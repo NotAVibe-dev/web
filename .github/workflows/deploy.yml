@@ -1,0 +1,95 @@
+name: Deploy to GitHub Pages
+
+# One repo, one domain (notavibe.dev). Two sites live here:
+#   landing : the full Astro site at the repo root      -> built to ./dist
+#   splash  : the static placeholder in ./splash          -> served as-is
+#
+# Deploys are manual for now: run this workflow and choose which site to
+# publish. It defaults to `splash` (the current holding page).
+#
+# EVENTUALLY, when the splash is retired and only the landing remains:
+#   1. uncomment the `push:` trigger below (pushes to main auto-deploy landing),
+#   2. then delete ./splash and, if you like, the workflow_dispatch input.
+# The build job already resolves a `push` event to the landing site, so
+# enabling auto-deploy is just uncommenting the trigger.
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "Which site to deploy? (defaults to splash)"
+        required: true
+        type: choice
+        default: splash
+        options:
+          - splash
+          - landing
+  # push:
+  #   branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve which site to deploy
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            SITE=landing            # auto-deploy target once the push trigger is enabled
+          else
+            SITE="${{ inputs.site }}"
+          fi
+          case "$SITE" in
+            landing|splash) ;;
+            *) echo "::error::Unexpected site '$SITE' (expected landing or splash)."; exit 1 ;;
+          esac
+          echo "site=$SITE" >> "$GITHUB_OUTPUT"
+          echo "Deploying **$SITE** to notavibe.dev." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/configure-pages@v5
+
+      # --- landing: build the Astro site (repo root) -> ./dist ---
+      - name: Set up Node
+        if: steps.pick.outputs.site == 'landing'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build landing
+        if: steps.pick.outputs.site == 'landing'
+        run: |
+          npm ci
+          npm run build
+      - name: Upload landing artifact
+        if: steps.pick.outputs.site == 'landing'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      # --- splash: static placeholder (no build) ---
+      - name: Upload splash artifact
+        if: steps.pick.outputs.site == 'splash'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./splash
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
