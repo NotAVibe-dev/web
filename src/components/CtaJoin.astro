@@ -1,0 +1,97 @@
+---
+// The dual conversion block — maintainer-led, both audiences served.
+// The maintainer form posts to a form endpoint (set FORM_ACTION before launch);
+// until then it is a mailto so it is functional, never fake.
+const MAILTO = 'mailto:hello@notavibe.dev';
+---
+
+<section class="join" id="join" aria-labelledby="join-title">
+  <div class="container">
+    <p class="kicker kicker--ember">// two ways in</p>
+    <h2 id="join-title" class="join__title">Which side of the dependency graph are you on?</h2>
+
+    <div class="join__grid">
+      <div class="card join__card">
+        <p class="join__eyebrow">You maintain something people rely on</p>
+        <h3 class="join__h">Claim your page.</h3>
+        <p class="join__p">
+          We turn your public usage — downloads, dependents, the funding gap — into a page
+          companies can act on. Free for maintainers, always.
+        </p>
+        <form class="join__form" action={MAILTO} method="post" enctype="text/plain">
+          <label class="vh" for="claim-handle">Your npm or GitHub handle</label>
+          <input
+            id="claim-handle"
+            name="handle"
+            class="join__input"
+            type="text"
+            placeholder="npm or github handle"
+            autocomplete="username"
+            required
+          />
+          <button class="btn btn--primary" type="submit">Claim your page</button>
+        </form>
+        <p class="join__note">No spam, no scraping your commits. Opt out any time — permanently.</p>
+      </div>
+
+      <div class="card join__card">
+        <p class="join__eyebrow">You ship on open source</p>
+        <h3 class="join__h">Back a maintainer.</h3>
+        <p class="join__p">
+          Fund the specific people your product depends on, matched to how much you actually rely
+          on them. One invoice, real humans, measurable impact.
+        </p>
+        <div class="join__form">
+          <a class="btn btn--ghost" href="/for-companies">See how it works &rarr;</a>
+          <a class="btn btn--ghost" href={`${MAILTO}?subject=Backing%20maintainers`}>Talk to us</a>
+        </div>
+        <p class="join__note">Start with one. Most companies find they depend on dozens.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .join { padding-block: clamp(var(--space-2xl), 10vh, var(--space-4xl)); }
+  .join__title { font-size: var(--fs-h2); margin-top: var(--space-sm); max-width: 20ch; }
+  .join__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+  .join__card { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .join__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-kicker);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .join__h { font-size: var(--fs-h3); }
+  .join__p { color: var(--text-muted); }
+  .join__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+  }
+  .join__input {
+    flex: 1 1 12rem;
+    min-width: 0;
+    background: var(--ink-900);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 0.72em 0.9em;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--text-strong);
+  }
+  .join__input::placeholder { color: var(--text-faint); }
+  .join__input:focus-visible { border-color: var(--ember-500); }
+  .join__note { color: var(--text-faint); font-size: var(--fs-kicker); margin-top: var(--space-2xs); }
+
+  @media (min-width: 720px) {
+    .join__grid { grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
+  }
+</style>

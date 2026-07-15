@@ -1,0 +1,171 @@
+/* ==========================================================================
+   Homepage — the ember arc. Scene layout + warmth engine + native scroll motion.
+   Loaded only on `/`. The page is fully readable with no JS and reduced motion.
+   ========================================================================== */
+
+/* --- Warmth engine -------------------------------------------------------- *
+ * scroll.js sets --warmth (0 cold .. 1 warm) to the act in view; this
+ * transition smooths it. The global reduced-motion rule zeroes the transition.
+ * The veil is a fixed, opaque ink backdrop tinted by --warmth.               */
+html { transition: --warmth 850ms cubic-bezier(0.65, 0, 0.35, 1); }
+body { background: transparent; }
+
+.warmth-veil {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* the whole field shifts cold (slate) -> warm (ember) with the story */
+  --wash: color-mix(in oklab, var(--cold-wash), var(--warm-wash) calc(var(--warmth) * 100%));
+  background:
+    radial-gradient(135% 95% at 50% -8%,
+      color-mix(in oklab, var(--ink-900), var(--wash) calc(15% + var(--warmth) * 23%)),
+      transparent 52%),
+    color-mix(in oklab, var(--ink-900), var(--wash) calc(5% + var(--warmth) * 9%));
+}
+
+/* --- Act scaffold --------------------------------------------------------- */
+.act { position: relative; z-index: 1; padding-block: clamp(var(--space-3xl), 16vh, 13rem); }
+.act__inner { position: relative; z-index: 2; max-width: 46rem; }
+.act__num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-kicker);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.act__title { font-size: var(--fs-h2); margin-top: var(--space-md); }
+.act__body { color: var(--text-muted); font-size: var(--fs-lg); margin-top: var(--space-lg); max-width: 40ch; }
+.act__body code { color: var(--text-strong); background: var(--ink-800); padding: 0.08em 0.4em; border-radius: 4px; }
+
+/* --- Reveal + parallax (native, gated, visible-by-default) ---------------- */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 6% cover 32%;
+    }
+    .reveal--late { animation-range: entry 14% cover 42%; }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(22px); }
+      to { opacity: 1; transform: none; }
+    }
+    .par { animation: par linear both; animation-timeline: view(); animation-range: cover; will-change: transform; }
+    @keyframes par { from { transform: translateY(5%); } to { transform: translateY(-5%); } }
+    .par--far { animation: parfar linear both; animation-timeline: view(); animation-range: cover; }
+    @keyframes parfar { from { transform: translateY(9%); } to { transform: translateY(-9%); } }
+  }
+}
+
+/* =============================== HERO ===================================== */
+.hero { position: relative; padding-block: clamp(var(--space-xl), 8vh, var(--space-3xl)) var(--space-2xl); z-index: 1; }
+.hero__kicker { color: var(--ember-500); }
+.hero__title { font-size: var(--fs-display); margin-top: var(--space-md); max-width: 16ch; }
+.hero__title .soft { color: var(--text-muted); }
+.hero__sub { color: var(--text-muted); font-size: var(--fs-xl); line-height: 1.45; max-width: 42ch; margin-top: var(--space-lg); }
+.hero__cta { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-xl); }
+.hero__grid { display: grid; grid-template-columns: 1fr; gap: var(--space-2xl); align-items: start; }
+.hero__cue {
+  margin-top: var(--space-2xl);
+  font-family: var(--font-mono);
+  font-size: var(--fs-kicker);
+  color: var(--text-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.hero__cue .cur { width: 0.5em; height: 1em; background: var(--ember-500); display: inline-block; }
+
+@media (min-width: 900px) {
+  .hero__grid { grid-template-columns: 1.15fr 0.85fr; gap: var(--space-4xl); }
+}
+
+/* --- Big stat / counter --------------------------------------------------- */
+.bigstat { font-family: var(--font-mono); line-height: 1; margin-top: var(--space-lg); }
+.bigstat__n { font-size: clamp(2.6rem, 1.4rem + 5vw, 4.6rem); color: var(--text-strong); letter-spacing: -0.03em; font-weight: var(--weight-medium); }
+.bigstat__label { color: var(--text-faint); font-size: var(--fs-sm); margin-top: var(--space-xs); }
+.bigstat__gap { color: var(--ember-500); }
+
+/* --- Notification stack (the weight) -------------------------------------- */
+.pings { display: flex; flex-direction: column; gap: var(--space-sm); margin-top: var(--space-xl); }
+.ping {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  background: var(--ink-800);
+  border: var(--border);
+  border-left: 2px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.7em 1em;
+}
+.ping .who { color: var(--text-faint); }
+.ping--urgent { border-left-color: var(--ember-600); }
+
+/* --- Incident ledger (the ash) -------------------------------------------- */
+.ledger {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.9;
+  color: var(--text-muted);
+  background: color-mix(in oklab, var(--ink-850), var(--cold-600) 10%);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-top: var(--space-xl);
+  overflow-x: auto;
+}
+.ledger caption, .ledger__head { display: block; color: var(--text-faint); margin-bottom: var(--space-sm); text-align: left; }
+.ledger__row { display: grid; grid-template-columns: 3.5rem 7rem 1fr; gap: var(--space-md); }
+.ledger__yr { color: var(--cold-400); }
+.ledger__id { color: var(--text-strong); }
+.ledger--cold { filter: saturate(0.7); }
+
+.ash-note {
+  margin-top: var(--space-lg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+/* --- Funding card + relight (the turn) ------------------------------------ */
+.turn__stage { margin-top: var(--space-xl); display: grid; gap: var(--space-md); max-width: 30rem; }
+.mcard { background: var(--ink-800); border: var(--border-strong); border-radius: var(--radius-lg); padding: var(--space-lg); }
+.mcard__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+.mcard__id { display: flex; align-items: center; gap: 0.6em; font-family: var(--font-mono); color: var(--text-strong); }
+.mcard__id .av { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(140deg, var(--ember-500), var(--ember-700)); flex: none; }
+.mcard__seg { font-family: var(--font-mono); font-size: var(--fs-kicker); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ember-500); border: 1px solid color-mix(in oklab, var(--ember-500), transparent 55%); border-radius: var(--radius-pill); padding: 0.2em 0.7em; }
+.mcard__rows { margin-top: var(--space-md); display: grid; gap: 0.5rem; font-family: var(--font-mono); font-size: var(--fs-sm); }
+.mcard__row { display: flex; justify-content: space-between; gap: var(--space-md); color: var(--text-muted); }
+.mcard__row b { color: var(--text-strong); font-weight: var(--weight-medium); }
+.mcard__gapbar { height: 6px; border-radius: 3px; margin-top: var(--space-xs); background: linear-gradient(90deg, var(--ember-500) 92%, var(--ink-600) 92%); }
+
+.delta {
+  display: inline-flex; align-items: center; gap: 0.5em;
+  font-family: var(--font-mono); font-size: var(--fs-lg);
+  color: var(--verdant-500);
+  background: color-mix(in oklab, var(--verdant-500), transparent 88%);
+  border: 1px solid color-mix(in oklab, var(--verdant-500), transparent 70%);
+  border-radius: var(--radius-md); padding: 0.6em 1em;
+}
+.delta b { color: var(--text-strong); }
+
+/* --- Commit stream (the fire) --------------------------------------------- */
+.commits { margin-top: var(--space-xl); font-family: var(--font-mono); font-size: var(--fs-sm); border: var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.commit { display: grid; grid-template-columns: 5.5rem 1fr auto; gap: var(--space-md); padding: 0.55em var(--space-md); border-bottom: var(--border); color: var(--text-muted); }
+.commit:last-child { border-bottom: 0; }
+.commit__h { color: var(--ember-500); }
+.commit__add { color: var(--verdant-500); }
+
+/* --- Backbone field (the call) -------------------------------------------- */
+.backbone { text-align: center; }
+.backbone .act__inner { max-width: 52rem; margin-inline: auto; }
+.backbone__title { font-size: var(--fs-h1); }
+.field { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin-top: var(--space-xl); }
+.field .chip { background: color-mix(in oklab, var(--ink-800), transparent 15%); }
+.field .chip em { font-style: normal; color: var(--text-faint); }
+.backbone__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-md); margin-top: var(--space-2xl); }
+.backbone__pair { display: grid; gap: var(--space-xs); }
+.backbone__pair span { font-family: var(--font-mono); font-size: var(--fs-kicker); color: var(--text-faint); }
+.closer { margin-top: var(--space-3xl); font-family: var(--font-mono); font-size: var(--fs-xl); color: var(--ember-500); display: inline-flex; align-items: center; gap: 0.6em; }
+.closer svg { width: 1.3em; height: 1.3em; }

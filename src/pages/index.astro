@@ -1,0 +1,200 @@
+---
+import Base from '../layouts/Base.astro';
+import PackageSky from '../components/PackageSky.astro';
+import CtaJoin from '../components/CtaJoin.astro';
+import '../styles/home.css';
+---
+
+<Base>
+  <div class="warmth-veil" aria-hidden="true"></div>
+
+  <!-- ============================== HERO ============================== -->
+  <section class="hero" data-warmth="0.75">
+    <div class="container hero__grid">
+      <div>
+        <p class="kicker hero__kicker">// open-source funding, matched to real usage</p>
+        <h1 class="hero__title">Fund the people <span class="soft">behind the code.</span></h1>
+        <p class="hero__sub">
+          Open source runs the world. Most of it is maintained by people who have never
+          been paid for it. notavibe changes who&rsquo;s holding the bill.
+        </p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="#join">Claim your page</a>
+          <a class="btn btn--ghost" href="/for-companies">Back a maintainer</a>
+        </div>
+        <p class="hero__cue"><span class="cur" aria-hidden="true"></span> scroll &mdash; this happened to someone real</p>
+      </div>
+
+      <div class="terminal" role="img" aria-label="Terminal: running npm fund shows a package with 2,148,392 weekly downloads earning $0 per month">
+        <div class="terminal__bar">
+          <span class="terminal__dot"></span><span class="terminal__dot"></span><span class="terminal__dot"></span>
+          <span style="margin-left:auto">sam@localhost</span>
+        </div>
+        <div class="terminal__body">
+          <div><span class="prompt">$</span> npm fund</div>
+          <div class="num">tinsel@1.0.0</div>
+          <div class="muted">&nbsp;&nbsp;&#x2514;&#x2500; https://notavibe.dev/sam</div>
+          <div>&nbsp;</div>
+          <div><span class="num">2,148,392</span> <span class="muted">weekly downloads</span> &middot; <span style="color:var(--ember-500)">$0 / mo</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 01 SPARK ========================== -->
+  <section class="act" data-warmth="1.0" aria-labelledby="a1">
+    <PackageSky opacity={0.2} />
+    <div class="container act__inner">
+      <p class="act__num reveal">01 / the spark</p>
+      <h2 class="act__title reveal" id="a1">You solved your own problem. Then you shared it.</h2>
+      <p class="act__body reveal reveal--late">
+        Friday night, one commit, one <code>npm publish</code>. You built <code>tinsel</code>
+        because it was fun, and because the alternative was 40kB of someone else&rsquo;s
+        assumptions. You did not think about money once.
+      </p>
+      <div class="diff reveal reveal--late" style="margin-top:var(--space-xl);max-width:32rem">
+        <div class="diff__line diff__line--add">published tinsel@1.0.0 &mdash; 4kB, zero dependencies</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 02 WEIGHT ========================= -->
+  <section class="act" data-warmth="0.45" aria-labelledby="a2">
+    <PackageSky opacity={0.4} />
+    <div class="container act__inner">
+      <p class="act__num reveal">02 / the weight</p>
+      <h2 class="act__title reveal" id="a2">Then the world started depending on you.</h2>
+      <p class="bigstat reveal reveal--late">
+        <span class="bigstat__n" data-count="2148392">2,148,392</span>
+      </p>
+      <p class="bigstat__label reveal reveal--late">weekly downloads &middot; <span class="bigstat__gap">$0 / mo</span></p>
+      <p class="act__body reveal reveal--late">
+        It&rsquo;s in apps you&rsquo;ll never see, in build tools, in a hospital system somewhere.
+        And it&rsquo;s in your inbox:
+      </p>
+      <div class="pings">
+        <div class="ping reveal"><span class="who">@acme-corp</span> can you fix this by Monday? we ship to prod.</div>
+        <div class="ping reveal reveal--late ping--urgent"><span class="who">issue #482</span> this is blocking our release &mdash; any update?</div>
+        <div class="ping reveal reveal--late"><span class="who">@a-stranger</span> is this project abandoned?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 03 ASH =========================== -->
+  <section class="act" data-warmth="0.08" aria-labelledby="a3">
+    <div class="container act__inner">
+      <p class="act__num reveal">03 / the ash</p>
+      <h2 class="act__title reveal" id="a3">Critical infrastructure. Completely alone.</h2>
+      <p class="act__body reveal reveal--late">
+        No raise. No thanks. Just more. <code>last commit: 4 months ago</code>.
+      </p>
+
+      <div class="ledger ledger--cold reveal reveal--late" role="group" aria-label="Times the internet noticed the backbone only when it cracked">
+        <span class="ledger__head">// the internet only looks up when the backbone cracks</span>
+        <div class="ledger__row"><span class="ledger__yr">2016</span><span class="ledger__id">left-pad</span><span>one unpublished package breaks builds across the industry</span></div>
+        <div class="ledger__row"><span class="ledger__yr">2014</span><span class="ledger__id">Heartbleed</span><span>the web&rsquo;s crypto, kept alive by essentially one funded dev</span></div>
+        <div class="ledger__row"><span class="ledger__yr">2022</span><span class="ledger__id">colors.js</span><span>a burned-out maintainer breaks their own libraries in protest</span></div>
+        <div class="ledger__row"><span class="ledger__yr">2021</span><span class="ledger__id">Log4Shell</span><span>a global emergency in volunteer-run logging code</span></div>
+        <div class="ledger__row"><span class="ledger__yr">2024</span><span class="ledger__id">xz utils</span><span>a backdoor slips past one exhausted solo maintainer</span></div>
+      </div>
+      <p class="ash-note reveal reveal--late">We only fund the backbone after it snaps. It shouldn&rsquo;t take a CVE.</p>
+    </div>
+  </section>
+
+  <!-- ============================== 04 TURN ========================== -->
+  <section class="act" data-warmth="0.6" aria-labelledby="a4">
+    <div class="container act__inner">
+      <p class="act__num reveal">04 / the turn</p>
+      <h2 class="act__title reveal" id="a4">One day, a company that ships on your code does the math.</h2>
+      <p class="act__body reveal reveal--late">
+        They find Sam on notavibe: 2.1M downloads a week, $0/mo, one maintainer. They don&rsquo;t
+        send thanks. They send a standing monthly amount &mdash; matched to how much they actually
+        rely on Sam&rsquo;s code.
+      </p>
+
+      <div class="turn__stage">
+        <div class="mcard reveal reveal--late">
+          <div class="mcard__top">
+            <span class="mcard__id"><span class="av" aria-hidden="true"></span> sam &middot; tinsel</span>
+            <span class="mcard__seg">underfunded-critical</span>
+          </div>
+          <div class="mcard__rows">
+            <div class="mcard__row"><span>weekly downloads</span><b>2,148,392</b></div>
+            <div class="mcard__row"><span>dependent projects</span><b>19,400</b></div>
+            <div class="mcard__row"><span>current funding</span><b>$0 / mo</b></div>
+          </div>
+          <div class="mcard__gapbar" aria-hidden="true"></div>
+          <div class="mcard__row" style="margin-top:.5rem"><span>underfunding gap</span><b style="color:var(--ember-500)">top 4%</b></div>
+        </div>
+        <div class="delta reveal reveal--late">+ <b>$1,200 / mo</b> &middot; backed by 3 companies</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 05 FIRE ========================== -->
+  <section class="act" data-warmth="1.0" aria-labelledby="a5">
+    <PackageSky opacity={0.26} glow={true} />
+    <div class="container act__inner">
+      <p class="act__num reveal">05 / the fire</p>
+      <h2 class="act__title reveal" id="a5">Funded, they did what they always wanted to.</h2>
+      <p class="act__body reveal reveal--late">
+        Rewrote the core. Cut the bundle in half. Answered issues the same day &mdash; because now
+        it&rsquo;s the job, not the guilt. <code>tinsel@3.0.0</code>: faster, smaller, still theirs.
+      </p>
+      <div class="commits reveal reveal--late">
+        <div class="commit"><span class="commit__h">a1f9c2e</span><span>rewrite core parser, drop 2 deps</span><span class="commit__add">+412 &minus;980</span></div>
+        <div class="commit"><span class="commit__h">7d3e0b4</span><span>ship tinsel@3.0.0 &mdash; 1.9kB gzipped</span><span class="commit__add">+88 &minus;40</span></div>
+        <div class="commit"><span class="commit__h">c0a54ff</span><span>close #482, #486, #491 (same day)</span><span class="commit__add">+21 &minus;6</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 06 BACKBONE ====================== -->
+  <section class="act backbone" data-warmth="1.0" aria-labelledby="a6">
+    <div class="container act__inner">
+      <p class="act__num reveal">06 / the backbone</p>
+      <h2 class="backbone__title reveal" id="a6">They&rsquo;re not the exception. They&rsquo;re the pattern.</h2>
+      <p class="act__body reveal reveal--late" style="margin-inline:auto;max-width:52ch">
+        The software your bank, your hospital, and your phone run on was built by people like Sam.
+        Recreating today&rsquo;s open source from scratch would cost an estimated
+        <b style="color:var(--text-strong)">$8.8 trillion</b>. Most of the people maintaining it are
+        doing it for free.
+      </p>
+
+      <div class="field reveal reveal--late" aria-hidden="true">
+        <span class="chip">chalk <em>&middot; a person</em></span>
+        <span class="chip">debug <em>&middot; a person</em></span>
+        <span class="chip">express <em>&middot; a person</em></span>
+        <span class="chip">lodash <em>&middot; a person</em></span>
+        <span class="chip">semver <em>&middot; a person</em></span>
+        <span class="chip">commander <em>&middot; a person</em></span>
+        <span class="chip">chokidar <em>&middot; a person</em></span>
+        <span class="chip">ms <em>&middot; a person</em></span>
+        <span class="chip">minimatch <em>&middot; a person</em></span>
+        <span class="chip">picocolors <em>&middot; a person</em></span>
+      </div>
+
+      <div class="backbone__cta reveal reveal--late">
+        <div class="backbone__pair">
+          <span>maintainer?</span>
+          <a class="btn btn--primary" href="#join">Claim your page</a>
+        </div>
+        <div class="backbone__pair">
+          <span>ship on open source?</span>
+          <a class="btn btn--ghost" href="/for-companies">Back a maintainer</a>
+        </div>
+      </div>
+
+      <p class="closer reveal reveal--late">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M34 5C35 18 47 22 47 35C47 46 40 53 31 53C22 53 17 46 17 38C17 31 21 28 24 23C25 29 30 28 29 22C28 15 30 10 34 5Z" fill="#FF6B35"/><rect x="19" y="57" width="26" height="4" rx="2" fill="#FF6B35"/></svg>
+        This is not a vibe.
+      </p>
+    </div>
+  </section>
+
+  <CtaJoin />
+
+  <script>
+    import '../scripts/scroll.js';
+  </script>
+</Base>
