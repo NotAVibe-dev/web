@@ -1,0 +1,105 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import CtaJoin from '../components/CtaJoin.astro';
+
+const faqs = [
+  {
+    q: 'Is this charity?',
+    a: 'No. It is a market correction and, for companies, risk management. The world extracts enormous measurable value from open source and returns almost none of it to the maintainers. Funding the people you depend on is overdue payment, not a donation.',
+  },
+  {
+    q: 'How do you decide who gets funded, and how much?',
+    a: 'By reliance. We measure how much the world depends on a maintainer&rsquo;s work (downloads, dependent projects), how underfunded they are relative to that, and how alone they are in maintaining it. A company&rsquo;s budget is allocated across the maintainers in their own dependency graph, weighted the same way.',
+  },
+  {
+    q: 'Where does my money actually go?',
+    a: 'To the maintainers, minus a small, flat, published platform fee and payment-processing at cost. Every allocation is itemized for both the company funding it and the maintainer receiving it. No mystery cut.',
+  },
+  {
+    q: 'Do you email maintainers who never signed up?',
+    a: 'Only through channels they made public themselves &mdash; a public profile, a published package, a funding page they put up &mdash; and every contact we hold has a recorded source. We never scrape commit-log emails, never scrape browsers, never buy broker data. Any opt-out is honored the same day, permanently.',
+  },
+  {
+    q: 'I maintain a lot of packages. How does that work?',
+    a: 'They roll up to one page for you as a person, not scattered across repos. Your combined reach and funding gap are what companies see and fund.',
+  },
+  {
+    q: 'What does a company get out of it?',
+    a: 'A healthier, less fragile supply chain; reduced single-maintainer risk; and receipts your security and engineering teams can point at. You are not buying equity or a support SLA &mdash; you are keeping the code you ship on alive.',
+  },
+  {
+    q: 'What about my privacy and GDPR?',
+    a: 'We process only publicly-published professional data, under legitimate interest for B2B contact, and we honor erasure requests immediately. EU maintainers are the norm, not an edge case, so this is designed in rather than bolted on.',
+  },
+  {
+    q: 'Which ecosystems do you cover?',
+    a: 'JavaScript and TypeScript (npm) first, because that is where the concentration and the fragility are clearest. Other ecosystems follow once the model is proven.',
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a.replace(/&[a-z]+;/g, ' ') },
+  })),
+};
+---
+
+<Base
+  title="FAQ — notavibe"
+  description="Answers about how notavibe funds open-source maintainers: how funding is matched, where the money goes, our strict contact and privacy stance, and what companies get."
+>
+  <PageHeader kicker="// faq" title="The honest answers." />
+
+  <section class="section">
+    <div class="container container--prose">
+      <div class="faqs">
+        {faqs.map((f) => (
+          <details class="faq">
+            <summary class="faq__q">
+              <span>{f.q}</span>
+              <span class="faq__mark" aria-hidden="true"></span>
+            </summary>
+            <p class="faq__a" set:html={f.a}></p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CtaJoin />
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>
+</Base>
+
+<style>
+  .faqs { border-top: var(--border); }
+  .faq { border-bottom: var(--border); }
+  .faq__q {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg) 0;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    color: var(--text-strong);
+    letter-spacing: -0.01em;
+    list-style: none;
+  }
+  .faq__q::-webkit-details-marker { display: none; }
+  .faq__mark { position: relative; width: 14px; height: 14px; flex: none; }
+  .faq__mark::before, .faq__mark::after {
+    content: ""; position: absolute; background: var(--ember-500);
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .faq__mark::before { top: 6px; left: 0; width: 14px; height: 2px; }
+  .faq__mark::after { top: 0; left: 6px; width: 2px; height: 14px; }
+  .faq[open] .faq__mark::after { transform: scaleY(0); }
+  .faq__a { color: var(--text-muted); font-size: var(--fs-lg); padding-bottom: var(--space-lg); max-width: 62ch; }
+</style>

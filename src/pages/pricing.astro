@@ -1,0 +1,153 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+
+const companyTiers = [
+  {
+    name: 'Supporter',
+    price: 'from $100',
+    unit: '/mo',
+    for: 'Indie teams and individuals',
+    features: [
+      'Back a handful of maintainers you pick',
+      'One monthly invoice, fully itemized',
+      'A public badge, if you want the credit',
+    ],
+    cta: 'Talk to us',
+    href: 'mailto:hello@notavibe.dev?subject=Supporter',
+    featured: false,
+  },
+  {
+    name: 'Dependency graph',
+    price: 'from $1,000',
+    unit: '/mo',
+    for: 'Companies that ship on OSS',
+    features: [
+      'Scan a lockfile &rarr; fund matched to real reliance',
+      'Fund dozens of maintainers, one invoice',
+      'Itemized allocation both sides can see',
+      'Prioritizes your underfunded-critical deps',
+    ],
+    cta: 'Back a maintainer',
+    href: 'mailto:hello@notavibe.dev?subject=Backing%20our%20dependency%20graph',
+    featured: true,
+  },
+  {
+    name: 'Enterprise',
+    price: 'custom',
+    unit: '',
+    for: 'Procurement, SBOM, reporting',
+    features: [
+      'SBOM / SCA integration',
+      'Reporting for security &amp; compliance',
+      'Custom invoicing &amp; procurement terms',
+    ],
+    cta: 'Talk to us',
+    href: 'mailto:hello@notavibe.dev?subject=Enterprise',
+    featured: false,
+  },
+];
+---
+
+<Base
+  title="Pricing — notavibe"
+  description="Free forever for maintainers. Companies choose a monthly budget that we allocate across the maintainers they depend on, matched to reliance. Maintainers keep the overwhelming majority; our fee is small and published."
+>
+  <PageHeader
+    kicker="// pricing"
+    title="Free for maintainers. Fair for everyone."
+    lead="Maintainers never pay. Companies choose a budget; we route it to the people they depend on, matched to real usage. No dark patterns, no mystery cut."
+  />
+
+  <section class="section">
+    <div class="container">
+      <div class="maintainer-card">
+        <div>
+          <p class="kicker kicker--ember">// maintainers</p>
+          <h2 class="mc__t">$0. Forever.</h2>
+          <p class="mc__b">
+            Claiming your page, showing your numbers, and receiving funding costs you nothing &mdash;
+            not now, not after launch. You keep the overwhelming majority of every dollar sent your way.
+          </p>
+        </div>
+        <a class="btn btn--primary" href="/#join">Claim your page</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="container">
+      <p class="kicker">// companies</p>
+      <h2 class="h2">Pick a starting point. Adjust any time.</h2>
+      <div class="tiers">
+        {companyTiers.map((t) => (
+          <div class:list={['tier', { 'tier--featured': t.featured }]}>
+            {t.featured && <span class="tier__flag">most common</span>}
+            <h3 class="tier__name">{t.name}</h3>
+            <p class="tier__price"><span class="tier__amt">{t.price}</span><span class="tier__unit">{t.unit}</span></p>
+            <p class="tier__for">{t.for}</p>
+            <ul class="tier__list" role="list">
+              {t.features.map((f) => (<li set:html={f}></li>))}
+            </ul>
+            <a class:list={['btn', t.featured ? 'btn--primary' : 'btn--ghost']} href={t.href}>{t.cta}</a>
+          </div>
+        ))}
+      </div>
+      <p class="indicative">Amounts are indicative launch pricing &mdash; final numbers are published before we take a cent.</p>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="container container--prose">
+      <div class="transp">
+        <p class="kicker kicker--ember">// where the money goes</p>
+        <h2 class="h2">The fee is small, flat, and published.</h2>
+        <p class="transp__p">
+          Maintainers keep the overwhelming majority of what companies send. Our platform fee is small,
+          flat, and stated up front &mdash; never a cut that quietly scales. Payment-processing costs are
+          passed through at cost. Every allocation is itemized for both sides. If that ever stops being
+          true, it stops being notavibe.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .maintainer-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    align-items: center;
+    border: var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--ember-700), transparent 90%), transparent);
+  }
+  .mc__t { font-size: var(--fs-h2); }
+  .mc__b { color: var(--text-muted); margin-top: var(--space-sm); font-size: var(--fs-lg); max-width: 52ch; }
+
+  .h2 { font-size: var(--fs-h2); margin-top: var(--space-sm); }
+
+  .tiers { display: grid; grid-template-columns: 1fr; gap: var(--space-lg); margin-top: var(--space-xl); }
+  .tier { position: relative; border: var(--border); border-radius: var(--radius-lg); padding: var(--space-lg); background: var(--ink-800); display: flex; flex-direction: column; gap: var(--space-sm); }
+  .tier--featured { border-color: var(--ember-500); background: var(--ink-700); }
+  .tier__flag { position: absolute; top: -0.7rem; left: var(--space-lg); font-family: var(--font-mono); font-size: var(--fs-kicker); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-900); background: var(--ember-500); border-radius: var(--radius-pill); padding: 0.2em 0.7em; }
+  .tier__name { font-size: var(--fs-h3); }
+  .tier__price { font-family: var(--font-mono); display: flex; align-items: baseline; gap: 0.25em; }
+  .tier__amt { font-size: 1.9rem; color: var(--text-strong); letter-spacing: -0.02em; }
+  .tier__unit { color: var(--text-muted); }
+  .tier__for { color: var(--text-muted); font-size: var(--fs-sm); }
+  .tier__list { display: flex; flex-direction: column; gap: var(--space-xs); color: var(--text-muted); font-size: var(--fs-sm); margin-block: var(--space-xs); flex: 1; }
+  .tier__list li { padding-left: 1.2em; position: relative; }
+  .tier__list li::before { content: "+"; position: absolute; left: 0; color: var(--verdant-500); font-family: var(--font-mono); }
+  .tier .btn { margin-top: auto; }
+
+  .indicative { color: var(--text-faint); font-size: var(--fs-sm); margin-top: var(--space-lg); font-family: var(--font-mono); }
+  .transp__p { color: var(--text-muted); font-size: var(--fs-lg); margin-top: var(--space-md); }
+
+  @media (min-width: 760px) {
+    .maintainer-card { grid-template-columns: 1fr auto; gap: var(--space-2xl); }
+    .tiers { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+  }
+</style>

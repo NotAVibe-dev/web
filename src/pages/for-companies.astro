@@ -1,0 +1,109 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import CtaJoin from '../components/CtaJoin.astro';
+
+const reasons = [
+  {
+    t: 'It is risk management, not charity.',
+    b: 'A burned-out solo maintainer is a supply-chain risk on your balance sheet. The xz backdoor reached the edge of the world&rsquo;s SSH servers through exactly one exhausted volunteer. Funding the people in your dependency graph is cheaper than the incident.',
+  },
+  {
+    t: 'You already depend on them. Deeply.',
+    b: 'A typical application pulls in hundreds of transitive dependencies, most maintained by unpaid individuals. You ship on their work every day. notavibe just makes the relationship explicit — and reciprocal.',
+  },
+  {
+    t: 'Matched to reliance, not vibes.',
+    b: 'We allocate your budget across the maintainers you actually depend on, weighted by usage. No guesswork, no popularity contest — the money follows the code you ship.',
+  },
+  {
+    t: 'One invoice. Real humans. Receipts.',
+    b: 'Fund dozens of maintainers through a single monthly invoice. See exactly who got what. Your engineers can point at the graph and know the people behind it are being paid.',
+  },
+];
+---
+
+<Base
+  title="For companies — notavibe"
+  description="You ship on open source maintained by unpaid individuals. notavibe lets you fund the specific maintainers in your dependency graph, matched to how much you actually rely on them — one invoice, real people, real receipts."
+>
+  <PageHeader
+    kicker="// for companies"
+    title="You depend on them. Start acting like it."
+    lead="Your product runs on code written by people you have never paid. Some of them are one bad week away from walking. notavibe turns that quiet liability into a funded, healthier supply chain."
+  />
+
+  <section class="section">
+    <div class="container">
+      <div class="lede-stat">
+        <p class="lede-stat__n mono">~$8.8T</p>
+        <p class="lede-stat__c">
+          The estimated cost to <strong>recreate</strong> today&rsquo;s most-used open source from scratch
+          (Harvard Business School, 2024). You get it for free. The people who wrote it mostly do too &mdash;
+          for free.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="container">
+      <div class="reasons">
+        {reasons.map((r, i) => (
+          <div class="reason">
+            <span class="reason__i mono">{String(i + 1).padStart(2, '0')}</span>
+            <h2 class="reason__t">{r.t}</h2>
+            <p class="reason__b">{r.b}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="container">
+      <p class="kicker">// what it looks like</p>
+      <h2 class="h2">From your lockfile to their livelihood.</h2>
+      <div class="terminal flow" role="img" aria-label="Example: connecting a repository surfaces 214 maintainers across 1,900 dependencies; a $2,000 monthly budget is allocated across 38 underfunded maintainers.">
+        <div class="terminal__bar">
+          <span class="terminal__dot"></span><span class="terminal__dot"></span><span class="terminal__dot"></span>
+          <span style="margin-left:auto">notavibe &mdash; company console</span>
+        </div>
+        <div class="terminal__body">
+          <div><span class="prompt">$</span> notavibe scan ./package-lock.json</div>
+          <div class="muted">resolved 1,904 dependencies &rarr; 214 maintainers</div>
+          <div class="muted">flagged <span class="num">38</span> as underfunded-critical</div>
+          <div>&nbsp;</div>
+          <div><span class="prompt">$</span> notavibe back --budget 2000/mo --match reliance</div>
+          <div class="ok">allocating $2,000/mo across 38 maintainers, weighted by usage</div>
+          <div class="ok">&#x2713; one invoice &middot; monthly &middot; fully itemized</div>
+        </div>
+      </div>
+      <p class="flow-note">Illustrative. Start with one maintainer if you like &mdash; most companies discover they rely on dozens.</p>
+    </div>
+  </section>
+
+  <CtaJoin />
+</Base>
+
+<style>
+  .lede-stat { display: grid; grid-template-columns: 1fr; gap: var(--space-md); align-items: baseline; max-width: 60rem; }
+  .lede-stat__n { font-size: clamp(3rem, 1.6rem + 6vw, 6rem); color: var(--ember-500); letter-spacing: -0.03em; line-height: 1; }
+  .lede-stat__c { color: var(--text-muted); font-size: var(--fs-xl); line-height: 1.45; max-width: 46ch; }
+  .lede-stat strong { color: var(--text-strong); }
+
+  .reasons { display: grid; grid-template-columns: 1fr; gap: var(--space-lg); }
+  .reason { border: var(--border); border-radius: var(--radius-lg); padding: var(--space-lg); background: var(--ink-800); }
+  .reason__i { color: var(--ember-500); font-size: var(--fs-sm); }
+  .reason__t { font-size: var(--fs-h3); margin-top: var(--space-sm); }
+  .reason__b { color: var(--text-muted); margin-top: var(--space-sm); font-size: var(--fs-lg); }
+
+  .h2 { font-size: var(--fs-h2); margin-top: var(--space-sm); }
+  .flow { margin-top: var(--space-lg); max-width: 52rem; }
+  .flow-note { color: var(--text-faint); font-size: var(--fs-sm); margin-top: var(--space-md); font-family: var(--font-mono); }
+
+  @media (min-width: 720px) {
+    .lede-stat { grid-template-columns: auto 1fr; gap: var(--space-2xl); }
+    .reasons { grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
+  }
+</style>

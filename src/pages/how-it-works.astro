@@ -1,0 +1,148 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import CtaJoin from '../components/CtaJoin.astro';
+
+const steps = [
+  {
+    n: '01',
+    t: 'We read the dependency graph.',
+    b: 'We start from public usage — npm downloads, dependent projects, GitHub activity — and roll it up to the humans behind each package. The unit that matters is the maintainer, not the repo.',
+  },
+  {
+    n: '02',
+    t: 'We measure the gap, not just the glory.',
+    b: 'For every maintainer we compute how much the world relies on their work against how much they actually earn. High reliance, low funding, few maintainers — that is the gap notavibe exists to close.',
+  },
+  {
+    n: '03',
+    t: 'Maintainers claim their page.',
+    b: 'Your page shows the honest numbers: downloads, dependents, current funding, the gap. You control it. Claiming is free, and it stays free — forever.',
+  },
+  {
+    n: '04',
+    t: 'Companies fund, matched to reliance.',
+    b: 'A company sets a budget; we allocate it across the maintainers in their real dependency graph, weighted by how much they depend on each. One invoice in, real money out to real people.',
+  },
+  {
+    n: '05',
+    t: 'The money moves, in the open.',
+    b: 'Maintainers keep the overwhelming majority; the platform fee is small and published. Every allocation is visible to both sides. Opt out any time and it is permanent, same-day.',
+  },
+];
+
+const signals = [
+  ['traction', 'downloads &times; dependent projects, log-scaled', 'how much the world leans on this'],
+  ['gap', 'traction &divide; current funding', 'the underfunding, made explicit'],
+  ['solo-ness', 'share of commits by the top contributor', 'is this one person carrying it?'],
+  ['reachability', 'a public, consented way to make contact', 'can we reach them without scraping?'],
+  ['momentum', 'change in downloads over time', 'rising, steady, or fading'],
+];
+---
+
+<Base
+  title="How it works — notavibe"
+  description="How notavibe turns public open-source usage into funding for the people who maintain it: measure reliance, surface the funding gap, let maintainers claim a page, and let companies fund the maintainers they actually depend on."
+>
+  <PageHeader
+    kicker="// how it works"
+    title="Usage in. Funding out."
+    lead="notavibe is a prioritization engine with a conscience. It turns the one thing about open source that is genuinely measurable — how much the world depends on it — into money for the people doing the work."
+  />
+
+  <section class="section">
+    <div class="container">
+      <ol class="steps" role="list">
+        {steps.map((s) => (
+          <li class="step">
+            <span class="step__n">{s.n}</span>
+            <div class="step__body">
+              <h2 class="step__t">{s.t}</h2>
+              <p class="step__b">{s.b}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="container">
+      <p class="kicker">// how matching works</p>
+      <h2 class="h2">We rank by reliance, gap, and how alone someone is.</h2>
+      <p class="sub">
+        The same signals that let us find underfunded maintainers decide how a company&rsquo;s budget
+        is split. Plain inputs, no black box.
+      </p>
+      <div class="signals">
+        {signals.map(([name, formula, why]) => (
+          <div class="signal">
+            <div class="signal__name">{name}</div>
+            <div class="signal__formula mono" set:html={formula}></div>
+            <div class="signal__why">{why}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="container">
+      <div class="pledge">
+        <p class="kicker kicker--ember">// the part most tools skip</p>
+        <h2 class="h2">We will never harvest what isn&rsquo;t ours to use.</h2>
+        <div class="pledge__grid">
+          <div class="diff">
+            <div class="diff__line diff__line--del">scraping commit-log emails for cold outreach</div>
+            <div class="diff__line diff__line--del">headless-browser scraping of github.com</div>
+            <div class="diff__line diff__line--del">buying data from brokers to &ldquo;enrich&rdquo; a profile</div>
+            <div class="diff__line diff__line--add">only public, consented, provenance-tagged contact</div>
+            <div class="diff__line diff__line--add">authenticated APIs, rate limits honored, identified</div>
+            <div class="diff__line diff__line--add">a permanent, same-day opt-out that we actually keep</div>
+          </div>
+          <p class="pledge__p">
+            Our audience is the most scraping-sensitive on earth, and rightly so. Every contact we
+            store has a source — a public profile, a published package, a funding page the maintainer
+            put up themselves. That restraint is the product. It is also the whole point of
+            &ldquo;this is not a vibe.&rdquo;
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <CtaJoin />
+</Base>
+
+<style>
+  .steps { display: grid; gap: var(--space-xl); max-width: 60rem; }
+  .step { display: grid; grid-template-columns: auto 1fr; gap: var(--space-lg); align-items: start; }
+  .step__n {
+    font-family: var(--font-mono);
+    font-size: var(--fs-h3);
+    color: var(--ember-500);
+    line-height: 1;
+    padding-top: 0.1em;
+  }
+  .step__t { font-size: var(--fs-h3); }
+  .step__b { color: var(--text-muted); margin-top: var(--space-sm); max-width: 52ch; font-size: var(--fs-lg); }
+  .step + .step { padding-top: var(--space-xl); border-top: var(--border); }
+
+  .h2 { font-size: var(--fs-h2); margin-top: var(--space-sm); }
+  .sub { color: var(--text-muted); font-size: var(--fs-lg); margin-top: var(--space-md); max-width: 50ch; }
+
+  .signals { display: grid; grid-template-columns: 1fr; gap: 0; margin-top: var(--space-xl); border: var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .signal { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: var(--space-md) var(--space-lg); border-bottom: var(--border); }
+  .signal:last-child { border-bottom: 0; }
+  .signal__name { font-family: var(--font-mono); color: var(--text-strong); font-size: var(--fs-sm); letter-spacing: 0.02em; }
+  .signal__formula { color: var(--ember-500); font-size: var(--fs-sm); }
+  .signal__why { color: var(--text-faint); font-size: var(--fs-sm); }
+
+  .pledge__grid { display: grid; grid-template-columns: 1fr; gap: var(--space-xl); margin-top: var(--space-xl); }
+  .pledge__p { color: var(--text-muted); font-size: var(--fs-lg); max-width: 46ch; }
+
+  @media (min-width: 760px) {
+    .signal { grid-template-columns: 10rem 1.4fr 1fr; align-items: baseline; gap: var(--space-lg); }
+    .pledge__grid { grid-template-columns: 1.1fr 0.9fr; align-items: center; }
+  }
+</style>

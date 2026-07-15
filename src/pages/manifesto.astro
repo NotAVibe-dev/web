@@ -1,0 +1,109 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+---
+
+<Base
+  title="Manifesto — notavibe"
+  description="Open source is critical infrastructure maintained largely by unpaid individuals. We only fund the backbone after it snaps. This is why notavibe exists — and why this is not a vibe."
+>
+  <PageHeader
+    kicker="// manifesto"
+    title="The internet runs on people. Pay them."
+  />
+
+  <article class="section">
+    <div class="container container--prose prose">
+      <p class="lead-para">
+        There is a cartoon that every engineer has seen. A towering, precarious structure labelled
+        &ldquo;all modern digital infrastructure,&rdquo; and the whole thing is balanced on a single
+        tiny block: &ldquo;a project some random person in Nebraska has been thanklessly maintaining
+        since 2003.&rdquo; We laugh because it is true, and then we go back to importing the block.
+      </p>
+
+      <p>
+        Open source is not a hobby that got lucky. It is the load-bearing wall of the modern economy.
+        Researchers at Harvard Business School put a number on it in 2024: recreating the most widely
+        used open source software from scratch would cost on the order of <strong>$8.8 trillion</strong>.
+        That is the replacement cost of software the world uses for free &mdash; and that most of its
+        authors maintain for free.
+      </p>
+
+      <h2>We only look up when the backbone cracks</h2>
+      <p>
+        In 2016, one developer unpublished an eleven-line package after a dispute, and builds broke
+        across the industry. In 2014, Heartbleed exposed that a huge slice of the web&rsquo;s encryption
+        was held together by essentially one funded developer. In 2021, a global security emergency
+        &mdash; Log4Shell &mdash; landed on a logging library kept alive by a small volunteer team.
+        In 2022, an exhausted maintainer deliberately broke their own popular libraries. In 2024, an
+        attacker spent two years grooming the trust of one burned-out solo maintainer and nearly
+        slipped a backdoor into the world&rsquo;s SSH servers.
+      </p>
+      <p>
+        Every one of these became a headline. Every one of them was, underneath, the same story: a
+        person carrying far more than one person should, with far less support than the work deserved.
+        We notice the backbone only when it snaps. It should not take a CVE.
+      </p>
+
+      <h2>Gratitude is not a wage</h2>
+      <p>
+        The usual answer is a GitHub star, a thank-you in a changelog, a &ldquo;this is amazing, please
+        never stop.&rdquo; Appreciation is lovely. It does not pay rent, and it does not buy the time
+        that turns a stressed volunteer into a maintainer who can answer an issue the same day because
+        it is now the job, not the guilt.
+      </p>
+      <p>
+        Meanwhile the value is measurable and enormous. Two million downloads a week is not a vanity
+        metric &mdash; it is two million weekly acts of dependence. When that number sits next to
+        <strong>$0 a month</strong>, that is not a maintainer&rsquo;s failure. It is a market failure.
+      </p>
+
+      <h2>What we are, and what we refuse to be</h2>
+      <p>
+        notavibe connects the companies that depend on open source with the people who maintain it,
+        and routes money to them <strong>matched to real usage</strong> &mdash; downloads, dependents,
+        the funding gap &mdash; not to whoever markets themselves best. Solo and duo maintainers first,
+        because they carry the most risk and receive the least.
+      </p>
+      <p>We are not a bulk-mail machine. We hold ourselves to a few hard lines:</p>
+      <ul role="list">
+        <li>We contact people only through channels they made public themselves, and every contact has a recorded source.</li>
+        <li>We never harvest commit-log emails, never scrape browsers, never buy data from brokers.</li>
+        <li>We honor an opt-out the same day, permanently. No dark patterns, ever.</li>
+        <li>The money is the point. Maintainers keep the overwhelming majority; our fee is small and published.</li>
+      </ul>
+
+      <h2>This is not a vibe</h2>
+      <p>
+        &ldquo;Supporting open source&rdquo; has become a vibe &mdash; a value companies profess and
+        rarely fund, a feeling that evaporates the moment a budget line is needed. We took the opposite
+        name on purpose. The claims on this site are numbers. The funding is real money to real people.
+        The people are not abstractions; they are the reason your product works this morning.
+      </p>
+      <p>
+        Fund the people behind the code. Not because it is charitable. Because it is true, it is
+        overdue, and everything you ship is standing on them.
+      </p>
+
+      <p class="sig">This is not a vibe.</p>
+
+      <p class="cta-row">
+        <a class="btn btn--primary" href="/#join">Claim your page</a>
+        <a class="btn btn--ghost" href="/for-companies">Back a maintainer</a>
+      </p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .lead-para { font-size: var(--fs-xl); line-height: 1.5; color: var(--text); }
+  .prose h2 { color: var(--text-strong); }
+  .sig {
+    font-family: var(--font-mono);
+    font-size: var(--fs-h3);
+    color: var(--ember-500);
+    margin-top: var(--space-2xl) !important;
+    letter-spacing: -0.02em;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg) !important; }
+</style>

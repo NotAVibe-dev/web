@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="404 — notavibe" description="Command not found.">
+  <section class="nf">
+    <div class="container nf__inner">
+      <div class="crt" aria-hidden="true"></div>
+      <pre class="nf__term"><span class="prompt">$</span> notavibe open <span class="path">{'{this page}'}</span>
+<span class="err">notavibe: command failed &mdash; 404: not found</span>
+<span class="muted"># the page you wanted was unpublished, moved, or never shipped.</span>
+<span class="muted"># it happens. left-pad happened to the whole internet once.</span>
+<span class="prompt">$</span> notavibe back --to home<span class="cur"></span></pre>
+      <h1 class="nf__h">This route was never maintained.</h1>
+      <p class="nf__p">Let&rsquo;s get you back to something that is.</p>
+      <div class="nf__cta">
+        <a class="btn btn--primary" href="/">Back to home</a>
+        <a class="btn btn--ghost" href="/manifesto">Read the manifesto</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { min-height: 78vh; display: grid; align-items: center; padding-block: var(--space-3xl); }
+  .nf__inner { position: relative; max-width: 46rem; }
+  .nf__term {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    line-height: 1.9;
+    color: var(--text);
+    background: var(--ink-850);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    overflow-x: auto;
+    position: relative;
+    z-index: 1;
+  }
+  .nf__term .prompt { color: var(--ember-500); }
+  .nf__term .err { color: var(--ember-500); }
+  .nf__term .path { color: var(--text-strong); }
+  .nf__term .muted { color: var(--text-faint); }
+  .cur { display: inline-block; width: 0.55em; height: 1em; background: var(--ember-500); transform: translateY(0.15em); margin-left: 0.15em; }
+
+  .nf__h { font-size: var(--fs-h2); margin-top: var(--space-xl); }
+  .nf__p { color: var(--text-muted); font-size: var(--fs-lg); margin-top: var(--space-sm); }
+  .nf__cta { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
+
+  /* the single deliberate CRT moment — subtle scanlines behind the terminal */
+  .crt {
+    position: absolute;
+    inset: -20px;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: var(--radius-lg);
+    background: repeating-linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--ember-500), transparent 92%) 0px,
+      color-mix(in oklab, var(--ember-500), transparent 92%) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    opacity: 0.5;
+    mask-image: radial-gradient(60% 60% at 30% 40%, black, transparent 75%);
+  }
+</style>
