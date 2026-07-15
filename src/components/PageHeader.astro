@@ -1,0 +1,33 @@
+---
+interface Props {
+  kicker: string;
+  title: string;
+  lead?: string;
+}
+const { kicker, title, lead } = Astro.props;
+---
+
+<header class="ph">
+  <div class="container container--prose">
+    <p class="kicker kicker--ember">{kicker}</p>
+    <h1 class="ph__title">{title}</h1>
+    {lead && <p class="ph__lead">{lead}</p>}
+  </div>
+</header>
+
+<style>
+  .ph {
+    padding-top: clamp(var(--space-2xl), 11vh, 8rem);
+    padding-bottom: var(--space-lg);
+    border-bottom: var(--border);
+  }
+  .ph__title { font-size: var(--fs-h1); margin-top: var(--space-md); max-width: 18ch; }
+  .ph__lead {
+    margin-top: var(--space-lg);
+    max-width: 54ch;
+    font-size: var(--fs-xl);
+    line-height: 1.45;
+    color: var(--text-muted);
+    text-wrap: pretty;
+  }
+</style>

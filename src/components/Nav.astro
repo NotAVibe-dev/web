@@ -1,0 +1,168 @@
+---
+const links = [
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/for-companies', label: 'For companies' },
+  { href: '/manifesto', label: 'Manifesto' },
+  { href: '/pricing', label: 'Pricing' },
+];
+const path = Astro.url.pathname.replace(/\/$/, '');
+---
+
+<header class="nav">
+  <div class="container nav__inner">
+    <a class="brand" href="/" aria-label="notavibe — home">
+      <svg class="brand__mark" width="22" height="22" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="nav-ember" x1="32" y1="4" x2="32" y2="53" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FFB694" />
+            <stop offset="0.45" stop-color="#FF6B35" />
+            <stop offset="1" stop-color="#C6410F" />
+          </linearGradient>
+        </defs>
+        <path d="M34 5C35 18 47 22 47 35C47 46 40 53 31 53C22 53 17 46 17 38C17 31 21 28 24 23C25 29 30 28 29 22C28 15 30 10 34 5Z" fill="url(#nav-ember)" />
+        <rect x="19" y="57" width="26" height="4" rx="2" fill="#FF6B35" />
+      </svg>
+      <span class="brand__word">notavibe</span>
+      <span class="brand__cursor" aria-hidden="true"></span>
+    </a>
+
+    <!-- CSS-only disclosure: the checkbox is the (focusable) control; the label
+         is the on-brand toggle. Works with no JS; on desktop both collapse and
+         the menu renders inline. -->
+    <input type="checkbox" id="nav-toggle" class="nav__cb" aria-label="Toggle navigation menu" />
+    <label for="nav-toggle" class="nav__toggle">
+      <span class="nav__toggle-cur" aria-hidden="true"></span>
+      <span class="nav__toggle-txt" data-open="menu" data-close="close"></span>
+    </label>
+
+    <div class="nav__menu">
+      <nav aria-label="Primary">
+        <ul role="list" class="nav__links">
+          {links.map((l) => (
+            <li>
+              <a href={l.href} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <a class="btn btn--primary btn--sm" href="/#join">Claim your page</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-nav);
+    background: color-mix(in oklab, var(--ink-900), transparent 12%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: var(--border);
+  }
+  .nav__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    min-height: 64px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-weight: var(--weight-medium);
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+    color: var(--text-strong);
+  }
+  .brand__mark { flex: none; }
+  .brand__cursor {
+    width: 0.55em;
+    height: 1.05em;
+    background: var(--ember-500);
+    display: inline-block;
+    transform: translateY(0.12em);
+  }
+
+  /* --- Toggle (mobile): ember cursor block + mono "menu"/"close" ---------- */
+  .nav__cb {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: 0; opacity: 0;   /* hidden but focusable (keyboard: Space toggles) */
+  }
+  .nav__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.25rem;
+    font-family: var(--font-mono);
+    font-size: var(--fs-kicker);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .nav__toggle:hover { color: var(--ember-500); }
+  .nav__toggle-cur {
+    width: 0.6em; height: 1.05em;
+    background: var(--ember-500);
+    flex: none;
+  }
+  .nav__toggle-txt::after { content: attr(data-open); }
+  .nav__cb:checked ~ .nav__toggle .nav__toggle-txt::after { content: attr(data-close); }
+  .nav__cb:focus-visible ~ .nav__toggle {
+    outline: 2px solid var(--ember-500);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  /* --- Menu: mobile dropdown, hidden until toggled ------------------------ */
+  .nav__menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.75rem);
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    min-width: 220px;
+    background: var(--ink-800);
+    border: var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+  .nav__cb:checked ~ .nav__menu { display: flex; }
+
+  .nav__links { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .nav__links a {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .nav__links a:hover,
+  .nav__links a[aria-current='page'] { color: var(--ember-500); }
+
+  /* --- Desktop: links inline, no toggle chrome, no <details> quirks ------- */
+  @media (min-width: 880px) {
+    .nav__cb, .nav__toggle { display: none; }
+    .nav__menu {
+      display: flex;
+      position: static;
+      flex-direction: row;
+      align-items: center;
+      padding: 0;
+      min-width: 0;
+      background: none;
+      border: 0;
+      box-shadow: none;
+    }
+    .nav__links { flex-direction: row; gap: var(--space-lg); }
+  }
+</style>

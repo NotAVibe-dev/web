@@ -1,0 +1,149 @@
+---
+const year = 2026;
+const cols = [
+  {
+    title: 'Product',
+    links: [
+      { href: '/how-it-works', label: 'How it works' },
+      { href: '/pricing', label: 'Pricing' },
+      { href: '/#join', label: 'Claim your page' },
+    ],
+  },
+  {
+    title: 'Companies',
+    links: [
+      { href: '/for-companies', label: 'For companies' },
+      { href: '/#join', label: 'Back a maintainer' },
+    ],
+  },
+  {
+    title: 'notavibe',
+    links: [
+      { href: '/manifesto', label: 'Manifesto' },
+      { href: '/faq', label: 'FAQ' },
+      { href: 'https://github.com/NotAVibe-dev', label: 'GitHub' },
+    ],
+  },
+];
+---
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__lead">
+      <div class="footer__brand">
+        <svg width="20" height="20" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M34 5C35 18 47 22 47 35C47 46 40 53 31 53C22 53 17 46 17 38C17 31 21 28 24 23C25 29 30 28 29 22C28 15 30 10 34 5Z" fill="#FF6B35" />
+          <rect x="19" y="57" width="26" height="4" rx="2" fill="#FF6B35" />
+        </svg>
+        <span>notavibe</span>
+      </div>
+      <p class="footer__tag">Fund the people behind the code.</p>
+      <pre class="footer__fund" aria-label="npm fund example"><span class="prompt">$</span> npm fund
+<span class="muted">142 packages in this project are looking for funding</span>
+<span class="muted">run `notavibe back` to change that</span></pre>
+    </div>
+
+    <nav class="footer__cols" aria-label="Footer">
+      {cols.map((c) => (
+        <div class="footer__col">
+          <h2 class="footer__col-title">{c.title}</h2>
+          <ul role="list">
+            {c.links.map((l) => (<li><a href={l.href}>{l.label}</a></li>))}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  </div>
+
+  <div class="container footer__base">
+    <p class="footer__legal">
+      &copy; {year} notavibe. Outreach is personal; opt-outs are permanent and honored
+      same-day. We process only publicly-published professional data, under GDPR.
+    </p>
+    <p class="footer__sig">This is not a vibe.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: var(--border);
+    background: var(--ink-850);
+    padding-block: var(--space-2xl) var(--space-xl);
+    margin-top: var(--space-2xl);
+  }
+  .footer__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2xl);
+  }
+  .footer__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-weight: var(--weight-medium);
+    color: var(--text-strong);
+    font-size: 1.05rem;
+  }
+  .footer__tag { color: var(--text-muted); margin-top: var(--space-sm); }
+  .footer__fund {
+    margin-top: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--fs-kicker);
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--ink-900);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-width: 42ch;
+  }
+  .footer__fund .prompt { color: var(--ember-500); }
+  .footer__fund .muted { color: var(--text-faint); }
+
+  .footer__cols {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xl);
+  }
+  .footer__col-title {
+    font-family: var(--font-mono);
+    font-size: var(--fs-kicker);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: var(--space-sm);
+  }
+  .footer__col ul { display: flex; flex-direction: column; gap: var(--space-xs); }
+  .footer__col a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: var(--fs-sm);
+  }
+  .footer__col a:hover { color: var(--ember-500); }
+
+  .footer__base {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer__legal { color: var(--text-faint); font-size: var(--fs-kicker); max-width: 62ch; }
+  .footer__sig {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--ember-500);
+    white-space: nowrap;
+  }
+
+  @media (min-width: 720px) {
+    .footer__inner { grid-template-columns: 1.3fr 2fr; gap: var(--space-4xl); }
+    .footer__cols { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
