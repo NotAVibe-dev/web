@@ -1,0 +1,301 @@
+/* ==========================================================================
+   notavibe — global styles  ·  Terminal Craft
+   Depends on tokens.css. Warm-dark, one ember accent, mono for data.
+   ========================================================================== */
+
+/* --- Reset (minimal) ------------------------------------------------------ */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+img, svg, video, canvas { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; color: inherit; }
+button { background: none; border: none; cursor: pointer; }
+ul[role="list"], ol[role="list"] { list-style: none; padding: 0; }
+:target { scroll-margin-top: 6rem; }
+
+/* --- @property for smooth scroll-driven color temperature ----------------- */
+@property --warmth {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+/* --- Base ----------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  background: var(--ink-900);
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text);
+  background: var(--ink-900);
+  font-feature-settings: "kern", "liga", "calt";
+  overflow-x: hidden;
+}
+
+::selection { background: var(--ember-500); color: var(--ink-900); }
+
+/* --- Typography ----------------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); }
+p { text-wrap: pretty; }
+
+/* Link styling is scoped with :not(.btn) so it never leaks into buttons —
+   otherwise a:hover would override a button's label color on hover. */
+a:not(.btn) {
+  color: var(--ember-500);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in oklab, var(--ember-500), transparent 55%);
+  transition: color var(--dur-fast) var(--ease-out),
+    text-decoration-color var(--dur-fast) var(--ease-out);
+}
+a:not(.btn):hover { color: var(--ember-300); text-decoration-color: var(--ember-300); }
+
+code, kbd, samp, .mono { font-family: var(--font-mono); font-size: 0.95em; }
+
+/* --- Focus (visible ember ring) ------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--ember-500);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* --- Skip link ------------------------------------------------------------ */
+.skip-link {
+  position: absolute;
+  left: var(--space-md);
+  top: -100px;
+  z-index: var(--z-overlay);
+  background: var(--ink-700);
+  color: var(--text-strong);
+  border: var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  transition: top var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus { top: var(--space-md); }
+
+/* --- Layout --------------------------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.container--wide { max-width: var(--maxw-wide); }
+.container--prose { max-width: var(--maxw-prose); }
+
+.section { padding-block: clamp(var(--space-2xl), 12vh, var(--space-4xl)); }
+.section--tight { padding-block: var(--space-2xl); }
+
+/* --- Kicker / eyebrow ----------------------------------------------------- */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--fs-kicker);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.kicker--ember { color: var(--ember-500); }
+.kicker::before {
+  content: "";
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* --- Buttons -------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.01em;
+  padding: 0.72em 1.15em;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.btn:active { transform: translateY(0); }
+
+/* Ember button = DARK INK on ember (never white). Hover reignites: hotter and
+   brighter (not the pale --ember-300 tint), lifted, with an ember glow. */
+.btn--primary { background: var(--ember-500); color: var(--ink-900); }
+.btn--primary:hover {
+  background: var(--ember-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--glow-ember);
+}
+.btn--primary:active { background: var(--ember-600); transform: translateY(0); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text-strong);
+  border-color: var(--hairline-strong);
+}
+.btn--ghost:hover {
+  border-color: var(--ember-500);
+  color: var(--ember-500);
+  transform: translateY(-1px);
+}
+
+.btn--sm { font-size: var(--fs-kicker); padding: 0.55em 0.9em; }
+
+/* --- Cards ---------------------------------------------------------------- */
+.card {
+  background: var(--ink-800);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+.card--raised { background: var(--ink-700); box-shadow: var(--shadow-md); }
+
+/* --- Terminal card (real prompt motif) ------------------------------------ */
+.terminal {
+  background: var(--ink-850);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-md);
+}
+.terminal__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.6rem var(--space-md);
+  border-bottom: var(--border);
+  color: var(--text-faint);
+  font-size: var(--fs-kicker);
+  letter-spacing: 0.04em;
+}
+.terminal__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--hairline-strong); }
+.terminal__body { padding: var(--space-md); line-height: 1.75; overflow-x: auto; }
+.terminal__body .prompt { color: var(--ember-500); user-select: none; }
+.terminal__body .muted { color: var(--text-faint); }
+.terminal__body .ok { color: var(--verdant-500); }
+.terminal__body .num { color: var(--text-strong); }
+
+/* --- Package chip (dependency-sky tokens) --------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  font-family: var(--font-mono);
+  font-size: var(--fs-kicker);
+  color: var(--text-muted);
+  border: var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.28em 0.7em;
+  background: color-mix(in oklab, var(--ink-800), transparent 25%);
+  white-space: nowrap;
+}
+.chip .chip__n { color: var(--text-faint); }
+
+/* --- Diff-style callout --------------------------------------------------- */
+.diff {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.diff__line { padding: 0.35em var(--space-md); display: flex; gap: var(--space-sm); }
+.diff__line--add { background: color-mix(in oklab, var(--verdant-500), transparent 88%); color: var(--text-strong); }
+.diff__line--del { background: color-mix(in oklab, var(--ember-700), transparent 86%); color: var(--text-muted); }
+.diff__line--add::before { content: "+"; color: var(--verdant-500); }
+.diff__line--del::before { content: "-"; color: var(--ember-600); }
+
+/* --- ASCII rule ----------------------------------------------------------- */
+.rule {
+  border: 0;
+  border-top: 1px dashed var(--hairline-strong);
+  margin-block: var(--space-xl);
+}
+
+/* --- Prose (long-form: manifesto/faq) ------------------------------------- */
+.prose { color: var(--text); }
+.prose > * + * { margin-top: var(--space-md); }
+.prose h2 { margin-top: var(--space-2xl); font-size: var(--fs-h3); }
+.prose h3 { margin-top: var(--space-xl); }
+.prose p, .prose li { font-size: var(--fs-lg); }
+.prose ul { padding-left: 1.2em; }
+.prose li { margin-top: var(--space-xs); }
+.prose li::marker { color: var(--ember-500); }
+.prose strong { color: var(--text-strong); font-weight: var(--weight-semibold); }
+
+/* --- Lead paragraph ------------------------------------------------------- */
+.lead {
+  font-size: var(--fs-xl);
+  line-height: 1.45;
+  color: var(--text);
+  max-width: 40ch;
+}
+
+/* --- Numeric emphasis ----------------------------------------------------- */
+.stat { font-family: var(--font-mono); color: var(--text-strong); }
+.stat--ember { color: var(--ember-500); }
+
+/* --- Film grain (the one ambient texture) --------------------------------- */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* --- Visually-hidden ------------------------------------------------------ */
+.vh {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* --- Reduced motion baseline ---------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

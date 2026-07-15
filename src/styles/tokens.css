@@ -1,0 +1,144 @@
+/* VENDORED from design/docs/design-system/tokens.css — do not edit here.
+   Source of truth is the design/ repo; sync changes from there. */
+/* ==========================================================================
+   notavibe — design tokens  ·  "Terminal Craft"
+   Source of truth: design/ repo. The web/ repo vendors a copy of this file;
+   if you change a token here, update the copy in web/src/styles/tokens.css.
+   --------------------------------------------------------------------------
+   The whole system is warm-dark. One accent — the EMBER — carries the story:
+   it dims to ash during burnout and reignites, brighter, once a maintainer
+   is funded. Motion and color are disciplined; the ember is used sparingly
+   so that when it glows, it means something.
+   ========================================================================== */
+
+:root {
+  /* --- Ink: warm-neutral backgrounds, darkest -> lightest surface -------- */
+  --ink-900: #0E0F12;   /* page background */
+  --ink-850: #121317;
+  --ink-800: #16181D;   /* panel / card */
+  --ink-700: #1E2127;   /* elevated panel */
+  --ink-600: #262A32;   /* hover surface */
+  --hairline: #2A2E37;        /* default 1px borders */
+  --hairline-strong: #363B45; /* emphasized dividers */
+
+  /* --- Text: warm greys -------------------------------------------------- */
+  --text-strong: #EDEFF3;  /* headings — ~14:1 on ink-900 */
+  --text:        #C9CDD6;  /* body — ~11:1 */
+  --text-muted:  #9098A6;  /* secondary — ~5.6:1 (AA normal) */
+  --text-faint:  #7C818C;  /* labels/meta — AA on ink-900 (~4.9:1) */
+
+  /* --- Ember: the spark (accent). Use sparingly. ------------------------- */
+  --ember-100: #FFE9DE;  /* tint on ember surfaces */
+  --ember-300: #FFB694;  /* highlight / flame tip */
+  --ember-500: #FF6B35;  /* PRIMARY accent */
+  --ember-hover: #FF8551; /* hover: hotter + brighter, still saturated */
+  --ember-600: #F2571C;  /* pressed / deeper */
+  --ember-700: #C6410F;  /* flame base / on-tint text */
+
+  /* Ember, dimmed — the burnout states of the same spark */
+  --ember-dim: #6B4A3A;  /* a spark running low */
+  --ash:       #3A3632;  /* nearly out */
+
+  /* --- Cold: burnout temperature (slate). Never a brand accent; mood only. */
+  --cold-600: #3B4252;
+  --cold-500: #4C566A;
+  --cold-400: #5E6B82;
+
+  /* --- Verdant: money/positive signal ONLY (deltas, funded ticks). ------- */
+  --verdant-500: #4FB286;
+  --verdant-600: #3B9B72;
+
+  /* --- Warmth axis ------------------------------------------------------- *
+   * A single 0..1 knob the scrollytelling drives. 0 = cold/burnout,
+   * 1 = funded/warm. Compose derived colors with color-mix() against it, e.g.
+   *   background: color-mix(in oklab, var(--ink-900), var(--warm-wash) calc(var(--warmth) * 12%));
+   * so the page literally warms as the story turns. Defaults to warm.        */
+  --warmth: 1;
+  --warm-wash: #FF6B35;   /* what the page warms *toward* */
+  --cold-wash: #4C566A;   /* what it cools *toward* */
+
+  /* --- Typography -------------------------------------------------------- */
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono",
+    Menlo, Consolas, "Liberation Mono", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+
+  /* Fluid type scale (min viewport 360px -> max ~1280px). */
+  --fs-kicker: 0.75rem;                               /* mono label / eyebrow */
+  --fs-sm: 0.875rem;
+  --fs-base: 1.0625rem;                               /* body */
+  --fs-lg: 1.1875rem;
+  --fs-xl: clamp(1.35rem, 1.1rem + 1.1vw, 1.75rem);   /* lead / subhead */
+  --fs-h3: clamp(1.5rem, 1.2rem + 1.5vw, 2.1rem);
+  --fs-h2: clamp(2rem, 1.4rem + 2.9vw, 3.25rem);
+  --fs-h1: clamp(2.6rem, 1.6rem + 4.6vw, 5rem);
+  --fs-display: clamp(2.75rem, 1.7rem + 3.4vw, 4rem); /* hero headline */
+
+  --lh-tight: 1.05;
+  --lh-snug: 1.2;
+  --lh-body: 1.6;
+
+  --tracking-tight: -0.02em;   /* large display */
+  --tracking-normal: 0;
+  --tracking-wide: 0.08em;     /* mono kickers, UPPERCASE */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* --- Spacing (4px base) ------------------------------------------------ */
+  --space-2xs: 0.25rem;   /*  4 */
+  --space-xs:  0.5rem;    /*  8 */
+  --space-sm:  0.75rem;   /* 12 */
+  --space-md:  1rem;      /* 16 */
+  --space-lg:  1.5rem;    /* 24 */
+  --space-xl:  2.5rem;    /* 40 */
+  --space-2xl: 4rem;      /* 64 */
+  --space-3xl: 6.5rem;    /* 104 */
+  --space-4xl: 10rem;     /* 160 — section rhythm */
+
+  /* --- Radii (restrained; not over-rounded) ------------------------------ */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* --- Borders ----------------------------------------------------------- */
+  --border: 1px solid var(--hairline);
+  --border-strong: 1px solid var(--hairline-strong);
+
+  /* --- Elevation & glow (subtle; dark UI leans on borders, not shadows) -- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --glow-ember: 0 0 40px rgba(255, 107, 53, 0.22);
+  --glow-ember-strong: 0 0 64px rgba(255, 107, 53, 0.38);
+
+  /* --- Motion (compositor-only; honor reduced-motion at call sites) ------ */
+  --dur-fast: 150ms;
+  --dur: 300ms;
+  --dur-slow: 600ms;
+  --dur-scene: 900ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* expo-out, calm settle */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-linear: linear;
+
+  /* --- Layout ------------------------------------------------------------ */
+  --maxw: 1120px;         /* default content column */
+  --maxw-wide: 1280px;
+  --maxw-prose: 68ch;     /* long-form reading measure */
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+
+  /* --- Texture ----------------------------------------------------------- */
+  --grain-opacity: 0.035; /* film grain over dark; keep faint */
+  --scanline-opacity: 0.04;
+
+  /* --- Z-index ----------------------------------------------------------- */
+  --z-base: 0;
+  --z-scene: 1;
+  --z-nav: 100;
+  --z-overlay: 200;
+}
+
+/* Breakpoints (documentary; used via media queries in components)
+   sm 640 · md 768 · lg 1024 · xl 1280 */
