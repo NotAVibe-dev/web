@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notavibe">
+  <title>notavibe</title>
+  <defs>
+    <linearGradient id="ember-fav" x1="32" y1="10" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB694"/>
+      <stop offset="0.45" stop-color="#FF6B35"/>
+      <stop offset="1" stop-color="#C6410F"/>
+    </linearGradient>
+  </defs>
+  <!-- terminal tile -->
+  <rect x="1" y="1" width="62" height="62" rx="14" fill="#16181D" stroke="#2A2E37" stroke-width="1.5"/>
+  <!-- ember, sized to read at 16px -->
+  <path d="M34 11C35 22 45 25 45 36C45 45 39 51 31 51C23 51 18 45 18 38C18 32 21 29 24 25C25 30 29 29 28 24C27 18 30 15 34 11Z" fill="url(#ember-fav)"/>
+  <rect x="21" y="53" width="22" height="3.5" rx="1.75" fill="#FF6B35"/>
+</svg>

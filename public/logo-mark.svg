@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notavibe">
+  <title>notavibe — the ember</title>
+  <!-- An ember rising from a command-line cursor. The spark a maintainer
+       keeps lit; the underscore is the prompt it rises from. -->
+  <defs>
+    <linearGradient id="ember" x1="32" y1="4" x2="32" y2="53" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB694"/>
+      <stop offset="0.45" stop-color="#FF6B35"/>
+      <stop offset="1" stop-color="#C6410F"/>
+    </linearGradient>
+  </defs>
+  <!-- outer flame -->
+  <path d="M34 5C35 18 47 22 47 35C47 46 40 53 31 53C22 53 17 46 17 38C17 31 21 28 24 23C25 29 30 28 29 22C28 15 30 10 34 5Z" fill="url(#ember)"/>
+  <!-- hot inner core -->
+  <path d="M33 23C34 31 40 33 40 40C40 47 36 51 31 51C26 51 23 47 23 42C23 37 26 35 28 31C29 35 33 34 32 30C31 26 31 25 33 23Z" fill="#FFD3BC" fill-opacity="0.92"/>
+  <!-- prompt cursor -->
+  <rect x="19" y="57" width="26" height="4" rx="2" fill="#FF6B35"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notavibe">
+  <title>notavibe — the ember (one color)</title>
+  <!-- Single-color mark using currentColor. For small sizes, print, and
+       on-ember contexts. Set `color` on the parent to recolor. -->
+  <path d="M34 5C35 18 47 22 47 35C47 46 40 53 31 53C22 53 17 46 17 38C17 31 21 28 24 23C25 29 30 28 29 22C28 15 30 10 34 5Z" fill="currentColor"/>
+  <rect x="19" y="57" width="26" height="4" rx="2" fill="currentColor"/>
+</svg>

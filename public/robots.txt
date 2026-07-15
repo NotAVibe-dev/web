@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://notavibe.dev/sitemap-index.xml

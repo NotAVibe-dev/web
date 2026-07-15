@@ -1,0 +1,32 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ember" x1="96" y1="150" x2="96" y2="250" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB694"/>
+      <stop offset="0.45" stop-color="#FF6B35"/>
+      <stop offset="1" stop-color="#C6410F"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#FF6B35" stop-opacity="0.16"/>
+      <stop offset="0.6" stop-color="#FF6B35" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0E0F12"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="0.5" y="0.5" width="1199" height="629" fill="none" stroke="#2A2E37"/>
+
+  <!-- ember mark -->
+  <g transform="translate(64,150) scale(1.7)">
+    <path d="M34 5C35 18 47 22 47 35C47 46 40 53 31 53C22 53 17 46 17 38C17 31 21 28 24 23C25 29 30 28 29 22C28 15 30 10 34 5Z" fill="url(#ember)"/>
+    <rect x="19" y="57" width="26" height="4" rx="2" fill="#FF6B35"/>
+  </g>
+
+  <text x="180" y="232" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="40" font-weight="500" fill="#EDEFF3" letter-spacing="-1">notavibe</text>
+
+  <text x="64" y="360" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="72" font-weight="500" fill="#EDEFF3" letter-spacing="-2">Fund the people</text>
+  <text x="64" y="446" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="72" font-weight="500" fill="#9098A6" letter-spacing="-2">behind the code.</text>
+
+  <text x="64" y="548" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="30" fill="#C9CDD6"><tspan fill="#EDEFF3">2,148,392</tspan> weekly downloads · <tspan fill="#FF6B35">$0 / mo</tspan></text>
+
+  <text x="1136" y="590" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="24" fill="#6B7280">notavibe.dev</text>
+</svg>
