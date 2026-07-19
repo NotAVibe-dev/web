@@ -22,8 +22,8 @@ Cloudflare change.
      --body "<category / what & why / specifics / target / urgency>"
    ```
    (Mirror the infra-request issue-form fields.)
-3. Report the issue URL to the user. The infra agent triages it, opens a PR, and a founder merges.
-   You are **done** — do not attempt the change here.
+3. Report the issue URL to the user. The infra agent triages it and posts a plan; a founder approves
+   it, the agent opens a PR, and a founder merges. You are **done** — do not attempt the change here.
 
 ## Never
 - Never run tofu/gcloud/Cloudflare/DNS/secret/IAM changes in this repo.
