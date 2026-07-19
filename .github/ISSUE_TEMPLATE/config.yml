@@ -1,0 +1,6 @@
+# Managed by notavibe/infra — do not edit here.
+blank_issues_enabled: true
+contact_links:
+  - name: Infrastructure / IT request
+    url: https://github.com/NotAVibe-dev/infra/issues/new?template=infra-request.yml
+    about: DNS, secrets, GCP, IAM, CI/CD, repo/org settings, or Google Workspace changes go to the infra queue — file them there, not here.
