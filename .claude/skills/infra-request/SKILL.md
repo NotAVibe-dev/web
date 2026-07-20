@@ -1,6 +1,6 @@
 ---
 name: infra-request
-description: Delegate ALL infrastructure/IT changes to notavibe's infra repo — never make them here. Use whenever a task touches DNS, domains, TLS/certs, cloud/GCP resources, secrets, API tokens, environment variables, IAM/access/permissions/service accounts, CI/CD, GitHub Actions/workflows, org/repo settings, or Google Workspace users/groups — and BEFORE running any OpenTofu/Terraform, gcloud, or Cloudflare change. Files a structured infra-request issue to NotAVibe-dev/infra via a subagent and tracks it to a human-merged PR. If you are about to provision, configure, or change infrastructure, STOP and use this instead.
+description: Delegate ALL infrastructure/IT changes to notavibe's infra repo — never make them here. Use whenever a task touches DNS, domains, TLS/certs, cloud/GCP resources, secrets, API tokens, environment variables, IAM/access/permissions/service accounts, CI/CD, GitHub Actions/workflows, org/repo settings, or Google Workspace (onboarding/offboarding a user, resetting a password, groups) — and BEFORE running any OpenTofu/Terraform, gcloud, or Cloudflare change. Files a structured infra-request issue to NotAVibe-dev/infra via a subagent and tracks it to a human-merged PR. If you are about to provision, configure, or change infrastructure, STOP and use this instead.
 ---
 
 # infra-request — delegate infra/IT changes to notavibe's infra repo
@@ -9,10 +9,10 @@ You are in a **product repo**, not the infra repo. This repo must **never** make
 changes itself. When a task touches infrastructure, file a request to `NotAVibe-dev/infra` and stop.
 
 ## When this applies
-DNS, domains, TLS/certs, cloud/GCP resources, secrets, API tokens, environment variables,
-IAM/access/permissions/service accounts, CI/CD, GitHub Actions/workflows, org/repo settings, or
-Google Workspace users/groups — and **before** running any OpenTofu/Terraform, `gcloud`, or
-Cloudflare change.
+Google Workspace — **onboarding/offboarding a user, resetting a password**, groups/membership;
+DNS, domains, TLS/certs; cloud/GCP resources; secrets, API tokens, environment variables;
+IAM/access/permissions/service accounts; CI/CD, GitHub Actions/workflows; org/repo settings — and
+**before** running any OpenTofu/Terraform, `gcloud`, or Cloudflare change.
 
 ## What to do — run in a SUBAGENT (keeps the main context clean)
 1. Gather specifics: what change, why, target repo/env, urgency. Never include secret **values**.
