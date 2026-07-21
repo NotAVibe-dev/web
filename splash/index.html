@@ -17,6 +17,13 @@
 <meta property="og:image" content="https://notavibe.dev/og.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://notavibe.dev/og.png" />
+<!--
+  Cloudflare Web Analytics — cookieless, no consent banner. Managed in infra
+  (bootstrap/analytics.tf). TOKEN IS A PLACEHOLDER: replace with the
+  `web_analytics_site_token` tofu output after NotAVibe-dev/infra#23 is applied,
+  then deploy. Do not deploy with the placeholder in place.
+-->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"REPLACE_WITH_CF_WEB_ANALYTICS_SITE_TOKEN"}'></script>
 <style>
   @font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: normal; font-display: swap;
     src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
