@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>notavibe — Privacy Policy</title>
+<meta name="description" content="How notavibe handles personal data: what we collect, why, who we share it with, and your rights under the GDPR." />
+<link rel="canonical" href="https://notavibe.dev/privacy/" />
+<meta name="theme-color" content="#0E0F12" />
+<meta name="color-scheme" content="dark" />
+<meta name="robots" content="index, follow" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<style>
+  @font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: normal; font-display: swap;
+    src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 500; font-style: normal; font-display: swap;
+    src: url("/fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap;
+    src: url("/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+
+  :root {
+    --ink-900: #0E0F12; --ink-800: #16181D;
+    --hairline: #2A2E37; --hairline-strong: #363B45;
+    --text-strong: #EDEFF3; --text: #C9CDD6; --text-muted: #9098A6; --text-faint: #7C818C;
+    --ember-500: #FF6B35; --ember-hover: #FF8551;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+  html { -webkit-text-size-adjust: 100%; background: var(--ink-900); }
+  body {
+    font-family: var(--sans); color: var(--text); line-height: 1.65;
+    background:
+      radial-gradient(120% 40% at 50% -10%, color-mix(in oklab, var(--ink-900), var(--ember-500) 9%), transparent 55%),
+      var(--ink-900);
+    -webkit-font-smoothing: antialiased; min-height: 100svh;
+    padding: clamp(1.5rem, 5vw, 3rem);
+  }
+  ::selection { background: var(--ember-500); color: var(--ink-900); }
+  a { color: var(--ember-500); text-decoration: none; }
+  a:hover { color: var(--ember-hover); text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--ember-500); outline-offset: 3px; border-radius: 3px; }
+
+  .grain { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px; }
+
+  main { width: 100%; max-width: 46rem; margin: 0 auto; position: relative; z-index: 1; }
+
+  .brand { display: inline-flex; align-items: center; gap: .55rem; font-family: var(--mono);
+    font-weight: 500; font-size: 1.05rem; letter-spacing: -.02em; color: var(--text-strong); }
+  .brand__cur { width: .55em; height: 1.05em; background: var(--ember-500); display: inline-block; transform: translateY(.12em); }
+
+  .kicker { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ember-500); margin-top: 2.5rem; }
+  h1 { font-family: var(--mono); font-weight: 500; line-height: 1.1; letter-spacing: -.02em;
+    color: var(--text-strong); font-size: clamp(1.8rem, 1.2rem + 2.4vw, 2.4rem); margin-top: .5rem; }
+  .updated { color: var(--text-faint); font-family: var(--mono); font-size: .78rem; margin-top: .6rem; }
+
+  h2 { font-family: var(--mono); font-weight: 500; color: var(--text-strong); font-size: 1.05rem;
+    letter-spacing: -.01em; margin-top: 2.5rem; }
+  p { color: var(--text); margin-top: .9rem; max-width: 62ch; text-wrap: pretty; }
+  ul { color: var(--text); margin-top: .9rem; padding-left: 1.1rem; max-width: 62ch; }
+  li { margin-top: .55rem; }
+  li b, p b { color: var(--text-strong); font-weight: 500; }
+  .lead { color: var(--text-muted); font-size: 1.05rem; margin-top: 1.2rem; }
+  hr { border: 0; border-top: 1px solid var(--hairline); margin: 2.5rem 0 0; }
+
+  .back { display: inline-block; margin-top: 2.5rem; font-family: var(--mono); font-size: .85rem; }
+  footer { margin-top: 3rem; color: var(--text-faint); font-family: var(--mono); font-size: .75rem; }
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<main>
+  <a class="brand" href="/" aria-label="notavibe home">
+    <span>notavibe</span><span class="brand__cur" aria-hidden="true"></span>
+  </a>
+
+  <p class="kicker">// privacy</p>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: 28 July 2026</p>
+
+  <p class="lead">
+    notavibe connects the companies that depend on open source with the maintainers who keep it alive,
+    matched to real usage. This explains what personal data we handle, why, and the rights you have. Any
+    question or request: <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a> — we are the data
+    controller.
+  </p>
+
+  <h2>What we collect, and why</h2>
+  <ul>
+    <li><b>Early-access sign-ups.</b> If you join the waitlist, we store your email address and whether
+      you identified as a maintainer or a backer — used only to tell you when notavibe launches. Legal
+      basis: your <b>consent</b>. You can opt out at any time, permanently.</li>
+    <li><b>Open-source maintainer information.</b> To match funding to real usage, we process professional
+      information about maintainers — name, a public/professional email, platform handles, and bio —
+      collected <b>only from public sources</b> (a maintainer's public GitHub profile, npm-published
+      metadata, or their own funding/website page). We never harvest emails from commit logs. Legal
+      basis: our <b>legitimate interest</b> in connecting maintainers with funding, balanced against your
+      rights.</li>
+    <li><b>Website analytics.</b> We use Cloudflare Web Analytics, which is <b>cookieless</b> — it does not
+      track you across sites or build a profile of you.</li>
+  </ul>
+  <p>We do not collect special-category data, and we don't use cookies for advertising or cross-site tracking.</p>
+
+  <h2>Who we share it with</h2>
+  <p>
+    We use a small set of processors to run the service, each under a data-processing agreement:
+    <b>Google</b> (Workspace and Cloud), <b>GitHub</b> (source and data), and <b>Cloudflare</b> (DNS and
+    analytics). Where these providers transfer data internationally, that transfer is covered by the EU
+    Standard Contractual Clauses and/or the EU–US Data Privacy Framework. <b>We do not sell your personal
+    data.</b>
+  </p>
+
+  <h2>How long we keep it</h2>
+  <ul>
+    <li><b>Waitlist email:</b> until notavibe launches or you opt out, whichever comes first.</li>
+    <li><b>Maintainer information:</b> until you opt out or it is no longer relevant. Opt-outs are
+      permanent — once you ask to be removed, we keep a minimal suppression record so we don't re-add you.</li>
+  </ul>
+
+  <h2>Your rights</h2>
+  <p>
+    Under the GDPR you can ask us to <b>access, correct, delete, or export</b> your personal data, or
+    <b>object</b> to our processing. To exercise any of these, email
+    <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a> and we'll action it — if a maintainer asks
+    to be removed, we delete the record and add it to a permanent suppression list the same day. You also
+    have the right to lodge a complaint with your local data-protection authority.
+  </p>
+
+  <h2>Changes</h2>
+  <p>We'll update this policy as notavibe takes shape; the "last updated" date above always reflects the current version.</p>
+
+  <hr />
+  <a class="back" href="/">&larr; Back to notavibe</a>
+  <footer>notavibe · <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a></footer>
+</main>
+</body>
+</html>
