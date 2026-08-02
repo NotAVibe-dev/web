@@ -1,0 +1,41 @@
+---
+// Maintainer dashboard / portal (§9.3). Authenticated shell; mock data until backend.
+import AppLayout from '../../../layouts/AppLayout.astro';
+import HealthSignals from '../../../components/product/HealthSignals.astro';
+import { getMaintainerDashboard } from '../../../lib/api/client';
+const d = await getMaintainerDashboard();
+---
+<AppLayout title="Maintainer" role="maintainer">
+  <p class="kicker">Maintainer</p>
+  <h1>Dashboard</h1>
+  <div class="kpi">
+    <span class="label">{d.primaryKpi.label}</span>
+    <strong>{d.primaryKpi.value}</strong>
+    <em>{d.primaryKpi.delta}</em>
+  </div>
+  <h2 id="presence">Your projects</h2>
+  <div class="projects">
+    {d.projects.map((p) => (
+      <section class="proj">
+        <header><a href={`/project/${p.slug}`}>{p.name}</a>{!p.claimed && <span>unclaimed</span>}</header>
+        <HealthSignals health={p.health} />
+      </section>
+    ))}
+  </div>
+  <p id="contests" class="contests">{d.openContests} open claim contest{d.openContests === 1 ? '' : 's'}.</p>
+</AppLayout>
+<style>
+  .kicker { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ember-500); font-size: var(--fs-kicker, 0.75rem); }
+  h1 { font-family: var(--font-mono); font-size: var(--fs-h1); color: var(--text); margin-bottom: 1.5rem; }
+  .kpi { display: flex; align-items: baseline; gap: 0.75rem; border: 1px solid var(--hairline); border-radius: 10px; padding: 1.25rem; background: var(--ink-850, #14161a); }
+  .kpi .label { color: var(--ash, #9aa0a6); font-size: var(--fs-sm, 0.9rem); }
+  .kpi strong { font-family: var(--font-mono); font-size: var(--fs-h2); color: var(--text); margin-left: auto; }
+  .kpi em { font-style: normal; font-family: var(--font-mono); color: var(--ember-500); }
+  h2 { font-family: var(--font-mono); font-size: var(--fs-h3); color: var(--text); margin: 2rem 0 1rem; }
+  .projects { display: grid; gap: 1rem; }
+  .proj { border: 1px solid var(--hairline); border-radius: 10px; padding: 1rem 1.25rem; background: var(--ink-850, #14161a); }
+  .proj header { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .proj header a { font-family: var(--font-mono); color: var(--text); text-decoration: none; }
+  .proj header span { font-size: var(--fs-kicker, 0.7rem); color: var(--ash, #9aa0a6); }
+  .contests { margin-top: 2rem; color: var(--ash, #9aa0a6); font-family: var(--font-mono); font-size: var(--fs-sm, 0.9rem); }
+</style>

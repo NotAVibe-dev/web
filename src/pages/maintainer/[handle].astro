@@ -1,0 +1,37 @@
+---
+// Public maintainer page. getStaticPaths from mock now; SSR later.
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../../components/product/ProjectCard.astro';
+import { listProjects, getMaintainer } from '../../lib/api/client';
+import type { Maintainer, Project } from '../../lib/api/types';
+
+export async function getStaticPaths() {
+  const [projects] = await Promise.all([listProjects()]);
+  const handles = [...new Set(projects.flatMap((p: Project) => p.maintainerHandles))];
+  return Promise.all(handles.map(async (handle) => {
+    const maintainer = await getMaintainer(handle);
+    const owned = projects.filter((p: Project) => p.maintainerHandles.includes(handle));
+    return { params: { handle }, props: { maintainer, owned } };
+  }));
+}
+const { maintainer, owned } = Astro.props as { maintainer: Maintainer; owned: Project[] };
+---
+<Base title={`${maintainer.displayName} — notavibe`} description={maintainer.bio}>
+  <section class="wrap">
+    <p class="kicker">Maintainer</p>
+    <h1>{maintainer.displayName} {maintainer.verified && <span class="v">✓</span>}</h1>
+    <p class="handle">@{maintainer.handle}</p>
+    <p class="bio">{maintainer.bio}</p>
+    <h2>Projects</h2>
+    <div class="grid">{owned.map((p) => <ProjectCard project={p} />)}</div>
+  </section>
+</Base>
+<style>
+  .wrap { max-width: var(--maxw, 72rem); margin-inline: auto; padding: 4rem var(--gutter, 1.5rem); }
+  .kicker { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ember-500); font-size: var(--fs-kicker, 0.75rem); }
+  h1 { font-family: var(--font-mono); font-size: var(--fs-h1); color: var(--text); } .v { color: var(--ember-500); }
+  .handle { font-family: var(--font-mono); color: var(--ash, #9aa0a6); }
+  .bio { color: var(--ash, #9aa0a6); max-width: 52ch; margin: 0.75rem 0 2rem; }
+  h2 { font-family: var(--font-mono); font-size: var(--fs-h3); color: var(--text); margin-bottom: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+</style>

@@ -1,0 +1,44 @@
+---
+// Public project page (§5.14). getStaticPaths from the mock catalog now; becomes
+// SSR (one generated page per slug, catalog scale) once the backend lands.
+import Base from '../../layouts/Base.astro';
+import HealthSignals from '../../components/product/HealthSignals.astro';
+import { listProjects } from '../../lib/api/client';
+import type { Project } from '../../lib/api/types';
+
+export async function getStaticPaths() {
+  const projects = await listProjects();
+  return projects.map((project: Project) => ({ params: { slug: project.slug }, props: { project } }));
+}
+const { project } = Astro.props as { project: Project };
+---
+<Base title={`${project.name} — notavibe`} description={project.summary}>
+  <article class="wrap">
+    <p class="eco">{project.ecosystem}</p>
+    <h1>{project.name} {project.verified && <span class="v" title="Verified">✓</span>}</h1>
+    <p class="lede">{project.summary}</p>
+    {!project.claimed && (
+      <p class="teaser">This page was generated from public sources and isn’t claimed yet.
+        <a href="/how-it-works">Claim it →</a></p>
+    )}
+    <h2>Health</h2>
+    <HealthSignals health={project.health} />
+    <div class="actions">
+      <button class="ember">Save to list</button>
+      <button class="ghost">Register interest</button>
+    </div>
+  </article>
+</Base>
+<style>
+  .wrap { max-width: 46rem; margin-inline: auto; padding: 4rem var(--gutter, 1.5rem); }
+  .eco { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ash, #9aa0a6); font-size: var(--fs-kicker, 0.7rem); }
+  h1 { font-family: var(--font-mono); font-size: var(--fs-h1); color: var(--text); }
+  h1 .v { color: var(--ember-500); }
+  .lede { color: var(--ash, #9aa0a6); margin: 0.5rem 0 1.5rem; }
+  .teaser { border: 1px dashed var(--hairline); border-radius: 8px; padding: 0.75rem 1rem; color: var(--ash, #9aa0a6); margin-bottom: 2rem; }
+  .teaser a { color: var(--ember-500); }
+  h2 { font-family: var(--font-mono); font-size: var(--fs-h3); color: var(--text); margin: 2rem 0 0.75rem; }
+  .actions { display: flex; gap: 0.75rem; margin-top: 2rem; }
+  .ember { background: var(--ember-500); color: var(--ink-900); font-weight: 600; border-radius: 4px; padding: 0.55rem 1rem; }
+  .ghost { border: 1px solid var(--hairline); color: var(--text); border-radius: 4px; padding: 0.55rem 1rem; }
+</style>
