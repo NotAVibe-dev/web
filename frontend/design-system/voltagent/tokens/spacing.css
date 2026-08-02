@@ -1,0 +1,14 @@
+:root{
+  --space-xxs:2px; --space-xs:4px; --space-sm:8px; --space-md:12px; --space-lg:16px;
+  --space-xl:20px; --space-2xl:24px; --space-3xl:32px; --space-4xl:40px; --space-5xl:48px; --space-6xl:64px;
+
+  /* Containers */
+  --container-max:1280px;      /* max-w-7xl — the marketing container */
+  --container-wide:1440px;     /* .main-wrapper / max-w-9xl */
+  --container-content:944px;   /* landing-content */
+  --gutter-desktop:32px; --gutter-mobile:16px;
+  --sidebar-docs:300px; --toc-width:280px;
+
+  /* Breakpoints (tailwind.config.js) */
+  --bp-mobile:375px; --bp-tablet:768px; --bp-desktop:1024px; --bp-desktop-lg:1200px; --bp-hd:1820px;
+}

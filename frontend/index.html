@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="scripts/runtime.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="design-system/voltagent/tokens/fonts.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/colors.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/typography.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/spacing.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/radius.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/elevation.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/motion.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/semantic.css">
+  <link rel="stylesheet" href="design-system/voltagent/styles.css">
+  <style>
+/* ── VoltAgent token bridge ──────────────────────────────────────────────────
+   The screen library was authored against the previous system's token names.
+   Rather than rewrite 7,000 lines, every old name is re-pointed at a VoltAgent
+   value here — which is also what inverts those screens to the void-black
+   canvas. Only names VoltAgent does not already define are declared. */
+:root {
+  --font-display: var(--font-sans);
+
+  /* Surfaces — two only: void and canvas. */
+  --surface-canvas: var(--volt-void);
+  --surface-soft: var(--volt-canvas);
+  --surface-dark: var(--volt-canvas);
+  --surface-dark-soft: var(--volt-surface);
+  --surface-card: var(--volt-canvas);
+  --surface-card-dark: var(--volt-panel);
+
+  /* Text */
+  --text-secondary: var(--volt-text-500);
+  --text-on-dark: var(--volt-white);
+  --text-on-dark-secondary: var(--volt-text-500);
+  --black: var(--volt-white);
+  --white: var(--volt-white);
+
+  /* Borders are the elevation system. */
+  --border-hairline: var(--volt-border);
+  --border-hairline-dark: var(--volt-border);
+  --border-input: var(--volt-border);
+  --border-level-1: 1px solid var(--volt-border);
+  --border-level-2: 1px solid var(--volt-border-faint);
+  --elevation-0: none;
+  --shadow-float: var(--elev-2);
+
+  /* One accent. The old secondary accents collapse into emerald or grey. */
+  --primary: var(--volt-emerald);
+  --on-primary: var(--volt-on-emerald);
+  --accent-mint: var(--volt-emerald-10);
+  --accent-periwinkle: var(--volt-surface);
+  --accent-orange: var(--volt-emerald);
+  --accent-magenta: var(--volt-text-600);
+  --wordmark-tint: var(--volt-canvas);
+  --brand-gradient: var(--volt-canvas);
+  --brand-gradient-soft: var(--volt-canvas);
+  --link: var(--volt-emerald-deep);
+  --link-hover: var(--volt-emerald);
+  --link-on-dark: var(--volt-emerald-deep);
+  --link-on-dark-hover: var(--volt-emerald);
+
+  /* Type — Inter at regular weight with negative tracking; mono for numbers. */
+  --type-display-xxl: 400 60px/60px var(--font-sans);
+  --type-display-xl: 400 36px/40px var(--font-sans);
+  --type-display-lg: 700 24px/32px var(--font-sans);
+  --type-display-md: 600 20px/28px var(--font-sans);
+  --type-body-lg: 400 18px/28px var(--font-sans);
+  --type-body-lg-strong: 600 18px/28px var(--font-sans);
+  --type-body-md: 400 16px/26px var(--font-sans);
+  --type-body-md-strong: 600 16px/24px var(--font-sans);
+  --type-caption: 400 14px/20px var(--font-sans);
+  --type-caption-strong: 600 14px/20px var(--font-sans);
+  --type-mono-button: 600 14px/20px var(--font-sans);
+  --type-mono-eyebrow: 600 12px/16px var(--font-mono);
+  --type-mono-label: 500 12px/18px var(--font-mono);
+  --type-mono-caption: 400 12px/16px var(--font-mono);
+  --ls-display-xxl: -0.65px;
+  --ls-display-xl: -0.9px;
+  --ls-display-lg: -0.6px;
+  --ls-display-md: 0px;
+  --ls-body-lg: 0px;
+  --ls-body-md: 0px;
+  --ls-caption: 0px;
+  --ls-mono-button: 0px;
+  --ls-mono-eyebrow: 1.4px;
+  --ls-mono-label: 0.4px;
+  --ls-mono-caption: 0.4px;
+  --weight-regular: 400;
+  --weight-medium: 600;
+
+  /* Spacing — VoltAgent's 4px scale; bands are 48px, gutters 32px. */
+  --space-section: 48px;
+  --band-padding-y: 48px;
+  --card-padding: 24px;
+  --card-padding-lg: 32px;
+  --row-padding: 12px 16px;
+  --inline-gap: 16px;
+  --chip-gap: 8px;
+  --nav-link-gap: 24px;
+  --touch-min: 44px;
+
+  /* Radii: 6px controls, 8px cards, pill for status only. */
+  --radius-card: var(--radius-md);
+  --radius-button: var(--radius-sm);
+  --radius-input: var(--radius-sm);
+
+  /* Motion: 200ms small, 300ms default, no springs. */
+  --duration-fast: var(--motion-fast);
+  --duration-base: var(--motion-base);
+  --duration-slow: var(--motion-slow);
+  --ease-standard: var(--ease-in-out);
+  --transition-base: all var(--motion-base) ease;
+  --hover-lighten-on-dark: rgba(255,255,255,0.06);
+  --hover-darken-on-light: rgba(255,255,255,0.06);
+  --press-opacity: 1;
+}
+  </style>
+  <style>
+/* ── Light inversion ─────────────────────────────────────────────────────────
+   VoltAgent ships no light mode, so this re-points its base ramp rather than
+   inventing a second system: canvas order inverted, text ramp inverted, the
+   emerald deepened for text roles (#00d992 stays for fills, dots and status
+   where it carries contrast). Hairlines still do the elevation work — no
+   card shadows — and hover now darkens the fill instead of lightening it. */
+:root {
+  --volt-void:#ffffff;        /* page + hero */
+  --volt-ink-black:#fbfbfa;
+  --volt-canvas:#f6f6f4;      /* band fill + default card fill */
+  --volt-surface:#ebebe8;     /* hover / selected / input recess */
+  --volt-panel:#eceef0;       /* code-mockup header, cool-shifted */
+
+  --volt-emerald:#00d992;         /* unchanged: CTA fill, dots, live status */
+  --volt-emerald-soft:#059669;    /* accent text needs contrast on white */
+  --volt-emerald-deep:#047857;    /* links, lockup */
+  --volt-emerald-400:#10b981;
+  --volt-emerald-08:rgba(0,217,146,0.10);
+  --volt-emerald-10:rgba(0,217,146,0.14);
+  --volt-emerald-20:rgba(4,120,87,0.20);
+  --volt-emerald-30:rgba(4,120,87,0.30);
+  --volt-on-emerald:#101010;
+
+  --volt-border:#e3e3df;
+  --volt-border-hover:#c7c7c1;
+  --volt-border-faint:rgba(0,0,0,0.09);
+  --volt-border-dashed:rgba(79,93,117,0.35);
+
+  --volt-white:#0d0d0d;       /* the heading role, inverted */
+  --volt-text-100:#171717;
+  --volt-text-200:#232323;    /* body */
+  --volt-text-300:#33312f;
+  --volt-text-400:#57534e;    /* eyebrow labels */
+  --volt-text-500:#635e59;    /* muted body */
+  --volt-text-600:#6b655f;    /* fine print */
+  --volt-zinc-300:#3f3f46;
+  --volt-zinc-400:#52525b;
+
+  --text-code:#1b1b1b;
+  --elev-2:0 0 0 1px var(--volt-border-hover);
+}
+  </style>
+  <!-- HashiCorp token layer. Last stylesheet in the helmet, so it wins on
+       document order over the VoltAgent bridge and the light inversion above
+       without either being edited. Remove this one line to revert. -->
+  <link rel="stylesheet" href="styles/hashicorp-tokens.css">
+  <script src="design-system/voltagent/ds-bundle.js"></script>
+  <script src="scripts/voltagent-adapter.js"></script>
+  <script src="scripts/screens.js"></script>
+  <script src="scripts/app.js"></script>
+  <script src="scripts/hifi.js"></script>
+  <script src="scripts/frontdoor.js"></script>
+  <script src="scripts/search.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--volt-void); }
+    body { font-family: var(--font-sans); color: var(--volt-text-200); -webkit-font-smoothing: antialiased; }
+    a { color: var(--volt-emerald-deep); text-decoration: none; }
+    a:hover { color: var(--volt-emerald); text-decoration: none; }
+    input::placeholder, textarea::placeholder { color: var(--volt-text-600); }
+    /* The UA gives buttons their own dark colour, which on a void canvas hides any
+       label the screen library left to inherit. */
+    button { color: inherit; font-family: inherit; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: var(--volt-void)">
+  <x-import component-from-global-scope="NotavibeShell" dc-props="{{ shellProps }}" hint-size="100%,100vh"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startRoute&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;discover&quot;,&quot;options&quot;:[&quot;discover&quot;,&quot;project&quot;,&quot;search&quot;,&quot;stack.connect&quot;,&quot;claim.start&quot;,&quot;suppress.start&quot;,&quot;backer.dashboard&quot;,&quot;maintainer.dashboard&quot;,&quot;admin.corrections&quot;,&quot;methodology&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Desktop 1280&quot;,&quot;options&quot;:[&quot;Desktop 1280&quot;,&quot;Mobile 360&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;ghOutage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+/* Deck before categories — a deliberate deviation from §5.5's "intent
+   categories, always first", recorded here rather than slipped in.
+
+   Rationale: the hero now asserts "ranked on maintenance, not popularity", and
+   the deck's banded project cards are the evidence for that claim where the
+   category grid changes the subject to navigation. The orientation job §5.5's
+   ordering protected has moved above the fold into the hero's seed chips, and
+   at 90dvh categories fall below the fold either way.
+
+   Costs accepted: nine internal links to indexed /discover/{category} surfaces
+   sit lower on the most-linked page, and orderViolated (below) now measures
+   drift from THIS order, not the spec's. */
+const CANON = ["deck", "categories", "stack", "editorial", "refine", "shipweek"];
+/* Fingerprint of the intended order. A saved moduleOrder from before the swap
+   would otherwise be restored from storage and silently reinstate the old
+   sequence — the persisted value outliving the decision that produced it. */
+const CANON_ID = CANON.join(",");
+const KEY = "notavibe.prototype.v1";
+const PERSIST = ["claims", "lists", "interests", "requests", "publishedStack", "orgWaitlisted", "signedIn", "moduleOrder"];
+
+/* ── Deep linking ────────────────────────────────────────────────────────────
+   Navigation is pure in-memory route state (ctx.go → setState({route})), so the
+   URL never moved and no screen was linkable. These two functions are the single
+   bridge between that state and location.hash, giving every screen its own URL.
+
+   Scheme — the route NAME is the first path segment (names use dots, never
+   slashes, so they can't be confused with a slug); a SLUG is the remaining
+   segments, kept raw so an owner/repo slug reads as #/project/honojs/hono; and
+   the other scalar fields ride the query string. `next` (a nested route used for
+   the sign-in redirect) is deliberately not encoded — it is transient in-session
+   state, not something a shared link should carry. */
+const URL_FIELDS = ["id", "q", "system", "type"];
+function buildHash(route) {
+  if (!route || !route.name) return "#/discover";
+  let path = "/" + route.name;
+  if (route.slug) path += "/" + route.slug; /* slug may hold slashes; leave raw */
+  const qs = URL_FIELDS
+    .filter((k) => route[k] != null && route[k] !== "")
+    .map((k) => k + "=" + encodeURIComponent(route[k]));
+  return "#" + path + (qs.length ? "?" + qs.join("&") : "");
+}
+function parseHash() {
+  const raw = (window.location.hash || "").replace(/^#/, "");
+  if (!raw || raw === "/") return null;
+  const qi = raw.indexOf("?");
+  const path = qi >= 0 ? raw.slice(0, qi) : raw;
+  const query = qi >= 0 ? raw.slice(qi + 1) : "";
+  const segs = path.replace(/^\//, "").split("/").filter(Boolean);
+  if (!segs.length) return null;
+  const route = { name: segs[0] };
+  if (segs.length > 1) route.slug = decodeURIComponent(segs.slice(1).join("/"));
+  if (query) {
+    query.split("&").forEach((pair) => {
+      const eq = pair.indexOf("=");
+      const k = decodeURIComponent(eq >= 0 ? pair.slice(0, eq) : pair);
+      const v = eq >= 0 ? decodeURIComponent(pair.slice(eq + 1)) : "";
+      if (URL_FIELDS.indexOf(k) > -1) route[k] = v;
+    });
+  }
+  return route;
+}
+/* Compares only the serialised fields, so a route carrying an unserialised
+   `next` still counts as "already shown" and no redundant navigation fires. */
+function sameRoute(a, b) {
+  if (!a || !b) return false;
+  if (a.name !== b.name || (a.slug || "") !== (b.slug || "")) return false;
+  return URL_FIELDS.every((k) => (a[k] || "") === (b[k] || ""));
+}
+
+class Component extends DCLogic {
+  state = {
+    /* A hash in the address bar wins over the editor's startRoute prop, so a
+       shared or reloaded link lands on the screen it names. */
+    route: parseHash() || { name: this.props.startRoute || "discover" },
+    focusSlug: "honojs/hono",
+    signedIn: false,
+    mobile: (this.props.viewport || "Desktop 1280") === "Mobile 360",
+    ghDegraded: !!this.props.ghOutage,
+    claims: {},
+    lists: null,
+    interests: [],
+    requests: [],
+    scan: null,
+    publishedStack: null,
+    orgWaitlisted: false,
+    moduleOrder: CANON.slice()
+  };
+
+  componentDidMount() {
+    try {
+      const raw = window.localStorage.getItem(KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        const patch = {};
+        PERSIST.forEach((k) => { if (saved[k] !== undefined && saved[k] !== null) patch[k] = saved[k]; });
+        /* Drop a moduleOrder saved against a different CANON. Everything else
+           in storage survives — only the ordering is re-baselined. */
+        if (saved.canonId !== CANON_ID) delete patch.moduleOrder;
+        if (Object.keys(patch).length) this.setState(patch);
+      }
+    } catch (e) { /* first run, or storage unavailable */ }
+    if (!window.NotavibeShell) {
+      this._poll = setInterval(() => {
+        if (window.NotavibeShell) { clearInterval(this._poll); this.forceUpdate(); }
+      }, 120);
+    }
+
+    /* Reflect the initial route in the address bar (a fresh load with no hash
+       lands on discover but the URL was bare), then keep state in sync with the
+       URL so browser Back/Forward and hand-edited links both work. */
+    this._lastHash = buildHash(this.state.route);
+    if (window.location.hash !== this._lastHash) {
+      window.location.replace(this._lastHash);
+    }
+    if (this.state.route.slug) this.setState({ focusSlug: this.state.route.slug });
+    this._onHashChange = () => {
+      const r = parseHash();
+      if (!r || sameRoute(r, this.state.route)) return;
+      this._lastHash = buildHash(r);
+      this.setState({ route: r, focusSlug: r.slug || this.state.focusSlug });
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", this._onHashChange);
+  }
+
+  /* State is the source of truth; the URL trails it. Every route change — from
+     go(), from runScan(), from anywhere — passes through here and updates the
+     hash. Guarded on _lastHash so the write the hashchange handler already made
+     doesn't bounce back and cause a loop. */
+  componentDidUpdate() {
+    const desired = buildHash(this.state.route);
+    if (desired === this._lastHash) return;
+    this._lastHash = desired;
+    if (window.location.hash !== desired) window.location.hash = desired;
+  }
+
+  componentWillUnmount() {
+    if (this._poll) clearInterval(this._poll);
+    if (this._onHashChange) window.removeEventListener("hashchange", this._onHashChange);
+  }
+
+  save(patch) {
+    this.setState(patch, () => {
+      try {
+        const out = {};
+        PERSIST.forEach((k) => { out[k] = this.state[k]; });
+        out.canonId = CANON_ID;
+        window.localStorage.setItem(KEY, JSON.stringify(out));
+      } catch (e) { /* storage full or blocked — the prototype still works in-session */ }
+    });
+  }
+
+  lists() {
+    if (this.state.lists) return this.state.lists;
+    const seed = window.SEED_LISTS || [];
+    return seed.map((l) => Object.assign({}, l, { items: l.items.slice() }));
+  }
+
+  claimState(slug) {
+    if (this.state.claims[slug]) return this.state.claims[slug];
+    const p = window.findProject ? window.findProject(slug) : null;
+    return p ? p.claim || "generated" : "generated";
+  }
+
+  parseManifest(text) {
+    const names = [];
+    const re = /"([^"]+)"\s*:\s*"[^"]*"/g;
+    let m;
+    while ((m = re.exec(text || "")) !== null) {
+      if (["dependencies", "devDependencies", "peerDependencies"].indexOf(m[1]) === -1) names.push(m[1]);
+    }
+    return names;
+  }
+
+  runScan(source, text) {
+    const names = this.parseManifest(text);
+    const catalog = window.PROJECTS || [];
+    const matched = [];
+    let unmatched = 0;
+    names.forEach((n) => {
+      const hit = catalog.find((p) => p.name === n || p.repo === n || p.slug === n);
+      if (hit && matched.indexOf(hit.slug) === -1) matched.push(hit.slug);
+      else if (!hit) unmatched += 1;
+    });
+    this.setState({
+      scan: { matched, unmatched, total: names.length, source },
+      route: { name: "stack.results" }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  renderVals() {
+    const self = this;
+    const lists = this.lists();
+    const ctx = {
+      route: this.state.route,
+      focusSlug: this.state.focusSlug,
+      signedIn: this.state.signedIn,
+      mobile: this.state.mobile,
+      ghDegraded: this.state.ghDegraded,
+      lists: lists,
+      interests: this.state.interests,
+      requests: this.state.requests,
+      scan: this.state.scan,
+      publishedStack: this.state.publishedStack,
+      orgWaitlisted: this.state.orgWaitlisted,
+      moduleOrder: this.state.moduleOrder,
+      orderViolated: this.state.moduleOrder.join(",") !== CANON.join(","),
+
+      go(route) {
+        const r = route || { name: "discover" };
+        self.setState({ route: r, focusSlug: r.slug || self.state.focusSlug });
+        window.scrollTo(0, 0);
+      },
+      signIn() { self.save({ signedIn: true }); },
+      toggleSignedIn() { self.save({ signedIn: !self.state.signedIn }); },
+      toggleMobile() { self.setState({ mobile: !self.state.mobile }); },
+      toggleGh() { self.setState({ ghDegraded: !self.state.ghDegraded }); },
+
+      claimState(slug) { return self.claimState(slug); },
+      setClaimState(slug, next) {
+        const claims = Object.assign({}, self.state.claims);
+        claims[slug] = next;
+        self.save({ claims: claims });
+      },
+
+      isSaved(slug) { return lists.some((l) => l.items.indexOf(slug) > -1); },
+      toggleInList(listId, slug) {
+        self.save({
+          lists: lists.map((l) => {
+            if (l.id !== listId) return l;
+            const on = l.items.indexOf(slug) > -1;
+            return Object.assign({}, l, {
+              items: on ? l.items.filter((s) => s !== slug) : l.items.concat([slug])
+            });
+          })
+        });
+      },
+      createList(title, description, items) {
+        const id = "l" + (lists.length + 1) + "-" + Date.now().toString(36).slice(-4);
+        self.save({
+          lists: lists.concat([{
+            id: id,
+            title: title,
+            handle: "raj",
+            slug: String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+            visibility: "private",
+            description: description || "",
+            items: (items || []).slice(),
+            saves: 0
+          }])
+        });
+        return id;
+      },
+      toggleVisibility(listId) {
+        self.save({
+          lists: lists.map((l) => l.id === listId
+            ? Object.assign({}, l, { visibility: l.visibility === "public" ? "private" : "public" })
+            : l)
+        });
+      },
+      saveListCopy(listId) {
+        const src = lists.find((l) => l.id === listId);
+        if (!src) return;
+        self.save({
+          lists: lists.concat([{
+            id: "copy-" + Date.now().toString(36).slice(-5),
+            title: src.title + " (saved copy)",
+            handle: "raj",
+            slug: src.slug + "-copy",
+            visibility: "private",
+            description: src.description,
+            items: src.items.slice(),
+            saves: 0
+          }])
+        });
+      },
+
+      hasInterest(slug, system) {
+        return self.state.interests.some((i) => i.slug === slug && i.system === (system || "subscriptions"));
+      },
+      toggleInterest(slug, system) {
+        const sys = system || "subscriptions";
+        const on = self.state.interests.some((i) => i.slug === slug && i.system === sys);
+        self.save({
+          interests: on
+            ? self.state.interests.filter((i) => !(i.slug === slug && i.system === sys))
+            : self.state.interests.concat([{ slug: slug, system: sys, at: new Date().toISOString() }])
+        });
+      },
+
+      runScan(source, text) { self.runScan(source, text); },
+      publishStack(slug) { self.save({ publishedStack: slug }); },
+      fileRequest(req) { self.save({ requests: self.state.requests.concat([req]) }); },
+      joinOrgWaitlist() { self.save({ orgWaitlisted: true }); },
+
+      moveModule(i, dir) {
+        const order = self.state.moduleOrder.slice();
+        const j = i + dir;
+        if (j < 0 || j >= order.length) return;
+        const tmp = order[i];
+        order[i] = order[j];
+        order[j] = tmp;
+        self.save({ moduleOrder: order });
+      },
+      resetOrder() { self.save({ moduleOrder: CANON.slice() }); }
+    };
+    return { shellProps: { ctx: ctx } };
+  }
+}
+</script>
+</body>
+</html>

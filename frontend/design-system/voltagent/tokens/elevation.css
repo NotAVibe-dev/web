@@ -1,0 +1,15 @@
+:root{
+  /* Level 0 flat · Level 1 hairline · Level 2 glow · Level 3 modal stack.
+     The brand has no material drop-shadow on cards. */
+  --elev-0:none;
+  --elev-1-border:1px solid var(--volt-border);
+  --elev-2:0 0 15px rgba(92,88,85,0.2);
+  --elev-3:0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(148,163,184,0.1) inset;
+  --elev-emerald-glow:0 0 8px rgba(0,217,146,0.35);
+
+  /* Neo-brutalist stacked shadow — used only on the docs/blog CTA buttons */
+  --shadow-button-stack:2px 2px 0 0 #000, 4px 4px 0 0 #000, 6px 6px 0 0 #000, 8px 8px 0 0 #000;
+  --shadow-button-stack-hover:2px 2px 0 0 #000, 4px 4px 0 0 #000;
+
+  --backdrop-blur:blur(12px) saturate(180%); /* @kind other */
+}

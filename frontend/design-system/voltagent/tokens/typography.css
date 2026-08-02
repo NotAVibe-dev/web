@@ -1,0 +1,37 @@
+:root{
+  /* Display — Inter, regular weight, negative tracking */
+  --type-display-xl-size:60px; --type-display-xl-weight:400; --type-display-xl-lh:60px; --type-display-xl-ls:-0.65px;
+  --type-display-lg-size:36px; --type-display-lg-weight:400; --type-display-lg-lh:40px; --type-display-lg-ls:-0.9px;
+  --type-display-md-size:24px; --type-display-md-weight:700; --type-display-md-lh:32px; --type-display-md-ls:-0.6px;
+  --type-display-sm-size:20px; --type-display-sm-weight:600; --type-display-sm-lh:28px; --type-display-sm-ls:0;
+
+  /* Eyebrows — uppercase Inter 600, wide positive tracking */
+  --type-eyebrow-size:14px; --type-eyebrow-weight:600; --type-eyebrow-lh:20px; --type-eyebrow-ls:2.52px;
+  --type-eyebrow-lg-size:18px; --type-eyebrow-lg-weight:600; --type-eyebrow-lg-lh:28px; --type-eyebrow-lg-ls:0.45px;
+
+  /* Body */
+  --type-body-lg-size:18px; --type-body-lg-weight:400; --type-body-lg-lh:28px;
+  --type-body-md-size:16px; --type-body-md-weight:400; --type-body-md-lh:26px;
+  --type-body-md-strong-weight:600; --type-body-md-strong-lh:24px;
+  --type-body-sm-size:14px; --type-body-sm-weight:400; --type-body-sm-lh:20px;
+  --type-body-sm-strong-weight:600; --type-body-sm-strong-lh:23px;
+  --type-caption-size:12px; --type-caption-weight:400; --type-caption-lh:16px;
+  --type-caption-strong-weight:500;
+
+  /* Mono */
+  --type-code-size:13px; --type-code-weight:400; --type-code-lh:18px;
+  --type-code-strong-weight:550; --type-code-strong-lh:16px;
+
+  /* Controls */
+  --type-button-size:16px; --type-button-weight:600; --type-button-lh:24px;
+
+  /* Docs H-scale (variables.css, desktop) */
+  --type-h1-size:56px; --type-h1-weight:700; --type-h1-lh:58px; --type-h1-ls:-1px;
+  --type-h1-tablet-size:48px; --type-h1-tablet-lh:50px;
+  --type-h1-mobile-size:32px; --type-h1-mobile-lh:38px;
+  --type-h2-size:24px; --type-h2-weight:700; --type-h2-lh:28px; --type-h2-case:uppercase;
+  --type-h3-size:18px; --type-h3-weight:500; --type-h3-lh:24px;
+  --type-h4-size:18px; --type-h4-weight:700; --type-h4-lh:26px;
+  --type-link-size:18px; --type-link-weight:500; --type-link-lh:24px;
+  --type-tag-size:12px; --type-tag-weight:500; --type-tag-lh:12px;
+}

@@ -1,0 +1,282 @@
+/* ── HashiCorp token layer ────────────────────────────────────────────────────
+   Generated from hashicorp.DESIGN.md (npx getdesign@latest add hashicorp).
+
+   Loaded AFTER the .dc.html's two inline blocks — the VoltAgent bridge and the
+   light inversion — so it wins on document order without either being edited.
+   Delete the one <link> in the helmet and the prototype returns to light
+   VoltAgent exactly as it was.
+
+   The technique is the file's own: the screen library and the Together AI
+   component bundle both read generic names (--primary, --surface-canvas,
+   --text-body, --type-*, --space-*) which the bridge resolves through --volt-*.
+   Re-point the --volt-* ramp and ~300KB of screens follow. Where HashiCorp's
+   *usage* differs rather than its value (button radius, link colour, primary
+   fill) the generic name is overridden directly.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Surfaces ───────────────────────────────────────────────────────────────
+     Near-black ground. "The dark canvas IS the whitespace" — sections separate
+     by surface lift (canvas → surface-1 → surface-2), never by shadow. */
+  --volt-void: #000000;        /* canvas — page, hero, footer, tables */
+  --volt-ink-black: #000000;
+  /* Band fill and default card fill. Overridden from HashiCorp's surface-1
+     (#15181e) to near-black on request. Consequence worth knowing: at 5/255
+     above the page canvas this all but removes the "surface lift" that
+     DESIGN.md uses to separate sections, so the 1px hairlines are now doing
+     that job alone — which is the system's own fallback ("borders are felt
+     more than seen"), just carrying more weight than it was designed to. */
+  --volt-canvas: #050505;      /* was surface-1 #15181e */
+  --volt-surface: #1f232b;     /* surface-2 — hover, selected, input recess */
+  --volt-panel: #1f232b;       /* code-mockup header */
+  --volt-grey-dark: #15181e;
+  --volt-black: #000000;
+
+  /* ── Text ───────────────────────────────────────────────────────────────── */
+  --volt-white: #ffffff;       /* ink — headlines and emphasised body */
+  --volt-text-100: #ffffff;
+  --volt-text-200: #ffffff;
+  --volt-text-300: #b2b6bd;
+  --volt-text-400: #b2b6bd;    /* ink-muted — eyebrow labels */
+  --volt-text-500: #b2b6bd;    /* ink-muted — secondary body */
+  --volt-text-600: #656a76;    /* ink-subtle — fine print, timestamps */
+  --volt-zinc-300: #b2b6bd;
+  --volt-zinc-400: #656a76;
+  --volt-zinc-700: #1f232b;
+  --volt-zinc-800: #15181e;
+  --volt-gray-400: #656a76;
+  --text-code: #ffffff;
+
+  /* ── Borders ────────────────────────────────────────────────────────────────
+     "1px translucent gray hairlines are the dominant edge — borders are visible
+     without competing." Felt more than seen. */
+  --volt-border: rgba(178, 182, 189, 0.1);
+  --volt-border-faint: #252830;   /* hairline-soft — comparison-table rows */
+  --volt-border-hover: #3b3d45;   /* hairline */
+  --volt-hairline-soft: #252830;
+  --volt-border-dashed: rgba(178, 182, 189, 0.1);
+
+  /* ── Accent ─────────────────────────────────────────────────────────────────
+     HashiCorp has no single accent — it has per-product identity colours. The
+     one that carries notavibe's existing accent role is Nomad green #00ca8e,
+     which is also the system's semantic-success. Near-identical hue to the
+     emerald it replaces, so status dots and "live" pills keep their meaning. */
+  --volt-emerald: #00ca8e;
+  --volt-emerald-400: #00ca8e;
+  --volt-emerald-soft: #00ca8e;
+  --volt-emerald-deep: #00ca8e;
+  --volt-emerald-08: rgba(0, 202, 142, 0.10);
+  --volt-emerald-10: rgba(0, 202, 142, 0.14);
+  --volt-emerald-20: rgba(0, 202, 142, 0.20);
+  --volt-emerald-30: rgba(0, 202, 142, 0.30);
+  --volt-on-emerald: #000000;
+
+  /* Per-product palette, mapped onto the ramp's remaining hues. These are real
+     HashiCorp identity tokens, not invented tints. */
+  --volt-purple: #7b42bc;      /* Terraform */
+  --volt-yellow: #ffcf25;      /* Vault */
+  --volt-red: #e62b1e;         /* Consul */
+  --volt-blue: #1868f2;        /* Vagrant */
+  --volt-blue-soft: #2b89ff;   /* accent blue */
+  --volt-indigo: #101a59;      /* blue-7 */
+  --volt-node-canvas: #15181e;
+  --volt-node-row: #1f232b;
+  --volt-node-fill: #1f232b;
+  --volt-node-agent: #7b42bc;
+  --volt-node-tool: #14c6cb;
+  --volt-node-memory: #ffcf25;
+
+  /* ── Primary action ─────────────────────────────────────────────────────────
+     The signature CTA: white fill, black text, 8px corners — "not a pill,
+     which keeps the system reading as developer-facing rather than consumer-y."
+     Overridden at the generic name because this is a change of usage, not of
+     value: the bridge points --primary at the accent, HashiCorp points it at
+     inverse-canvas. */
+  --primary: #ffffff;
+  --on-primary: #000000;
+
+  /* Links run accent-blue across the marketing surface, not the accent colour. */
+  --link: #2b89ff;
+  --link-hover: #2b89ff;
+  --link-on-dark: #2b89ff;
+  --link-on-dark-hover: #2b89ff;
+
+  /* Secondary accents keep real product hues rather than collapsing to grey. */
+  --accent-mint: rgba(0, 202, 142, 0.14);
+  --accent-periwinkle: #1f232b;
+  --accent-orange: #ffcf25;    /* Vault */
+  --accent-magenta: #7b42bc;   /* Terraform */
+  --wordmark-tint: #15181e;
+  --brand-gradient: #15181e;
+  --brand-gradient-soft: #15181e;
+
+  /* ── Typography ─────────────────────────────────────────────────────────────
+     hashicorpSans is proprietary; DESIGN.md names Inter as the closest
+     substitute, and --font-sans is already Inter, so the family stands.
+     "Tight on display, relaxed on body" — display 1.17–1.21, body 1.50–1.71.
+     Weight hierarchy is deliberately narrow: 500 body / 600 emphasis / 700
+     display, "no light / black extremes — the brand reads as engineered." */
+  --type-display-xxl: 700 clamp(40px, 5.6vw, 80px)/1.17 var(--font-sans);
+  --type-display-xl: 700 clamp(34px, 4vw, 56px)/1.18 var(--font-sans);
+  --type-display-lg: 600 40px/1.19 var(--font-sans);
+  --type-display-md: 600 28px/1.21 var(--font-sans);
+  --type-body-lg: 500 18px/1.69 var(--font-sans);
+  --type-body-lg-strong: 600 18px/1.69 var(--font-sans);
+  --type-body-md: 500 16px/1.5 var(--font-sans);
+  --type-body-md-strong: 600 16px/1.5 var(--font-sans);
+  --type-caption: 500 14px/1.71 var(--font-sans);
+  --type-caption-strong: 600 14px/1.71 var(--font-sans);
+  --type-button: 600 14px/1.29 var(--font-sans);
+
+  --ls-display-xxl: -0.031em;
+  --ls-display-xl: -0.029em;
+  --ls-display-lg: -0.025em;
+  --ls-display-md: -0.021em;
+  --ls-body-lg: 0px;
+  --ls-body-md: 0px;
+  --ls-caption: 0px;
+
+  --weight-regular: 500;
+  --weight-medium: 600;
+
+  /* ── The mono question ──────────────────────────────────────────────────────
+     HashiCorp principle, stated outright: "No mono. Despite being a
+     developer-tools brand, the marketing surface uses no monospace face —
+     code voice is reserved for in-product surfaces."
+
+     notavibe's current voice does the opposite: every number in mono, uppercase
+     mono eyebrows, provenance and schema in mono. Applying HashiCorp faithfully
+     means the marketing surface loses all of it, and the eyebrow becomes
+     sans 12px/600 at +0.6px tracking.
+
+     Applied at the four type ROLES rather than at --font-mono, because the rule
+     has a carve-out: "code voice is reserved for in-product surfaces." Code
+     mockups are code, so --font-mono keeps IBM Plex Mono and the mockups keep
+     their monospace; it is the eyebrow / label / caption roles that move to the
+     sans. Point these four back at var(--font-mono) to keep the mono voice on
+     numbers and eyebrows while taking everything else HashiCorp. */
+  --font-mono: "IBM Plex Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --type-mono-button: 600 14px/1.29 var(--font-sans);
+  --type-mono-eyebrow: 600 12px/1.23 var(--font-sans);
+  --type-mono-label: 500 13px/1.38 var(--font-sans);
+  --type-mono-caption: 500 13px/1.38 var(--font-sans);
+  --ls-mono-button: 0px;
+  --ls-mono-eyebrow: 0.6px;
+  --ls-mono-label: 0.2px;
+  --ls-mono-caption: 0.2px;
+
+  /* ── Shape ──────────────────────────────────────────────────────────────────
+     Values match VoltAgent's scale almost exactly; the *usage* is what differs.
+     HashiCorp puts buttons and inputs on md 8px and cards on lg 12px, where the
+     bridge had buttons on sm 6px and cards on md 8px. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 24px;
+  --radius-button: 8px;
+  --radius-input: 8px;
+  --radius-card: 12px;
+
+  /* ── Spacing ────────────────────────────────────────────────────────────────
+     "Universal rhythm constant: 96px vertical gap between major sections."
+     Double the bridge's 48px — the single largest structural change here. */
+  --space-section: 96px;
+  --band-padding-y: 96px;
+  --card-padding: 24px;      /* product cards */
+  --card-padding-lg: 32px;   /* pricing cards */
+  --row-padding: 12px 16px;
+  --inline-gap: 16px;
+  --chip-gap: 8px;
+  --nav-link-gap: 24px;
+  --touch-min: 44px;         /* DESIGN.md §Touch Targets */
+
+  /* ── Elevation ──────────────────────────────────────────────────────────────
+     "No drop shadows on dark. Cards lift via surface change, never shadow."
+     Card-level elevation goes flat; --shadow-float is deliberately left on the
+     ramp, because a floating overlay on a black canvas still needs separation
+     and DESIGN.md's rule is written about cards. */
+  --elevation-0: none;
+  --elev-2: 0 0 0 1px var(--volt-border-hover);
+  --border-level-1: 1px solid var(--volt-border);
+  --border-level-2: 1px solid var(--volt-border-faint);
+
+  --hover-lighten-on-dark: rgba(255, 255, 255, 0.06);
+  --hover-darken-on-light: rgba(255, 255, 255, 0.06);
+  --press-opacity: 1;
+}
+
+/* Body/base — the light inversion set these on the element, so they need the
+   same reach here. */
+html, body { background: var(--volt-void); color: var(--volt-text-200); }
+
+/* ── Hero height ─────────────────────────────────────────────────────────────
+   90% of the viewport, so the top of the next band stays visible and does the
+   work a scroll cue would otherwise do.
+
+   dvh, not vh: vh is the *largest* viewport height, so on mobile Safari a 90vh
+   block is measured against a viewport that only exists once the address bar
+   has collapsed — the hero ends up taller than the screen and the sliver of the
+   next section disappears, which is the one thing this height is for. dvh
+   tracks the live viewport. vh stays as the fallback for older engines. */
+:root { --hero-min: 90vh; }
+@supports (height: 1dvh) {
+  :root { --hero-min: 90dvh; }
+}
+
+/* ── Burger menu stagger ─────────────────────────────────────────────────────
+   Items rise into place one after another. Done as a keyframe rather than a
+   transition because the panel mounts fresh on open — a transition would need a
+   second render pass to have a "from" state to animate out of, a keyframe with
+   `both` does not. The per-item delay is set inline from the index. */
+@keyframes nv-menu-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.nv-menu-item {
+  animation: nv-menu-in 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.nv-menu-item:hover {
+  background: color-mix(in srgb, var(--volt-border-hover) 45%, transparent) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* no travel, no stagger — the panel simply is there */
+  .nv-menu-item { animation: none; }
+}
+
+/* ── The one specificity escape hatch ────────────────────────────────────────
+   The Together AI component bundle writes its variants as INLINE styles
+   (`background: var(--volt-emerald); border-radius: var(--radius-sm)`), so no
+   stylesheet can reach them by cascade — !important is the only route.
+
+   Scoped to the three properties that actually carry HashiCorp's CTA identity:
+   white fill, black label, 8px corners — "not a pill, which keeps the system
+   reading as developer-facing rather than consumer-y."
+
+   The attribute selector matches the primary variant only: it is the sole
+   variant whose inline background is the accent (outline and ghost are
+   transparent), so secondary and tertiary buttons are left alone.
+
+   Not corrected here: the bundle's buttons run 16px/12px-16px where HashiCorp
+   specifies 14px/10px-18px. That is a scale difference rather than an identity
+   one, and forcing it would also shrink the sm variant, which already matches. */
+button[style*="var(--volt-emerald)"] {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+button[style*="var(--radius-sm)"] { border-radius: var(--radius-button) !important; }
+
+/* Controls inside the header capsule are pill-shaped. The shell already sets
+   that vocabulary — the capsule itself and the header search are pills — so an
+   8px button sitting inside them reads as a foreign object. Same !important
+   reason as above: the bundle writes its radius inline.
+   Note this is a departure from HashiCorp, which puts CTAs on rounded.md 8px
+   precisely because a pill "keeps the system reading as developer-facing rather
+   than consumer-y". Traded for internal consistency with the capsule.
+
+   The [style] qualifier is load-bearing, not decoration: the 8px rule above is
+   an attribute selector (0-1-1) and this one would otherwise be two elements
+   (0-0-2), so the 8px rule would win the tie and the pill would never apply.
+   Adding [style] takes this to 0-1-2. */
+header button[style] { border-radius: var(--radius-pill, 9999px) !important; }

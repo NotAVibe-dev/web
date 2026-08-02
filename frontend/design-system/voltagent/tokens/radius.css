@@ -1,0 +1,9 @@
+:root{
+  --radius-none:0px;
+  --radius-xs:4px;    /* inline chips */
+  --radius-sm:6px;    /* buttons, inputs */
+  --radius-md:8px;    /* cards, code blocks (rounded-lg in tailwind) */
+  --radius-lg:12px;
+  --radius-pill:9999px;
+  --radius-full:9999px;
+}
