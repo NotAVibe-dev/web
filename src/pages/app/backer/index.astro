@@ -1,0 +1,33 @@
+---
+// Backer dashboard / portal (§9.5). Authenticated shell; mock data until backend.
+import AppLayout from '../../../layouts/AppLayout.astro';
+import { getBackerDashboard } from '../../../lib/api/client';
+const d = await getBackerDashboard();
+---
+<AppLayout title="Backer" role="backer">
+  <p class="kicker">Backer</p>
+  <h1>Dashboard</h1>
+  <div class="stats">
+    <div class="stat"><strong>{d.interestRegistered}</strong><span>interests registered</span></div>
+    <div class="stat"><strong>{d.stackScanned ? 'Yes' : 'No'}</strong><span>stack scanned</span></div>
+  </div>
+  <h2 id="lists">My lists</h2>
+  <ul class="lists">
+    {d.lists.map((l) => <li><a href={`/app/backer#${l.id}`}>{l.name}</a><em>{l.count}</em></li>)}
+  </ul>
+  <p id="scan" class="cta"><a href="/discover">Discover your stack →</a></p>
+</AppLayout>
+<style>
+  .kicker { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ember-500); font-size: var(--fs-kicker, 0.75rem); }
+  h1 { font-family: var(--font-mono); font-size: var(--fs-h1); color: var(--text); margin-bottom: 1.5rem; }
+  .stats { display: flex; gap: 1rem; }
+  .stat { flex: 1; border: 1px solid var(--hairline); border-radius: 10px; padding: 1.25rem; background: var(--ink-850, #14161a); }
+  .stat strong { display: block; font-family: var(--font-mono); font-size: var(--fs-h2); color: var(--text); }
+  .stat span { color: var(--ash, #9aa0a6); font-size: var(--fs-sm, 0.9rem); }
+  h2 { font-family: var(--font-mono); font-size: var(--fs-h3); color: var(--text); margin: 2rem 0 1rem; }
+  .lists { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+  .lists li { display: flex; border: 1px solid var(--hairline); border-radius: 8px; padding: 0.75rem 1rem; background: var(--ink-850, #14161a); }
+  .lists a { color: var(--text); text-decoration: none; font-family: var(--font-mono); }
+  .lists em { margin-left: auto; font-style: normal; font-family: var(--font-mono); color: var(--ash, #9aa0a6); }
+  .cta { margin-top: 2rem; } .cta a { color: var(--ember-500); font-family: var(--font-mono); }
+</style>

@@ -1,0 +1,25 @@
+---
+// Public discovery (§5). SSR-load-bearing surface — prerendered from mock now,
+// flips to real SSR when the backend + adapter are chosen.
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../../components/product/ProjectCard.astro';
+import { listProjects } from '../../lib/api/client';
+const projects = await listProjects();
+---
+<Base title="Discover — notavibe" description="Discover the open-source packages the world runs on, ranked by real signals — not vibes.">
+  <section class="wrap">
+    <p class="kicker">Discovery</p>
+    <h1>The catalog</h1>
+    <p class="lede">Project pages generated from public sources, at catalog scale. Health you can read, not a single made-up score.</p>
+    <div class="grid">
+      {projects.map((p) => <ProjectCard project={p} />)}
+    </div>
+  </section>
+</Base>
+<style>
+  .wrap { max-width: var(--maxw, 72rem); margin-inline: auto; padding: 4rem var(--gutter, 1.5rem); }
+  .kicker { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ember-500); font-size: var(--fs-kicker, 0.75rem); }
+  h1 { font-family: var(--font-mono); font-size: var(--fs-h1); color: var(--text); margin: 0.25rem 0 0.5rem; }
+  .lede { color: var(--ash, #9aa0a6); max-width: 46ch; margin-bottom: 2rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+</style>

@@ -1,0 +1,44 @@
+---
+// Search (§5.4). Static shell + client-side filter over the prerendered catalog
+// now; swaps to a server search endpoint when the backend lands.
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../../components/product/ProjectCard.astro';
+import { listProjects } from '../../lib/api/client';
+const projects = await listProjects();
+---
+<Base title="Search — notavibe" description="Search the open-source catalog.">
+  <section class="wrap">
+    <p class="kicker">Search</p>
+    <input id="q" type="search" placeholder="Search packages, tags, ecosystems…" autocomplete="off" />
+    <div class="grid" id="results">
+      {projects.map((p) => (
+        <div data-hay={`${p.name} ${p.summary} ${p.tags.join(' ')} ${p.ecosystem}`.toLowerCase()}>
+          <ProjectCard project={p} />
+        </div>
+      ))}
+    </div>
+    <p id="empty" hidden>No matches.</p>
+  </section>
+</Base>
+<script>
+  const q = document.getElementById('q') as HTMLInputElement;
+  const items = [...document.querySelectorAll('#results [data-hay]')] as HTMLElement[];
+  const empty = document.getElementById('empty')!;
+  q?.addEventListener('input', () => {
+    const term = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const match = !term || el.dataset.hay!.includes(term);
+      el.hidden = !match; if (match) shown++;
+    }
+    empty.hidden = shown !== 0;
+  });
+</script>
+<style>
+  .wrap { max-width: var(--maxw, 72rem); margin-inline: auto; padding: 4rem var(--gutter, 1.5rem); }
+  .kicker { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ember-500); font-size: var(--fs-kicker, 0.75rem); }
+  #q { width: 100%; margin: 0.5rem 0 2rem; padding: 0.75rem 1rem; background: var(--ink-850, #14161a); border: 1px solid var(--hairline); border-radius: 8px; color: var(--text); font-family: var(--font-mono); }
+  #q:focus { outline: none; border-color: var(--ember-500); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+  #empty { color: var(--ash, #9aa0a6); font-family: var(--font-mono); }
+</style>
