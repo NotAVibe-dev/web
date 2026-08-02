@@ -1,6 +1,6 @@
 ---
 name: infra-request
-description: Delegate ALL infrastructure/IT changes to notavibe's infra repo — never make them here. Use whenever a task touches DNS, domains, TLS/certs, cloud/GCP resources, secrets, API tokens, environment variables, IAM/access/permissions/service accounts, CI/CD, GitHub Actions/workflows, org/repo settings, or Google Workspace (onboarding/offboarding a user, resetting a password, groups) — and BEFORE running any OpenTofu/Terraform, gcloud, or Cloudflare change. Files a structured infra-request issue to NotAVibe-dev/infra via a subagent and tracks it to a human-merged PR. If you are about to provision, configure, or change infrastructure, STOP and use this instead.
+description: Delegate INFRASTRUCTURE changes to notavibe's infra repo — never make them here. Use whenever a task touches DNS, domains, TLS/certs, cloud/GCP resources, secrets, API tokens, environment variables, IAM/access/permissions/service accounts, org/repo settings, Google Workspace (onboarding/offboarding a user, resetting a password, groups), OR CI that needs an infra-level thing — a new/changed GitHub Actions secret, a WIF/cloud identity, or an org-managed Actions-allowlist entry — and BEFORE running any OpenTofu/Terraform, gcloud, or Cloudflare change. Do NOT use it for editing THIS repo's own workflow content (build/test/deploy steps, or bumping versions of actions it already uses) — that is the repo's own job, done here. Files a structured infra-request issue to NotAVibe-dev/infra via a subagent and tracks it to a human-merged PR. If you are about to provision or change infrastructure (not your own repo's workflow content), STOP and use this instead.
 ---
 
 # infra-request — delegate infra/IT changes to notavibe's infra repo
@@ -11,8 +11,16 @@ changes itself. When a task touches infrastructure, file a request to `NotAVibe-
 ## When this applies
 Google Workspace — **onboarding/offboarding a user, resetting a password**, groups/membership;
 DNS, domains, TLS/certs; cloud/GCP resources; secrets, API tokens, environment variables;
-IAM/access/permissions/service accounts; CI/CD, GitHub Actions/workflows; org/repo settings — and
-**before** running any OpenTofu/Terraform, `gcloud`, or Cloudflare change.
+IAM/access/permissions/service accounts; org/repo settings; **CI that needs an infra-level thing** —
+a new/changed GitHub Actions **secret**, a **WIF/cloud identity**, or an **org-managed
+Actions-allowlist** entry — and **before** running any OpenTofu/Terraform, `gcloud`, or Cloudflare change.
+
+## When this does NOT apply — do it here yourself
+Editing THIS repo's own `.github/workflows/` content is the repo's own job — do it here directly, do
+**not** file a request: adding or changing build/test/deploy **steps**, or **bumping the version of an
+action it already uses** (e.g. `actions/checkout@v4 → v7`). Only file an infra-request if that change
+*also* needs one of the infra-level things above — a new/changed **secret**, a **WIF/cloud identity**,
+or an **org-managed Actions-allowlist** entry. (Bumping an already-permitted action needs none of these.)
 
 ## What to do — run in a SUBAGENT (keeps the main context clean)
 1. Gather specifics: what change, why, target repo/env, urgency. Never include secret **values**.
