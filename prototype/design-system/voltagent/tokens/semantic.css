@@ -1,0 +1,42 @@
+/* Semantic aliases — reach for these first; base tokens are the fallback. */
+:root{
+  --bg-page:var(--volt-void);
+  --bg-docs:var(--volt-ink-black);
+  --bg-band:var(--volt-canvas);
+  --bg-card:var(--volt-canvas);
+  --bg-card-hover:var(--volt-surface);
+  --bg-input:var(--volt-surface);
+  --bg-code:var(--volt-canvas);
+  --bg-chip:var(--volt-surface);
+  --bg-panel-header:var(--volt-panel);
+  --bg-icon-tile:rgba(184,179,176,0.1);
+  --bg-icon-tile-accent:var(--volt-emerald-10);
+
+  --text-heading:var(--volt-white);
+  --text-body:var(--volt-text-200);
+  --text-muted:var(--volt-text-500);
+  --text-eyebrow:var(--volt-text-400);
+  --text-caption:var(--volt-text-600);
+  --text-accent:var(--volt-emerald-soft);
+  --text-link:var(--volt-emerald-deep);
+  --text-code:#f5f6f7;
+
+  --border-default:var(--volt-border);
+  --border-hover:var(--volt-border-hover);
+  --border-subtle:var(--volt-border-faint);
+  --border-accent:var(--volt-emerald);
+
+  --action-primary-bg:var(--volt-emerald);
+  --action-primary-fg:var(--volt-on-emerald);
+  --action-secondary-bg:transparent;
+  --action-secondary-fg:var(--volt-text-200);
+  --action-ghost-fg:var(--volt-emerald-soft);
+  --focus-ring:var(--volt-emerald-soft);
+
+  --status-live:var(--volt-emerald);
+  --status-error:var(--volt-red);
+  --status-info:var(--volt-indigo);
+}
+html,body{background:var(--bg-page);color:var(--text-body);font-family:var(--font-sans);font-feature-settings:"calt","rlig"}
+a{color:var(--text-link);text-decoration:none}
+a:hover{color:var(--volt-emerald);text-decoration:none}

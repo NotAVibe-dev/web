@@ -1,0 +1,15 @@
+:root{
+  --motion-fast:200ms; /* @kind other */
+  --motion-base:300ms; /* @kind other */   /* the default: border + background colour crossfades */
+  --motion-slow:500ms; /* @kind other */
+  --motion-reveal:1000ms; /* @kind other */ /* hero fade-in-up on mount */
+  --ease-out:cubic-bezier(0,0,0.2,1); /* @kind other */
+  --ease-in-out:ease-in-out; /* @kind other */
+  --delay-step:200ms; /* @kind other */     /* hero staggers copy → buttons at 300ms / 500ms */
+  --marquee-duration:40s; /* @kind other */
+}
+@keyframes volt-fade-in-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes volt-fade-in{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+@keyframes volt-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+@keyframes volt-marquee{from{transform:translateX(0)}to{transform:translateX(calc(-100% - var(--gap,24px)))}}
+@keyframes volt-pulse{0%,100%{opacity:1}50%{opacity:.5}}

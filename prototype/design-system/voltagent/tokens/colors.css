@@ -1,0 +1,58 @@
+:root{
+  /* ── Canvas: four near-blacks, never a light mode ─────────────── */
+  --volt-void:#050507;        /* landing page canvas (--landing-home-bg) */
+  --volt-ink-black:#0a0a0a;   /* docs + blog canvas */
+  --volt-canvas:#101010;      /* full-bleed band / default card fill */
+  --volt-surface:#1a1a1a;     /* hover + selected card fill */
+  --volt-panel:#0A0F15;       /* console panel header (cool-shifted black) */
+  --volt-black:#000;
+
+  /* ── Emerald: the only brand accent ───────────────────────────── */
+  --volt-emerald:#00d992;       /* primary — CTA, glyph, live dot */
+  --volt-emerald-soft:#2fd6a1;  /* accent text, hero italic, ghost buttons */
+  --volt-emerald-deep:#10b981;  /* main-emerald: logo lockup, footer links */
+  --volt-emerald-400:#34d399;   /* VoltOps button label */
+  --volt-emerald-08:rgba(0,217,146,0.08);
+  --volt-emerald-10:rgba(0,217,146,0.10);
+  --volt-emerald-20:rgba(16,185,129,0.20);
+  --volt-emerald-30:rgba(16,185,129,0.30);
+  --volt-on-emerald:#101010;
+
+  /* ── Hairlines ────────────────────────────────────────────────── */
+  --volt-border:#3d3a39;
+  --volt-border-hover:#5c5855;
+  --volt-border-faint:rgba(255,255,255,0.10);
+  --volt-border-dashed:rgba(79,93,117,0.4);
+  --volt-hairline-soft:#b8b3b0;
+
+  /* ── Text ─────────────────────────────────────────────────────── */
+  --volt-white:#ffffff;
+  --volt-text-100:#f2f2f2;
+  --volt-text-200:#eeeeee;
+  --volt-text-300:#dcdcdc;
+  --volt-text-400:#b8b3b0;  /* eyebrow labels */
+  --volt-text-500:#8a8380;  /* muted body — the brand's warm grey */
+  --volt-text-600:#8b949e;  /* fine print */
+  --volt-gray-400:#9ca3af;
+  --volt-zinc-300:#d4d4d8;
+  --volt-zinc-400:#a1a1aa;
+  --volt-zinc-700:#3f3f46;
+  --volt-zinc-800:#27272a;
+
+  /* ── Secondary hues: docs/console only, never marketing chrome ── */
+  --volt-indigo:#6366f1;   /* Observability section eyebrow */
+  --volt-blue:#3b82f6;
+  --volt-blue-soft:#60a5fa;
+  --volt-purple:#818cf8;
+  --volt-red:#ef4444;
+  --volt-yellow:#facc15;   /* the hover bolt spark only */
+  --volt-grey-dark:#1f2937;
+
+  /* ── VoltOps flow-graph node accents (console only) ───────────── */
+  --volt-node-memory:#a855f7;   /* memory / storage nodes */
+  --volt-node-agent:#3b82f6;    /* agent + supervisor nodes */
+  --volt-node-tool:#eab308;     /* tool-call nodes */
+  --volt-node-canvas:#0d0d0d;
+  --volt-node-fill:#161616;
+  --volt-node-row:#1f1f1f;
+}
