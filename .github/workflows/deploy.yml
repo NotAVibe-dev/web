@@ -39,7 +39,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Resolve which site to deploy
         id: pick
@@ -56,12 +56,12 @@ jobs:
           echo "site=$SITE" >> "$GITHUB_OUTPUT"
           echo "Deploying **$SITE** to notavibe.dev." >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
       # --- landing: build the Astro site (repo root) -> ./dist ---
       - name: Set up Node
         if: steps.pick.outputs.site == 'landing'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -72,14 +72,14 @@ jobs:
           npm run build
       - name: Upload landing artifact
         if: steps.pick.outputs.site == 'landing'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 
       # --- splash: static placeholder (no build) ---
       - name: Upload splash artifact
         if: steps.pick.outputs.site == 'splash'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./splash
 
@@ -92,4 +92,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
