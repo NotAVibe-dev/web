@@ -970,13 +970,32 @@ function AppNav({
       flexDirection: "column",
       gap: "var(--space-xs)"
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#",
+    "aria-label": "notavibe — front door",
+    onClick: e => {
+      e.preventDefault();
+      ctx.go({
+        name: "discover",
+        full: true
+      });
+    },
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      textDecoration: "none",
+      cursor: "pointer"
+    }
+  }, window.NvWordmark ? /*#__PURE__*/React.createElement(window.NvWordmark, {
+    size: 18
+  }) : /*#__PURE__*/React.createElement("span", {
     style: {
       font: "var(--type-body-lg-strong)",
       letterSpacing: "var(--ls-body-lg)",
       color: dark ? "var(--text-on-dark)" : "var(--text-body)"
     }
-  }, "notavibe"), /*#__PURE__*/React.createElement(Eyebrow, {
+  }, "notavibe")), /*#__PURE__*/React.createElement(Eyebrow, {
     tone: dark ? "onDarkMuted" : "muted",
     size: "caption"
   }, kind === "maintainer" ? "app.notavibe.dev · maintainer" : "app.notavibe.dev · backer")), /*#__PURE__*/React.createElement("nav", {

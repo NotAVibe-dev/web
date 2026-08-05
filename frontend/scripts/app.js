@@ -924,7 +924,7 @@
        surfaces render inside the app shell (sidebar persists) rather than swapping
        to the public marketing shell. Logged-out visitors still get the public
        front door. (Deliberate deviation from §572's top-nav — see ADR.) */
-    var backerDiscovery = ctx.signedIn && /^(discover|category|search|project)$/.test(name);
+    var backerDiscovery = ctx.signedIn && !ctx.route.full && /^(discover|category|search|project)$/.test(name);
     var isApp = APP_ROUTES.test(name) || backerDiscovery;
 
     if (ctx.mobile) {
