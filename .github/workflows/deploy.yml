@@ -60,6 +60,30 @@ jobs:
       - uses: actions/configure-pages@v6
 
       # --- frontend: static prototype (no build) ---
+      # Stamp the commit SHA onto every local asset URL in index.html so a
+      # deploy always busts Cloudflare's 4h edge cache (assets are max-age=14400;
+      # index.html is served fresh). No manual version bumping, no CF API needed.
+      - name: Cache-bust frontend asset URLs
+        if: steps.pick.outputs.site == 'frontend'
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const f = "frontend/index.html";
+            const v = (process.env.SHA || "dev").slice(0, 12);
+            let n = 0;
+            const out = fs.readFileSync(f, "utf8").replace(
+              /(src|href)="([^"]+?\.(?:js|css))(\?[^"]*)?"/g,
+              (m, attr, path) => {
+                if (/^(https?:)?\/\//.test(path)) return m; // leave external URLs alone
+                n++;
+                return attr + "=\"" + path + "?v=" + v + "\"";
+              }
+            );
+            fs.writeFileSync(f, out);
+            console.log("cache-busted " + n + " local asset refs with ?v=" + v);
+          '
       - name: Upload frontend artifact
         if: steps.pick.outputs.site == 'frontend'
         uses: actions/upload-pages-artifact@v5
