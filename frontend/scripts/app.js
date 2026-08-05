@@ -7,24 +7,6 @@
   var Button = DS.Button, Badge = DS.Badge, Eyebrow = DS.Eyebrow, Container = DS.Container,
       Icon = DS.Icon, TextInput = DS.TextInput, StatsCard = DS.StatsCard;
 
-  /* Dev-only prototype chrome (the bottom PrototypeRail + the floating
-     PrototypeBar navigator) is gated behind this flag so the public site never
-     shows it, while internal walkthroughs keep the full click-through to the
-     backer/maintainer/admin surfaces the public nav does not link. Turn it on
-     with ?dev in the URL (persists to storage so it survives in-app hash nav);
-     turn it off with ?dev=0. */
-  var NV_DEV = (function () {
-    try {
-      var params = new URLSearchParams(window.location.search);
-      if (params.has("dev")) {
-        var v = params.get("dev");
-        if (v === "0" || v === "off" || v === "false") { localStorage.removeItem("nv-dev"); return false; }
-        localStorage.setItem("nv-dev", "1"); return true;
-      }
-      return localStorage.getItem("nv-dev") === "1";
-    } catch (e) { return false; }
-  })();
-
   function W(name) { return window[name]; }
   var col = function (gap, extra) {
     return Object.assign({ display: "flex", flexDirection: "column", gap: gap }, extra || {});
@@ -464,9 +446,15 @@
        that point, so the hero field stays the primary one. */
     var showSearch = r.name !== "discover" || pastHero;
 
-    /* The burger (and its menu) is the only nav on a narrow viewport, so it is
-       present there from the top; on desktop it rides in with the search field. */
-    var burgerVisible = showSearch || narrow;
+    /* The search RESULTS page is search-first: there the field claims the whole
+       centre and the section links fold into the burger, rather than sitting
+       inline beside it. Every other surface keeps nav + search co-visible. */
+    var searchDominant = r.name === "search";
+
+    /* The burger holds the nav on narrow viewports, and on the search page at any
+       width — that surface gives the field the whole centre, so the section links
+       live in the menu. Every other desktop surface shows the nav inline. */
+    var burgerVisible = narrow || searchDominant;
 
     /* the menu cannot outlive the control that opens it */
     React.useEffect(function () { if (!burgerVisible) setMenuOpen(false); }, [burgerVisible]);
@@ -495,18 +483,30 @@
     };
     /* Left and right zones both flex:1 so they claim equal width — that is what
        actually centres the middle. With only the middle flexing it centres in
-       the leftover space and lands off-axis. */
-    var ZONE = { display: "flex", alignItems: "center", gap: "12px", flex: "1 1 0", minWidth: 0 };
+       the leftover space and lands off-axis.
+       NO minWidth:0 here (unlike the centre): the sides must keep their
+       automatic min-content floor so a wide centre can never shrink a side zone
+       BELOW its own content — which let the account button ("My workspace")
+       overflow its zone and print over the search. The centre is the one that
+       yields; its search field carries minWidth:0. */
+    var ZONE = { display: "flex", alignItems: "center", gap: "12px", flex: "1 1 0" };
 
     /* One source for both the inline row and the burger panel, so they can never
        drift apart. D10: Ship Week shares the band's gate — no link to an empty hub. */
+    /* The highest-utility developer action — audit the maintenance health of the
+       dependencies you already ship — promoted out of the Discover ModStack
+       module into a permanent slot. Editorial and Methodology were removed from
+       the nav: Editorial is already surfaced by ModEditorial on Discover and
+       publishes only monthly, and Methodology is a read-once trust page better
+       reached from a contextual "how is this ranked?" link and the footer. Both
+       routes still exist (#/editorial, #/methodology) — this is a one-line
+       restore if either earns a slot back. */
     var NAV = [
       { label: "Discover", route: { name: "discover" }, on: r.name === "discover" || r.name === "category" },
+      { label: "Scan your stack", route: { name: "stack.connect" }, on: r.name === "stack.connect" || r.name === "stack.results" },
       (window.NvShipWeekLive && window.NvShipWeekLive(ctx))
         ? { label: "Ship Week", route: { name: "shipweek" }, on: r.name === "shipweek" }
-        : null,
-      { label: "Editorial", route: { name: "editorial" }, on: r.name === "editorial" },
-      { label: "Methodology", route: { name: "methodology" }, on: r.name === "methodology" }
+        : null
     ].filter(Boolean);
 
     var searchField = h("form", {
@@ -541,48 +541,65 @@
       h("span", { key: "m", style: Object.assign({}, BAR, { top: "17px", opacity: menuOpen ? 0 : 1 }) }),
       h("span", { key: "b", style: Object.assign({}, BAR, { top: menuOpen ? "17px" : "22px", transform: menuOpen ? "rotate(-45deg)" : "none" }) }));
 
-    /* The two states share one stacked box so they can cross over instead of
-       snapping. Both layers are absolutely positioned inside it, which keeps the
-       capsule's height fixed while they move.
-       Choreography: the links leave upward, then the search arrives from below
-       on a 70ms delay — sequencing the two reads as one thing replacing another,
-       where a simple cross-fade reads as a glitch. */
-    var LAYER = {
-      position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-      display: "flex", alignItems: "center", minWidth: 0
-    };
     var EASE_OUT = "cubic-bezier(0.2, 0.9, 0.2, 1)";
 
+    /* ONE persistent desktop layout for all three states — nav-only, nav+search
+       co-visible, and search-first — so moving between them ANIMATES rather than
+       swapping subtrees. The nav, the search and the burger stay mounted across
+       every state; only their width/opacity/margin transition. Keeping the search
+       node mounted is also what lets the field hold its focus and value as it
+       widens on the way into the search page. Spacing is carried by each item's
+       own collapsing margin (not a flex gap), so a collapsed item leaves no
+       phantom space behind it. */
     var inlineNav = h("nav", {
       "aria-label": "Sections",
-      "aria-hidden": showSearch ? "true" : "false",
-      style: Object.assign({}, LAYER, {
-        justifyContent: "center", gap: "8px 24px",
-        opacity: showSearch ? 0 : 1,
-        transform: showSearch ? "translateY(-10px)" : "translateY(0)",
-        pointerEvents: showSearch ? "none" : "auto",
-        transition: "opacity 240ms ease, transform 300ms " + EASE_OUT
-      })
+      "aria-hidden": searchDominant ? "true" : "false",
+      style: {
+        display: "flex", alignItems: "center", gap: "8px 24px",
+        flexShrink: 0, overflow: "hidden",
+        maxWidth: searchDominant ? "0px" : "360px",
+        marginRight: (showSearch && !searchDominant) ? "20px" : "0px",
+        opacity: searchDominant ? 0 : 1,
+        pointerEvents: searchDominant ? "none" : "auto",
+        transition: "max-width 320ms " + EASE_OUT + ", margin-right 320ms " + EASE_OUT + ", opacity 220ms ease"
+      }
     }, NAV.map(function (m) { return link(m.label, m.route, m.on); }));
 
-    /* Search and burger travel together as one cluster — the burger sits beside
-       the field it belongs to rather than across the capsule from it. */
-    var searchCluster = h("div", {
-      style: Object.assign({}, LAYER, {
-        justifyContent: "center", gap: "8px",
+    /* Search width has three stops: closed (0), co-visible, and search-first
+       (wider). It GROWS to fill the centre up to a cap and, crucially, SHRINKS
+       below that cap (flex-shrink 1 + min-width 0) when the pill narrows on
+       scroll. A fixed width here overflowed the centre zone and spilled left over
+       the wordmark once the scrolled pill got narrow enough. opacity holds at 1
+       whenever it is open, so widening between stops never flashes the field. */
+    var searchReveal = h("div", {
+      style: {
+        flex: showSearch ? "1 1 auto" : "0 1 0px",
+        maxWidth: showSearch ? (searchDominant ? "640px" : "340px") : "0px",
         opacity: showSearch ? 1 : 0,
-        transform: showSearch ? "translateY(0)" : "translateY(16px)",
-        pointerEvents: showSearch ? "auto" : "none",
-        transition: "opacity 260ms ease " + (showSearch ? "70ms" : "0ms")
-          + ", transform 340ms " + EASE_OUT + " " + (showSearch ? "70ms" : "0ms")
-      })
-    }, searchField, burger);
+        minWidth: 0, overflow: "hidden",
+        transition: "max-width 340ms " + EASE_OUT + ", flex-basis 340ms " + EASE_OUT + ", opacity 240ms ease " + (showSearch ? "80ms" : "0ms")
+      }
+    }, searchField);
+
+    /* The burger only earns space on the search page; elsewhere on desktop it
+       collapses to zero width and fades out instead of popping in and out. */
+    var burgerSlot = h("div", {
+      "aria-hidden": searchDominant ? "false" : "true",
+      style: {
+        width: searchDominant ? "36px" : "0px",
+        marginLeft: searchDominant ? "8px" : "0px",
+        opacity: searchDominant ? 1 : 0,
+        flexShrink: 0, overflow: "hidden",
+        pointerEvents: searchDominant ? "auto" : "none",
+        transition: "width 300ms " + EASE_OUT + ", margin-left 300ms " + EASE_OUT + ", opacity 200ms ease"
+      }
+    }, burger);
 
     var centre = h("div", {
-      /* grows 3× faster than the side zones so the field gets real width; the
-         sides stay equal to each other, so the centring still holds */
-      style: { position: "relative", flex: "3 1 auto", minWidth: 0, maxWidth: "660px", height: "40px" }
-    }, inlineNav, searchCluster);
+      /* nav + search (+ burger on the search page) centred as one cluster. flex 3
+         so the zone claims width over the equal sides, keeping it on axis. */
+      style: { display: "flex", alignItems: "center", justifyContent: "center", flex: "3 1 auto", minWidth: 0, maxWidth: "760px", height: "40px" }
+    }, inlineNav, searchReveal, burgerSlot);
 
 
     /* The account action (workspace / sign-in). D11: auth is action-scoped (§7),
@@ -604,7 +621,7 @@
        otherwise collide (this is the same 760px break the nav links fold at). */
     var right = h("div", { style: Object.assign({}, ZONE, { justifyContent: "flex-end" }) },
       narrow ? null : (ctx.signedIn
-        ? h(Button, { variant: "outline", size: "sm", onClick: goAccount }, accountLabel)
+        ? h(Button, { variant: "outline", size: "sm", onClick: goAccount, style: { whiteSpace: "nowrap", flexShrink: 0 } }, accountLabel)
         : h("a", {
             href: accountHref,
             onClick: function (e) { e.preventDefault(); goAccount(); },
@@ -759,7 +776,7 @@
     if (ctx.mobile) {
       return h(React.Fragment, null,
         h(window.MobileShell, { ctx: ctx, Screen: Screen }),
-        (NV_DEV ? h(window.PrototypeBar, { ctx: ctx }) : null));
+        h(window.PrototypeBar, { ctx: ctx }));
     }
 
     var body;
@@ -772,7 +789,7 @@
         h(window.AppNav, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } },
           h("div", { style: { flex: 1 } }, h(Screen, { ctx: ctx })),
-          (NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null)));
+          h(PrototypeRail, { ctx: ctx })));
     } else {
       body = h("div", { style: { minHeight: "100vh", background: "var(--volt-void)", display: "flex", flexDirection: "column" } },
         h(NvPublicHeader, { ctx: ctx }),
@@ -784,10 +801,10 @@
         h("main", {
           style: { flex: 1, paddingTop: name === "discover" ? 0 : "76px" }
         }, h(Screen, { ctx: ctx })),
-        (NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null),
+        h(PrototypeRail, { ctx: ctx }),
         h(DS.FooterWordmark, null, "notavibe"));
     }
-    return h(React.Fragment, null, body, (NV_DEV ? h(window.PrototypeBar, { ctx: ctx }) : null));
+    return h(React.Fragment, null, body, h(window.PrototypeBar, { ctx: ctx }));
   }
 
   Object.assign(window, {
