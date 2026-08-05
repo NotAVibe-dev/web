@@ -6,6 +6,245 @@
 <script src="scripts/runtime.js"></script>
 </head>
 <body>
+<!-- ── Access gate ─────────────────────────────────────────────────────────────
+     A private-preview password layer. Injected as the first body child so it
+     paints before the app: the runtime only swaps the sibling app-root node
+     (dc.replaceWith), so this overlay survives and covers the app underneath.
+
+     The canvas + gradient are lifted straight from the hero (frontdoor.js): the
+     same indigo→emerald radials over --volt-void, and the same mouse-reactive
+     slate dot field. The card is glass over that gradient. Token values are
+     hardcoded as fallbacks (var(--x, #hex)) because the design-system stylesheets
+     are hoisted from <helmet> and may not have resolved at first paint.
+
+     NOTE: this is a soft, client-side gate — it hides the UI, it does not stop a
+     determined visitor from fetching the static assets directly. For real access
+     control the host needs server-side auth (e.g. HTTP Basic). -->
+<style id="nv-gate-style">
+  #nv-gate {
+    position: fixed; inset: 0; z-index: 2147483000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 12% -20%, color-mix(in srgb, var(--volt-indigo, #101a59) 70%, transparent) 0%, transparent 62%),
+      radial-gradient(80% 70% at 88% -10%, color-mix(in srgb, var(--volt-emerald, #00ca8e) 10%, transparent) 0%, transparent 58%),
+      var(--volt-void, #000000);
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    /* Opaque from the first painted frame — deliberately NOT faded in, or the
+       app would show through the transparent overlay before it settles. Only the
+       card animates on entry; the backdrop is solid immediately. */
+  }
+  #nv-gate.nv-gate-out { animation: nv-gate-out .5s ease forwards; pointer-events: none; }
+  @keyframes nv-gate-out { from { opacity: 1 } to { opacity: 0; visibility: hidden } }
+
+  #nv-gate-dots { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+  .nv-gate-card {
+    position: relative; z-index: 2; box-sizing: border-box;
+    width: 100%; max-width: 400px;
+    padding: 40px 32px 34px; border-radius: 22px; text-align: center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.11);
+    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    backdrop-filter: blur(22px) saturate(135%);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.10);
+    animation: nv-card-in .55s cubic-bezier(.2,.7,.2,1) both;
+  }
+  @keyframes nv-card-in { from { opacity: 0; transform: translateY(14px) scale(.985) } to { opacity: 1; transform: none } }
+  #nv-gate.nv-shake .nv-gate-card { animation: nv-shake .4s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes nv-shake {
+    10%,90% { transform: translateX(-2px) } 20%,80% { transform: translateX(4px) }
+    30%,50%,70% { transform: translateX(-7px) } 40%,60% { transform: translateX(7px) }
+  }
+
+  /* notavibe lockup — the ringed bolt glyph + wordmark, in emerald. */
+  .nv-gate-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .nv-gate-ring {
+    width: 34px; height: 34px; border-radius: 9999px;
+    border: 2px solid var(--volt-emerald, #00ca8e); background: rgba(0,202,142,0.12);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .nv-gate-ring svg { width: 19px; height: 19px; display: block; }
+  .nv-gate-word { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--volt-emerald, #00ca8e); }
+
+  .nv-gate-hint { margin: 0 0 22px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.52); }
+
+  #nv-gate-input {
+    width: 100%; box-sizing: border-box; padding: 15px 20px;
+    font-size: 16px; font-family: inherit; color: #fff;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 9999px; outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+  }
+  #nv-gate-input::placeholder { color: rgba(255,255,255,0.40); }
+  #nv-gate-input:focus {
+    border-color: var(--volt-emerald, #00ca8e); background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 4px rgba(0,202,142,0.13), 0 0 34px rgba(0,202,142,0.10);
+  }
+
+  #nv-gate-form button {
+    margin-top: 14px; width: 100%; padding: 14px 20px;
+    font-size: 15px; font-weight: 600; font-family: inherit; letter-spacing: .01em;
+    color: #04120d; background: var(--volt-emerald, #00ca8e);
+    border: none; border-radius: 9999px; cursor: pointer;
+    transition: filter .15s ease, transform .05s ease;
+  }
+  #nv-gate-form button:hover { filter: brightness(1.06); }
+  #nv-gate-form button:active { transform: translateY(1px); }
+
+  #nv-gate-err {
+    margin: 16px 0 0; min-height: 18px; font-size: 13px;
+    color: #ff6b6b; opacity: 0; transition: opacity .2s ease;
+  }
+  #nv-gate-err.show { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #nv-gate, .nv-gate-card { animation: none; }
+  }
+</style>
+<div id="nv-gate" role="dialog" aria-modal="true" aria-label="Enter password to continue">
+  <canvas id="nv-gate-dots" aria-hidden="true"></canvas>
+  <div class="nv-gate-card">
+    <span class="nv-gate-logo">
+      <span class="nv-gate-ring">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="var(--volt-emerald, #00ca8e)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
+        </svg>
+      </span>
+      <span class="nv-gate-word">notavibe</span>
+    </span>
+    <p class="nv-gate-hint">Private preview.<br>Enter the password to continue.</p>
+    <form id="nv-gate-form" autocomplete="off">
+      <input id="nv-gate-input" type="password" name="nv-access"
+             placeholder="Password" aria-label="Password"
+             autocomplete="current-password" autofocus />
+      <button type="submit">Enter</button>
+      <p id="nv-gate-err" role="alert">Incorrect password. Try again.</p>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  /* ──────────────────────────────────────────────────────────────────────────
+     CHANGE THE PASSWORD HERE. Soft, client-side gate — good enough to keep the
+     preview out of the wrong hands, not real access control (see note above). */
+  var NV_PASSWORD = "mkr2026";
+  /* ────────────────────────────────────────────────────────────────────────── */
+
+  var KEY = "notavibe.gate.v1";
+  var gate = document.getElementById("nv-gate");
+  if (!gate) return;
+
+  var root = document.documentElement;
+  function lock()   { root.style.overflow = "hidden"; }
+  function unlock() { root.style.overflow = ""; }
+
+  /* Already unlocked this session → drop the gate before it can be seen. */
+  try {
+    if (window.sessionStorage && sessionStorage.getItem(KEY) === "1") {
+      gate.parentNode && gate.parentNode.removeChild(gate);
+      return;
+    }
+  } catch (e) { /* storage blocked — just show the gate */ }
+
+  lock();
+
+  var form  = document.getElementById("nv-gate-form");
+  var input = document.getElementById("nv-gate-input");
+  var err   = document.getElementById("nv-gate-err");
+
+  function open() {
+    try { if (window.sessionStorage) sessionStorage.setItem(KEY, "1"); } catch (e) {}
+    unlock();
+    gate.classList.add("nv-gate-out");
+    var done = function () { gate.parentNode && gate.parentNode.removeChild(gate); };
+    gate.addEventListener("animationend", done, { once: true });
+    setTimeout(done, 700); /* fallback if animationend never fires */
+  }
+
+  function reject() {
+    err.classList.add("show");
+    gate.classList.remove("nv-shake");
+    /* reflow so the shake animation can restart on repeated wrong tries */
+    void gate.offsetWidth;
+    gate.classList.add("nv-shake");
+    input.select();
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (input.value === NV_PASSWORD) open();
+    else reject();
+  });
+  input.addEventListener("input", function () { err.classList.remove("show"); });
+  setTimeout(function () { try { input.focus(); } catch (e) {} }, 60);
+
+  /* ── Mouse-reactive dot field ───────────────────────────────────────────────
+     Vanilla port of the hero's DotField (frontdoor.js): a slate grid that bulges
+     toward the pointer and blends to emerald, easing back when it leaves. Same
+     constants, so the gate reads as the same surface as the page behind it. */
+  (function dotField() {
+    var canvas = document.getElementById("nv-gate-dots");
+    var g = canvas && canvas.getContext && canvas.getContext("2d");
+    if (!g) return;
+    var host = gate;
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var SPACING = 28, BASE_R = 1.5, RADIUS = 165, STRENGTH = 0.62, EASE = 0.14;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = 0, H = 0, dots = [];
+    var pxr = -99999, pyr = -99999, active = false, raf = null;
+
+    function build() {
+      dots = [];
+      for (var y = SPACING / 2; y < H + SPACING; y += SPACING)
+        for (var x = SPACING / 2; x < W + SPACING; x += SPACING)
+          dots.push({ ox: x, oy: y, x: x, y: y, k: 0 });
+    }
+    function step() {
+      var moving = false;
+      for (var i = 0; i < dots.length; i++) {
+        var p = dots[i], tx = p.ox, ty = p.oy, k = 0;
+        if (active) {
+          var dx = pxr - p.ox, dy = pyr - p.oy, d = Math.sqrt(dx * dx + dy * dy);
+          if (d < RADIUS) { var f = 1 - d / RADIUS; k = f * f; tx = p.ox + dx * k * STRENGTH; ty = p.oy + dy * k * STRENGTH; }
+        }
+        p.x += (tx - p.x) * EASE; p.y += (ty - p.y) * EASE; p.k += (k - p.k) * EASE;
+        if (Math.abs(tx - p.x) > 0.05 || Math.abs(ty - p.y) > 0.05 || p.k > 0.004) moving = true;
+      }
+      return moving;
+    }
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      for (var i = 0; i < dots.length; i++) {
+        var p = dots[i], k = p.k, mix = k > 0 ? Math.min(1, k * 1.5) : 0;
+        g.fillStyle = "rgba(" + Math.round(148 - 148 * mix) + "," + Math.round(163 + 39 * mix) + "," +
+          Math.round(184 - 42 * mix) + "," + (0.17 + k * 0.55).toFixed(3) + ")";
+        g.beginPath(); g.arc(p.x, p.y, BASE_R + k * 1.1, 0, 6.2832); g.fill();
+      }
+    }
+    function resize() {
+      var rect = host.getBoundingClientRect();
+      W = Math.max(1, rect.width); H = Math.max(1, rect.height);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      build(); draw();
+    }
+    function frame() { var m = step(); draw(); if (!m && !active) { raf = null; return; } raf = requestAnimationFrame(frame); }
+    function kick() { if (raf === null) raf = requestAnimationFrame(frame); }
+    function onMove(e) { var r = host.getBoundingClientRect(); pxr = e.clientX - r.left; pyr = e.clientY - r.top; active = true; kick(); }
+    function onLeave() { active = false; kick(); }
+
+    resize();
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
+    else window.addEventListener("resize", resize);
+    if (!reduce) { host.addEventListener("pointermove", onMove); host.addEventListener("pointerleave", onLeave); }
+  })();
+})();
+</script>
 <x-dc>
 <helmet>
   <link rel="stylesheet" href="design-system/voltagent/tokens/fonts.css">
