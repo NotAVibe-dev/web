@@ -451,6 +451,7 @@
        used in unified-core gradients", plus a much fainter pass of the accent.
        Kept low-opacity so the canvas still reads as near-black. */
     return h("section", {
+      className: "nv-hero",
       style: {
         position: "relative",
         /* 90% of the live viewport, content optically centred in it. Not 100:
@@ -484,8 +485,8 @@
            to disclose. */
         /* nbsp so "open source" never breaks across lines — a split compound is
            the one wrap this headline cannot afford. */
-        h("h1", { style: Object.assign({}, HERO, { maxWidth: "18ch" }) }, "Like Google, but for open source"),
-        h("p", { style: Object.assign({}, BODY_LG, { maxWidth: "42ch" }) },
+        h("h1", { className: "nv-hero-pitch", style: Object.assign({}, HERO, { maxWidth: "18ch" }) },"Like Google, but for open source"),
+        h("p", { className: "nv-hero-pitch", style: Object.assign({}, BODY_LG, { maxWidth: "42ch" }) },
           "Except ranked on maintenance, not popularity."),
 
         h("form", { onSubmit: submit, "data-hero-search": "1", style: { width: "100%", maxWidth: "680px", paddingTop: "8px" } },
@@ -1083,7 +1084,7 @@
     var alive = { eco: "NPM", name: "quiet-forms", stars: "28.1k",
       rows: [["Last release", 96, "6 days ago"], ["Active maintainers", 82, "5 active"], ["Issue response", 91, "p90 · 1d"], ["PR backlog", 88, "keeping up"]],
       verdict: "Same reach. Still alive." };
-    return h(Band, { tone: "canvas" },
+    return h("div", { className: "nv-proof" }, h(Band, { tone: "canvas" },
       h(BandHead, {
         eyebrow: "Stars don't tell you this",
         title: "Same stars. Opposite health.",
@@ -1091,7 +1092,7 @@
       }),
       h("div", { ref: wrapRef, className: "nv-proof-wrap", style: { display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" } },
         h(ProofCard, { p: dying, alive: false, index: 0 }),
-        h(ProofCard, { p: alive, alive: true, index: 1 })));
+        h(ProofCard, { p: alive, alive: true, index: 1 }))));
   }
 
   function NvDiscover(props) {
