@@ -872,6 +872,8 @@
     if (name === "backer.dashboard") return BackerHome;
     if (name === "backer.more") return BackerMore;
     if (name === "backer.lists") return MyListsV2;
+    if (name === "backer.list") return ListDetailV2;
+    if (name === "list.public") return PublicListPageV2;
     if (name === "backer.activity") return BackerActivityV2;
     if (name === "stack.connect") return StackConnectV2;
     if (name === "stack.results") return ScanResultsV2;
@@ -1178,6 +1180,69 @@
       h("div", null, h(Button, { variant: "primary", size: "lg", disabled: !consent, onClick: run }, "Scan")));
   }
 
+  /* ── List detail (overrides compiled ListDetail) ──────────────────────────
+     Shared by the private list (backer.list) and the public list page
+     (list.public) via publicView. Numbered items reuse ProjectRow; retired /
+     revoked entries render as dated records; the on-request-removal private
+     note and the visibility actions are preserved. */
+  function ListDetailV2(props) {
+    var ctx = props.ctx;
+    var publicView = props.publicView;
+    var Note = W("Note"), ProjectRow = W("ProjectRow");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var lists = ctx.lists || [];
+    var list = lists.filter(function (l) { return l.id === (ctx.route.id || "l1"); })[0] || lists[0];
+    if (!list) return h("div", { style: { padding: "var(--space-3xl)" } }, h(Note, null, "List not found."));
+    var visible = list.items.filter(function (s) { return ctx.claimState(s) !== "suppressed"; });
+    var removedOnRequest = list.items.some(function (s) { return ctx.claimState(s) === "suppressed"; });
+
+    var actions = publicView
+      ? h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap", alignItems: "center" } },
+          h(Button, { variant: "primary", onClick: function () { ctx.saveListCopy(list.id); } }, "Save this list"),
+          h(Note, null, "Copies it into your own lists as an independent list — not a subscription to the original."))
+      : h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap" } },
+          h(Button, { variant: "outline", onClick: function () { ctx.toggleVisibility(list.id); } }, list.visibility === "public" ? "Unpublish" : "Publish"),
+          h(Button, { variant: "ghost", onClick: function () { ctx.go({ name: "list.public", id: list.id }); } }, "View public page"));
+
+    var header = h("header", { style: col("var(--space-md)") },
+      h("span", { style: eyebrow }, publicView ? "/lists/" + list.handle + "/" + list.slug : (list.visibility || "private") + " list"),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, list.title),
+      list.description ? h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, list.description) : null,
+      actions);
+
+    var itemsList = h("ol", { style: { margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
+      visible.map(function (slug, i) {
+        var p = window.findProject(slug); var st = ctx.claimState(slug);
+        var dated = (st === "retired" || st === "revoked");
+        return h("li", { key: slug, style: { display: "flex", gap: "var(--space-md)", alignItems: "center" } },
+          h("span", { style: { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--text-secondary)", flex: "0 0 20px" } }, i + 1),
+          h("div", { style: { flex: 1, minWidth: 0 } },
+            dated
+              ? h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "var(--radius-sm)", padding: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-xs)" } },
+                  h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, p ? p.name : slug),
+                  h(Note, null, "Renders as a dated record — " + (st === "retired" ? ("retired " + ((p && p.retiredAt) || "")) : "revoked and not indexed") + "."))
+              : h(ProjectRow, { slug: slug, ctx: ctx, compact: true })),
+          !publicView ? h(Button, { variant: "ghost", onClick: function () { ctx.toggleInList(list.id, slug); } }, "Remove") : null);
+      }));
+
+    var removed = (removedOnRequest && !publicView) ? h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-lg) var(--space-2xl)" } },
+      h(Note, null, h("b", { style: { fontWeight: 500, color: "var(--text-body)" } }, "Private note to you:"), " an item was removed from this list on request. It is not named publicly, and your list has not been silently corrupted.")) : null;
+
+    var wrap = publicView
+      ? { display: "flex", flexDirection: "column", gap: "var(--space-2xl)" }
+      : { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap }, header, itemsList, removed);
+  }
+
+  function PublicListPageV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    return h(Container, { style: { padding: "var(--space-5xl) var(--gutter-desktop) var(--space-section)", maxWidth: "760px", display: "flex", flexDirection: "column", gap: "var(--space-2xl)" } },
+      h(ListDetailV2, { ctx: ctx, publicView: true }),
+      h(Note, null, "An acquisition surface: indexed, reachable from search and from its object, never a front-door module. Reserved namespace segment: /lists."));
+  }
+
   /* ── My lists (overrides compiled MyLists) ────────────────────────────────
      List index in the card system. Each list is a clickable card (border warms
      to emerald on hover) → its detail. New-list flow preserved; designed empty
@@ -1373,6 +1438,8 @@
     BackerDashboard: BackerHome,
     BackerMore: BackerMore,
     MyLists: MyListsV2,
+    ListDetail: ListDetailV2,
+    PublicListPage: PublicListPageV2,
     BackerActivity: BackerActivityV2,
     ScanResults: ScanResultsV2,
     StackConnect: StackConnectV2
