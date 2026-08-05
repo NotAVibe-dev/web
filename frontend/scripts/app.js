@@ -338,9 +338,25 @@
     var s = React.useState(window.NvQuery.get()), q = s[0], setQ = s[1];
     React.useEffect(function () { return window.NvQuery.subscribe(setQ); }, []);
     var r = ctx.route;
+    /* Real, right-clickable URLs. Mirror the router's hash scheme (index.html
+       buildHash) so every nav target is a genuine link — open-in-new-tab, copy
+       link and middle-click all work — while onClick still drives the in-page
+       SPA nav. aria-current marks the active section programmatically, since the
+       colour shift alone is not a signal assistive tech can read. */
+    var HREF_FIELDS = ["id", "q", "system", "type"];
+    var hrefFor = function (route) {
+      if (!route || !route.name) return "#/discover";
+      var path = "/" + route.name;
+      if (route.slug) path += "/" + route.slug; /* slug may hold slashes; leave raw */
+      var qs = HREF_FIELDS
+        .filter(function (k) { return route[k] != null && route[k] !== ""; })
+        .map(function (k) { return k + "=" + encodeURIComponent(route[k]); });
+      return "#" + path + (qs.length ? "?" + qs.join("&") : "");
+    };
     var link = function (label, route, active) {
       return h("a", {
-        key: label, href: "#",
+        key: label, href: hrefFor(route),
+        "aria-current": active ? "page" : undefined,
         onClick: function (e) { e.preventDefault(); ctx.go(route); },
         style: { fontSize: "14px", lineHeight: "20px", fontWeight: 500, color: active ? "var(--volt-text-200)" : "var(--volt-text-500)", whiteSpace: "nowrap", transition: "color var(--motion-base) ease" }
       }, label);
@@ -398,14 +414,18 @@
           || (document.scrollingElement && document.scrollingElement.scrollTop)
           || 0;
         setScrolled(y > 24);
-        /* measured off the hero element itself rather than a magic number, so
-           the swap tracks the 90dvh block instead of guessing where it ends.
-           Guarded on height: this runs once on mount, before the hero has laid
-           out, and an unlaid-out rect reports bottom ≈ 0 — which satisfies the
-           test and latches the swapped state on at the top of the page. */
-        var hero = document.querySelector("main section");
-        var box = hero ? hero.getBoundingClientRect() : null;
-        setPastHero(box && box.height > 40 ? box.bottom <= 96 : y > 320);
+        /* Swap the moment the hero's own search field clears the header, not
+           when the whole 90dvh block ends — the two searches are the same field,
+           so the header takes over the instant the hero one scrolls under the
+           pill. Measured off the field itself (tagged data-hero-search); the
+           hero section is the fallback for any surface without one.
+           Guarded on height: this runs once on mount, before layout, and an
+           unlaid-out rect reports bottom ≈ 0 — which satisfies the test and
+           latches the swapped state on at the top of the page. */
+        var field = document.querySelector("[data-hero-search]");
+        var box = field ? field.getBoundingClientRect()
+          : (function () { var h = document.querySelector("main section"); return h ? h.getBoundingClientRect() : null; })();
+        setPastHero(box && box.height > 20 ? box.bottom <= 76 : y > 320);
       };
       onScroll();
       /* one more read after layout has settled, for the same reason */
@@ -451,7 +471,9 @@
       WebkitBackdropFilter: "blur(16px) saturate(150%)",
       border: "1px solid color-mix(in srgb, var(--volt-border-hover) 55%, transparent)",
       boxSizing: "border-box",
-      transition: "min-height var(--motion-base) ease, padding var(--motion-base) ease, background-color var(--motion-base) ease"
+      /* ease-out so the shrink begins immediately on scroll (see the wrapper's
+         max-width note); same duration as the wrapper so they move as one. */
+      transition: "min-height var(--motion-base) var(--ease-out), padding var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out)"
     };
     /* Left and right zones both flex:1 so they claim equal width — that is what
        actually centres the middle. With only the middle flexing it centres in
@@ -554,6 +576,9 @@
       else ctx.go({ name: "signin", next: ctx.route });
     };
     var accountLabel = ctx.signedIn ? "My workspace" : "Sign in";
+    /* signin carries a transient `next` the router deliberately drops, so its
+       href is just the bare route — honest and still right-clickable. */
+    var accountHref = hrefFor(ctx.signedIn ? { name: "backer.dashboard" } : { name: "signin" });
 
     /* On a normal-width pill it stays put in the right zone — desktop has the
        room, and the account action is worth a permanent slot. It folds into the
@@ -563,7 +588,7 @@
       narrow ? null : (ctx.signedIn
         ? h(Button, { variant: "outline", size: "sm", onClick: goAccount }, accountLabel)
         : h("a", {
-            href: "#",
+            href: accountHref,
             onClick: function (e) { e.preventDefault(); goAccount(); },
             style: { fontSize: "14px", lineHeight: "20px", fontWeight: 500, color: "var(--volt-text-200)", whiteSpace: "nowrap", flexShrink: 0, padding: "0 4px" }
           }, "Sign in")));
@@ -597,7 +622,8 @@
         var base = narrow ? (NAV.length - i) : (NAV.length - 1 - i);
         var delay = menuOpen ? base * 65 : 0;
         return h("a", {
-          key: m.label, href: "#",
+          key: m.label, href: hrefFor(m.route),
+          "aria-current": m.on ? "page" : undefined,
           onClick: function (e) { e.preventDefault(); setMenuOpen(false); ctx.go(m.route); },
           style: {
             display: "block", padding: "13px 16px", borderRadius: "12px",
@@ -615,7 +641,7 @@
          sections-only there. Set off by a hairline, bottom-most so it leads the
          reveal and is the closest tap target to the burger that opened it. */
       if (narrow) items.push(h("a", {
-        key: "__account", href: "#",
+        key: "__account", href: accountHref,
         onClick: function (e) { e.preventDefault(); setMenuOpen(false); goAccount(); },
         style: {
           display: "block", padding: "13px 16px", margin: "4px 6px 2px", borderRadius: "12px",
@@ -631,10 +657,11 @@
     })());
 
     var emblem = h("a", {
-      href: "#",
+      href: hrefFor({ name: "discover" }),
+      "aria-label": "notavibe home",
       onClick: function (e) { e.preventDefault(); ctx.go({ name: "discover" }); },
       style: { display: "inline-flex", flexShrink: 0 }
-    }, h(window.NvWordmark, { size: 18, symbolOnly: true }));
+    }, h(window.NvWordmark, { size: 18, symbolOnly: narrow }));
 
     /* Narrow layout: one row — emblem, a flexible search that fills the gap
        between it and the burger, and the burger pinned right. The search is kept
@@ -665,7 +692,13 @@
           maxWidth: scrolled ? "880px" : "1280px",
           margin: "0 auto",
           pointerEvents: "auto",
-          transition: "max-width var(--motion-slow, 300ms) ease"
+          /* ease-out, not ease: `ease` eases *in*, so the capsule barely moved
+             for the first ~150ms after you crossed the scroll threshold — which
+             read as "the header doesn't shrink right away". ease-out starts at
+             full velocity, so the narrow begins the instant `scrolled` flips.
+             Matched to the pill's --motion-base so width and padding settle
+             together instead of the pill finishing while the width still glides. */
+          transition: "max-width var(--motion-base) var(--ease-out)"
         }
       },
         h("div", { style: PILL }, pillLeft, pillCentre, pillRight),

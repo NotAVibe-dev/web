@@ -279,7 +279,16 @@
      Production note: hard-coding four is the "top-4 popularity list" this
      product refuses to be. These should be derived from catalog vocabulary or
      rotated, so the row never becomes an editorially-picked leaderboard. */
-  var SEEDS = ["test runner", "query builder", "web framework", "schema validator"];
+  /* Top intents — goal-phrased (this is now the only "start by intent" entry,
+     since the nine-intent module was cut). `label` is the goal shown; `q` is the
+     catalog term it searches, so the phrasing stays human without breaking search. */
+  var SEEDS = [
+    { label: "ship a library", q: "bundler" },
+    { label: "trust my tests", q: "test runner" },
+    { label: "talk to Postgres", q: "query builder" },
+    { label: "serve requests", q: "web framework" },
+    { label: "validate inputs", q: "schema validator" }
+  ];
   var EXPO = "cubic-bezier(0.16, 1, 0.3, 1)";
 
   /* Reveal runs as a CSS animation rather than a JS timer flipping state.
@@ -332,13 +341,13 @@
         gap: "8px", paddingTop: "4px"
       }
     },
-      SEEDS.map(function (term, i) {
+      SEEDS.map(function (seed, i) {
         var on = hover === i;
         return h("button", {
-          key: term,
+          key: seed.label,
           className: "nv-chip",
           type: "button",
-          onClick: function () { run(term); },
+          onClick: function () { run(seed.q); },
           onMouseEnter: function () { setHover(i); },
           onMouseLeave: function () { setHover(-1); },
           style: {
@@ -355,7 +364,7 @@
               + ", border-color 220ms " + EXPO + ", color 220ms " + EXPO,
             animationDelay: (420 + i * 90) + "ms"
           }
-        }, term);
+        }, seed.label);
       }));
   }
 
@@ -479,7 +488,7 @@
         h("p", { style: Object.assign({}, BODY_LG, { maxWidth: "42ch" }) },
           "Except ranked on maintenance, not popularity."),
 
-        h("form", { onSubmit: submit, style: { width: "100%", maxWidth: "680px", paddingTop: "8px" } },
+        h("form", { onSubmit: submit, "data-hero-search": "1", style: { width: "100%", maxWidth: "680px", paddingTop: "8px" } },
           /* Button inside the field. A plain button rather than the DS one so the
              inset sizing is exact — the bundle writes its padding inline. Styled
              from the same tokens, so it stays HashiCorp's white/black 8px CTA. */
@@ -710,9 +719,83 @@
      Signed in it is Your Deck, and the dial actually reorders the deck —
      it used to only rewrite its own label.
      ───────────────────────────────────────────────────────────────── */
+  (function injectDeckCSS() {
+    if (document.getElementById("nv-deck-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-deck-css";
+    s.textContent =
+      ".nv-deck.nv-js .nv-deck-row{opacity:0}"
+      + ".nv-deck.nv-inview .nv-deck-row{animation:nvCardIn 480ms cubic-bezier(0.16,1,0.3,1) both}"
+      + ".nv-deck-row:hover{background:var(--volt-surface)}"
+      + "@media (prefers-reduced-motion: reduce){.nv-deck.nv-js .nv-deck-row{opacity:1}.nv-deck.nv-inview .nv-deck-row{animation:none}}";
+    document.head.appendChild(s);
+  })();
+
+  /* This week's selection — a curated tease, not a re-run of the Proof's bars.
+     One honest signal per pick (a real data point, never a rollup — §4.4 no
+     single rating), a why-line, a category icon and a movement marker; the full
+     five signals live on the project page. Editorial, illustrative figures. */
+  var TWS_PICKS = [
+    { slug: "hono", name: "hono", repo: "honojs · unclaimed", icon: "server-stack",
+      why: "Web-Standards handler — the same code runs on Workers, Deno, Bun and Node.",
+      sig: "responsiveness · p90 1d", ok: true, move: "▲ new", moveTone: "accent" },
+    { slug: "vitest", name: "vitest", repo: "vitest-dev", icon: "beaker", verified: true,
+      why: "Reads your Vite config, so tests resolve modules exactly like the app does.",
+      sig: "adoption · 4.1k dependents", ok: true, move: "↑ climbing", moveTone: "mute" },
+    { slug: "drizzle-orm", name: "drizzle-orm", repo: "drizzle-team · unclaimed", icon: "circle-stack",
+      why: "Types derived from the schema you already wrote — not a second modelling language.",
+      sig: "maintainers · 6 active", ok: true, move: "↑ climbing", moveTone: "mute" },
+    { slug: "unbuild", name: "unbuild", repo: "unjs", icon: "wrench", verified: true,
+      why: "Reads package.json's export map and emits the build most libraries configure by hand.",
+      sig: "release · quiet 4 mo", ok: false, move: "watch", moveTone: "watch" },
+    { slug: "valibot", name: "valibot", repo: "fabian-hiller", icon: "shield-check", verified: true,
+      why: "1 kB validation with types inferred once, not declared twice.",
+      sig: "responsiveness · p90 2d", ok: true, move: "▲ new", moveTone: "accent" }
+  ];
+
+  function DeckRow(props) {
+    var p = props.p, i = props.i, ctx = props.ctx;
+    var dotColor = p.ok ? "var(--volt-emerald)" : "#e0a33e";
+    var moveColor = p.moveTone === "accent" ? "var(--volt-emerald)" : (p.moveTone === "watch" ? "#e0a33e" : "var(--volt-text-500)");
+    return h("button", {
+      className: "nv-deck-row", type: "button",
+      onClick: function () { ctx.go({ name: "project", slug: p.slug }); },
+      style: {
+        background: "none", border: "none", borderTop: "1px solid var(--volt-border)",
+        textAlign: "left", font: "inherit", color: "inherit", cursor: "pointer",
+        display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap",
+        padding: "14px 6px", width: "100%", boxSizing: "border-box",
+        transition: "background-color 160ms " + EXPO_OUT, animationDelay: (i * 70) + "ms"
+      }
+    },
+      h(IconTile, { tone: "accent", size: 34 }, h(Icon, { name: p.icon, size: 17 })),
+      h("div", { style: { flex: "1 1 240px", minWidth: 0 } },
+        h("div", { style: { display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" } },
+          h("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "15px", color: "var(--volt-white)" } }, p.name),
+          p.verified ? h(Icon, { name: "check-badge", variant: "solid", size: 14, color: "var(--volt-emerald)" }) : null,
+          h("span", { style: MONO }, p.repo)),
+        h("p", { style: Object.assign({}, SMALL, { margin: "3px 0 0", color: "var(--volt-text-500)" }) }, p.why)),
+      h("span", { style: { display: "inline-flex", alignItems: "center", gap: "8px", flex: "0 0 auto" } },
+        h("span", { style: { width: "8px", height: "8px", borderRadius: "50%", background: dotColor, flexShrink: 0 } }),
+        h("span", { style: Object.assign({}, MONO, { color: "var(--volt-text-200)" }) }, p.sig)),
+      h("span", { style: Object.assign({}, MONO, { color: moveColor, flex: "0 0 auto", minWidth: "64px", textAlign: "right" }) }, p.move));
+  }
+
   function ModDeck(props) {
     var ctx = props.ctx;
     var st = React.useState(35), dial = st[0], setDial = st[1];
+    var wrapRef = React.useRef(null);
+    React.useEffect(function () {
+      var el = wrapRef.current; if (!el) return;
+      var done = false, io, timer;
+      function reveal() { if (done) return; done = true; el.classList.add("nv-inview"); if (io) io.disconnect(); clearTimeout(timer); }
+      el.classList.add("nv-js");
+      if (!("IntersectionObserver" in window) || !window.innerHeight) { reveal(); return; }
+      io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) reveal(); }); }, { threshold: 0.15, rootMargin: "0px 0px -8% 0px" });
+      io.observe(el);
+      timer = setTimeout(reveal, 4000);
+      return function () { if (io) io.disconnect(); clearTimeout(timer); };
+    }, []);
     var pool = window.PROJECTS.filter(function (p) { return LIVE[ctx.claimState(p.slug)]; });
 
     /* the dial is a real control: familiar end favours claimed + broad,
@@ -731,32 +814,27 @@
     };
 
     return h(Band, null,
-      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "32px", flexWrap: "wrap" } },
+      h("div", { style: col("18px") },
         ctx.signedIn
           ? h(BandHead, {
               eyebrow: "Your deck",
               title: "Built from your profile, not from what is popular",
-              lead: "Eight to twelve projects a week from your preference profile and the health signals. The discovery digest is its email form."
+              lead: "Projects surfaced from your preference profile and the health signals — never stars, never downloads. Each shows the one signal that earned its spot; open the page for the full five."
             })
           : h(BandHead, {
               eyebrow: "This week's selection",
               title: "Eight projects, ordered by the published formula",
-              lead: "Maintenance rhythm and contribution breadth — never stars, never downloads. Sign in to weight this toward what you already use."
+              lead: "Maintenance rhythm and contribution breadth — never stars, never downloads. Each pick shows the one signal that earned it a spot; open the page for the full five."
             }),
-        h("div", { style: col("8px", { minWidth: "260px", flex: "0 1 300px" }) },
-          h("div", { style: { display: "flex", justifyContent: "space-between" } },
-            h("span", { style: MONO }, "FAMILIAR"),
-            h("span", { style: MONO }, "EXPLORATORY")),
-          h("input", {
-            type: "range", min: 0, max: 100, value: dial,
-            "aria-label": ctx.signedIn ? "Explore dial" : "Explore dial — sign in to weight your deck",
-            onChange: onDial,
-            style: { width: "100%", accentColor: "var(--volt-emerald)" }
-          }),
-          h("span", { style: MONO },
-            ctx.signedIn ? "explore = " + dial + "% · 8 this week" : "sign in to weight this"))),
-      h("div", { style: GRID },
-        deck.map(function (p) { return h(window.NvProjectCard, { key: p.slug, project: p, ctx: ctx }); })));
+        h("div", null,
+          h("span", { style: Object.assign({}, MONO, { border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "5px 12px", color: "var(--volt-text-400)" }) },
+            "ordered by · maintenance rhythm × contribution breadth")),
+        h("div", { ref: wrapRef, className: "nv-deck", style: { marginTop: "2px" } },
+          TWS_PICKS.map(function (p, i) { return h(DeckRow, { key: p.slug, p: p, i: i, ctx: ctx }); })),
+        h("button", {
+          type: "button", onClick: function () { ctx.go({ name: "search" }); },
+          style: { background: "none", border: "none", cursor: "pointer", font: "inherit", fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: 400, color: "var(--volt-text-400)", padding: "8px 6px 0" }
+        }, "see the full week →")));
   }
 
   /* D13 — module 3 stops pitching a scan to someone who already scanned. */
@@ -794,33 +872,54 @@
 
   /* D10 fixes — the featured card opens its feature, not the index; and of
      the three integrity pills only "unpurchasable" says anything to Raj. */
+  function edInitials(name) {
+    return (name || "").split(/\s+/).map(function (w) { return w[0] || ""; }).join("").slice(0, 2).toUpperCase();
+  }
+
+  /* Editorial as a publication front: a featured lead with a real byline
+     (monogram + author + date), the unpurchasable integrity badge given weight,
+     and a short reading list of the other features. No health-bars — this is the
+     voice layer, kept visually distinct from the catalog surfaces. */
   function ModEditorial(props) {
     var ctx = props.ctx;
     var e = window.EDITORIAL[0];
+    var more = window.EDITORIAL.slice(1);
     var cat = window.CATEGORIES.find(function (c) { return c.slug === e.category; });
     var open = function () { ctx.go({ name: "editorial", slug: e.slug || e.category }); };
     return h(Band, null,
-      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "16px", flexWrap: "wrap" } },
-        /* D9's heading rule applies here too: this was the one module with no
-           h2, so it was the one module unreachable by heading navigation.
-           Same eyebrow styling, real heading semantics. */
-        h("h2", { style: EYEBROW }, "Editorial"),
-        h("a", {
-          href: "#", onClick: function (ev) { ev.preventDefault(); ctx.go({ name: "editorial" }); },
-          style: { fontFamily: "var(--font-sans)", fontSize: "13px", color: "var(--link)" }
-        }, "all features →")),
-      h(Card, {
-        interactive: true, padding: "32px", onClick: open,
-        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "32px" }
-      },
-        h("div", { style: col("16px") },
-          h("span", { style: MONO }, "CATEGORY FEATURE · " + (cat ? cat.label.toUpperCase() : e.category)),
-          h("h3", { style: Object.assign({}, H2, { fontSize: "28px", lineHeight: "34px" }) }, e.title),
-          h("span", { style: MONO }, e.author + " · " + e.date)),
-        h("div", { style: col("16px", { justifyContent: "center" }) },
-          h("p", { style: Object.assign({}, BODY, { fontSize: "18px", lineHeight: "28px" }) }, e.standfirst),
-          h("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
-            h(PillTag, null, "unpurchasable")))));
+      h("div", { style: col("18px") },
+        /* D9: real h2 so the section is reachable by heading navigation. */
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "16px", flexWrap: "wrap" } },
+          h("h2", { style: EYEBROW }, "notavibe editorial"),
+          h("a", {
+            href: "#", onClick: function (ev) { ev.preventDefault(); ctx.go({ name: "editorial" }); },
+            style: { fontFamily: "var(--font-sans)", fontSize: "13px", color: "var(--link)" }
+          }, "all features →")),
+
+        h(Card, { interactive: true, padding: "28px", onClick: open, style: col("14px") },
+          h("span", { style: MONO }, "Category feature · " + (cat ? cat.label : e.category)),
+          h("h3", { style: Object.assign({}, H2, { fontSize: "28px", lineHeight: "34px", margin: 0 }) }, e.title),
+          h("p", { style: Object.assign({}, BODY_LG, { color: "var(--volt-text-400)", maxWidth: "60ch" }) }, e.standfirst),
+          h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", flexWrap: "wrap", marginTop: "4px" } },
+            h("div", { style: { display: "flex", alignItems: "center", gap: "10px" } },
+              h("span", { style: { width: "30px", height: "30px", borderRadius: "50%", background: "rgba(0,202,142,0.16)", color: "var(--volt-emerald)", fontFamily: "var(--font-mono)", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" } }, edInitials(e.author)),
+              h("span", { style: { fontSize: "13px", color: "var(--volt-text-200)" } }, e.author,
+                h("span", { style: Object.assign({}, MONO, { color: "var(--volt-text-600)" }) }, "  ·  " + e.date))),
+            h("span", { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--volt-text-400)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "5px 11px" } },
+              h(Icon, { name: "lock-closed", size: 13, color: "var(--volt-text-400)" }), "unpurchasable"))),
+
+        more.length ? h("div", { style: col("0") },
+          h("p", { style: Object.assign({}, MONO, { textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--volt-text-600)", margin: "0 0 4px" }) }, "More from editorial"),
+          more.map(function (m) {
+            var mc = window.CATEGORIES.find(function (c) { return c.slug === m.category; });
+            return h("button", {
+              key: m.slug, type: "button",
+              onClick: function () { ctx.go({ name: "editorial", slug: m.slug || m.category }); },
+              style: { background: "none", border: "none", borderTop: "1px solid var(--volt-border)", textAlign: "left", font: "inherit", color: "inherit", cursor: "pointer", width: "100%", boxSizing: "border-box", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "16px", padding: "12px 2px" }
+            },
+              h("span", { style: { fontSize: "15px", color: "var(--volt-white)" } }, m.title),
+              h("span", { style: Object.assign({}, MONO, { color: "var(--volt-text-600)", whiteSpace: "nowrap" }) }, m.author + " · " + (mc ? mc.label : m.category)));
+          })) : null));
   }
 
   /* ─────────────────────────────────────────────────────────────────
@@ -864,12 +963,142 @@
   /* No `refine` entry: it moved into the hero. ctx.moduleOrder still lists it,
      and an unmapped key renders nothing — so the five remaining modules keep
      their invariant order and the page is not left with two search fields. */
-  var MOD = { categories: ModCategories, deck: ModDeck, stack: ModStack, editorial: ModEditorial };
+  /* `categories` (the nine-intent map) is intentionally NOT mapped here: the
+     hero chips + search carry "start by intent" at the top, and the full intent
+     browse lives on the discovery page. ModCategories stays defined for that.
+     An unmapped key renders nothing, so the remaining modules keep their order. */
+  var MOD = { deck: ModDeck, stack: ModStack, editorial: ModEditorial };
+
+  /* ─────────────────────────────────────────────────────────────────
+     The Proof — stars vs health. Placed right after the hero so the
+     thesis is argued before anyone browses. Two npm packages with
+     near-identical GitHub stars and opposite maintenance health. No
+     red/green: the living one glows in the accent, the dying one fades
+     to grey — the contrast is the argument. Illustrative figures
+     (fictional packages), per the truthfulness rule.
+     ───────────────────────────────────────────────────────────────── */
+  /* Motion: the house system — injected @keyframes + a class with `both`
+     fill, staggered via animationDelay, reduced-motion opt-out (matches
+     nvChipIn / nvCardIn above). Cards fade up; each health bar grows from
+     scaleX(0) to scaleX(1) — a composited transform, never a width reflow. */
+  (function injectProofCSS() {
+    if (document.getElementById("nv-proof-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-proof-css";
+    s.textContent =
+      /* Grow via transform:scaleX, not width. Animating width relaid out the
+         6px track (and everything after it) on every frame — with the hero's
+         rAF dot-field running at the same time, that layout thrash is what read
+         as slow/glitchy. scaleX is composited: no reflow, one paint. The bar
+         holds its final width (var(--w)) at all times so layout never moves;
+         only the horizontal scale changes, anchored to the left edge. */
+      "@keyframes nvBarFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}"
+      /* Hidden until the section scrolls into view; an IntersectionObserver
+         adds .nv-inview to the wrapper, which is what starts the animations.
+         Bars carry their target as --w so CSS (not inline) owns the width and
+         can hold scaleX(0) pre-reveal. */
+      + ".nv-proof-bar{width:var(--w);transform-origin:left center;will-change:transform}"
+      + ".nv-proof-wrap.nv-js .nv-proof-card{opacity:0}"
+      + ".nv-proof-wrap.nv-js .nv-proof-bar{transform:scaleX(0)}"
+      + ".nv-proof-wrap.nv-inview .nv-proof-card{animation:nvCardIn 560ms cubic-bezier(0.16,1,0.3,1) both}"
+      + ".nv-proof-wrap.nv-inview .nv-proof-bar{transform:scaleX(1);animation:nvBarFill 620ms cubic-bezier(0.16,1,0.3,1) both}"
+      + "@media (prefers-reduced-motion: reduce){.nv-proof-wrap.nv-js .nv-proof-card{opacity:1}.nv-proof-wrap.nv-js .nv-proof-bar{transform:scaleX(1)}.nv-proof-wrap.nv-inview .nv-proof-card,.nv-proof-wrap.nv-inview .nv-proof-bar{animation:none}}";
+    document.head.appendChild(s);
+  })();
+
+  function ProofBars(props) {
+    var alive = props.alive;
+    var accent = alive ? "var(--volt-emerald)" : "var(--volt-text-600)";
+    return h("div", { style: col("10px") },
+      props.rows.map(function (r, i) {
+        return h("div", { key: i, style: { display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "center", gap: "12px" } },
+          h("div", { style: col("6px") },
+            h("span", { style: Object.assign({}, SMALL, { color: "var(--volt-text-400)" }) }, r[0]),
+            h("div", { style: { height: "6px", borderRadius: "999px", background: "var(--volt-surface)", overflow: "hidden" } },
+              h("div", { className: "nv-proof-bar", style: { height: "100%", "--w": r[1] + "%", background: accent, borderRadius: "999px", animationDelay: ((props.delay || 0) + i * 90) + "ms" } }))),
+          h("span", { style: Object.assign({}, MONO, { color: alive ? "var(--volt-text-200)" : "var(--volt-text-600)", minWidth: "8ch", textAlign: "right" }) }, r[2]));
+      }));
+  }
+
+  /* GitHub's own star octicon (star-16) + humanised count, styled like
+     GitHub's muted star counter — so "same stars" reads as the literal
+     GitHub number, not a decorative glyph. */
+  function GhStars(props) {
+    return h("span", {
+      style: { display: "inline-flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap", color: "var(--volt-text-400)", fontSize: "13px", fontWeight: 500, fontVariantNumeric: "tabular-nums" }
+    },
+      h("svg", { width: 16, height: 16, viewBox: "0 0 16 16", "aria-hidden": "true", fill: "currentColor", style: { display: "block", flex: "0 0 auto" } },
+        h("path", { d: "M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" })),
+      h("span", null, props.count));
+  }
+
+  function ProofCard(props) {
+    var p = props.p, alive = props.alive;
+    var cardDelay = (props.index || 0) * 140;
+    return h("div", {
+      className: "nv-proof-card",
+      style: Object.assign(col("18px"), {
+        flex: "1 1 300px", minWidth: 0,
+        background: "var(--volt-surface)",
+        border: "1px solid " + (alive ? "color-mix(in srgb, var(--volt-emerald) 45%, var(--volt-border))" : "var(--volt-border)"),
+        borderRadius: "var(--radius-card, 14px)",
+        padding: "var(--card-padding, 24px)",
+        animationDelay: cardDelay + "ms"
+      })
+    },
+      h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px" } },
+        h("div", { style: { display: "flex", alignItems: "baseline", gap: "8px", minWidth: 0 } },
+          h("span", { style: Object.assign({}, EYEBROW, { color: "var(--volt-text-500)" }) }, p.eco),
+          h("span", { style: { fontWeight: 700, fontSize: "20px", letterSpacing: "-0.01em", color: "var(--volt-white)" } }, p.name)),
+        h(GhStars, { count: p.stars })),
+      h("div", { style: { height: "1px", background: "var(--volt-border)" } }),
+      h(ProofBars, { alive: alive, rows: p.rows, delay: cardDelay + 240 }),
+      h("div", { style: { height: "1px", background: "var(--volt-border)" } }),
+      h("p", { style: Object.assign({}, BODY, { fontWeight: 600, color: alive ? "var(--volt-emerald)" : "var(--volt-text-500)" }) },
+        (alive ? "✓  " : "✕  ") + p.verdict));
+  }
+
+  function ProofSplit(props) {
+    var wrapRef = React.useRef(null);
+    React.useEffect(function () {
+      var el = wrapRef.current; if (!el) return;
+      var done = false, io, timer;
+      function reveal() { if (done) return; done = true; el.classList.add("nv-inview"); if (io) io.disconnect(); clearTimeout(timer); }
+      /* hidden-until-reveal applies ONLY once JS runs (nv-js). No JS → the
+         section renders fully, so it's never dependent on the observer. */
+      el.classList.add("nv-js");
+      /* no observer, or a collapsed/0-height viewport where it could never
+         fire → reveal now rather than leave the section hidden. */
+      if (!("IntersectionObserver" in window) || !window.innerHeight) { reveal(); return; }
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) reveal(); });
+      }, { threshold: 0.2, rootMargin: "0px 0px -10% 0px" });
+      io.observe(el);
+      timer = setTimeout(reveal, 4000); // insurance: never stay hidden
+      return function () { if (io) io.disconnect(); clearTimeout(timer); };
+    }, []);
+    var dying = { eco: "NPM", name: "glimmer-ui", stars: "28.4k",
+      rows: [["Last release", 8, "14 mo ago"], ["Active maintainers", 14, "1 left"], ["Issue response", 11, "p90 · 41d"], ["PR backlog", 9, "growing"]],
+      verdict: "Popular. Unmaintained." };
+    var alive = { eco: "NPM", name: "quiet-forms", stars: "28.1k",
+      rows: [["Last release", 96, "6 days ago"], ["Active maintainers", 82, "5 active"], ["Issue response", 91, "p90 · 1d"], ["PR backlog", 88, "keeping up"]],
+      verdict: "Same reach. Still alive." };
+    return h(Band, { tone: "canvas" },
+      h(BandHead, {
+        eyebrow: "Stars don't tell you this",
+        title: "Same stars. Opposite health.",
+        lead: "Popularity tells you a package was chosen once. Maintenance tells you it will still be there next quarter — notavibe ranks on the second. Below: two npm packages with ~28,000 GitHub stars each."
+      }),
+      h("div", { ref: wrapRef, className: "nv-proof-wrap", style: { display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" } },
+        h(ProofCard, { p: dying, alive: false, index: 0 }),
+        h(ProofCard, { p: alive, alive: true, index: 1 })));
+  }
 
   function NvDiscover(props) {
     var ctx = props.ctx;
     return h("div", null,
       h(Hero, { ctx: ctx }),
+      h(ProofSplit, { ctx: ctx }),
       h(ModShipWeek, { ctx: ctx }),
       ctx.moduleOrder.map(function (key) {
         var M = MOD[key];
