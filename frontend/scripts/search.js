@@ -132,9 +132,18 @@
          the results, and the signal spine drops to its own full-width line under
          each project name. Overrides use !important because the base tracks are
          inline styles. */
+      /* The filter toggle is a mobile-only control: hidden on desktop, where the
+         rail is always open beside the results. */
+      ".nv-filter-toggle{display:none}",
       "@media (max-width: 900px){",
-      ".nv-search-layout{grid-template-columns:1fr!important;gap:28px!important}",
-      ".nv-search-rail{position:static!important;top:auto!important}}",
+      ".nv-search-layout{grid-template-columns:1fr!important;gap:20px!important}",
+      /* Below the rail's breakpoint the filters collapse behind the toggle so the
+         results are the first thing in view, not a full column of facets. The
+         rail reveals only when opened; active constraints still show as chips up
+         in the search band, so a collapsed rail never hides what is applied. */
+      ".nv-filter-toggle{display:flex!important}",
+      ".nv-search-rail{position:static!important;top:auto!important;display:none!important}",
+      ".nv-search-rail.nv-rail-open{display:flex!important}}",
       "@media (max-width: 620px){",
       ".nv-result-row{grid-template-columns:22px minmax(0,1fr)!important;gap:8px 14px!important}",
       ".nv-result-row .nv-spine{grid-column:1 / -1!important;margin-top:2px}",
@@ -435,6 +444,9 @@
     var fac = React.useState({}), facets = fac[0], setFacets = fac[1];
     var bnd = React.useState({}), bands = bnd[0], setBands = bnd[1];
     var srt = React.useState("Relevance"), sort = srt[0], setSort = srt[1];
+    /* Mobile-only: the rail collapses behind a toggle, closed by default so the
+       results lead. Desktop ignores this — CSS keeps the rail open there. */
+    var fto = React.useState(false), filtersOpen = fto[0], setFiltersOpen = fto[1];
 
     var toggle = function (setter, obj, k, v) {
       var cur = obj[k] || [];
@@ -650,8 +662,47 @@
               }, "Clear all"))
           : null));
 
+    /* Toggle that fronts the rail on mobile. Hidden on desktop by CSS. Carries
+       the active-constraint count so a collapsed rail still says how many filters
+       are on, and mirrors the rail's open state for a screen reader. */
+    var filterToggle = h("button", {
+      type: "button",
+      className: "nv-filter-toggle",
+      onClick: function () { setFiltersOpen(!filtersOpen); },
+      "aria-expanded": filtersOpen ? "true" : "false",
+      "aria-controls": "nv-filter-rail",
+      style: {
+        alignItems: "center", justifyContent: "space-between", gap: "10px", width: "100%",
+        border: "1px solid var(--volt-border-hover)", background: "var(--volt-canvas)",
+        color: "var(--volt-white)", borderRadius: "var(--radius-button, 8px)",
+        padding: "13px 16px", fontFamily: "var(--font-sans)", fontWeight: 600,
+        fontSize: "14px", lineHeight: 1.4, cursor: "pointer"
+      }
+    },
+      h("span", { style: { display: "flex", alignItems: "center", gap: "9px" } },
+        (filtersOpen ? "Hide filters" : "Filters"),
+        constraintCount
+          ? h("span", {
+              style: {
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                minWidth: "20px", height: "20px", padding: "0 6px", borderRadius: "9999px",
+                background: "var(--primary)", color: "var(--on-primary)",
+                fontSize: "12px", fontWeight: 600, fontVariantNumeric: "tabular-nums"
+              }
+            }, constraintCount)
+          : null),
+      h("span", {
+        "aria-hidden": "true",
+        style: {
+          fontSize: "13px", color: "var(--volt-text-500)",
+          transform: filtersOpen ? "rotate(90deg)" : "none",
+          transition: "transform 240ms " + EXPO
+        }
+      }, "›"));
+
     var rail = h("aside", {
-      className: "nv-search-rail",
+      id: "nv-filter-rail",
+      className: "nv-search-rail" + (filtersOpen ? " nv-rail-open" : ""),
       style: { display: "flex", flexDirection: "column", gap: "22px", position: "sticky", top: "96px", alignSelf: "start" }
     },
       BAND_FILTERS.map(function (b) {
@@ -777,6 +828,7 @@
           gap: "56px", alignItems: "start"
         }
       },
+        filterToggle,
         rail,
         h("main", { style: { display: "flex", flexDirection: "column", gap: "0" } },
           /* The count is announced, not just drawn — a filter change that only
