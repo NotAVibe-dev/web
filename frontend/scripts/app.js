@@ -1077,24 +1077,39 @@
      desktop switcher lives in the sidebar footer, which is hidden on the phone). */
   function BackerMore(props) {
     var ctx = props.ctx;
-    var SectionTitle = W("SectionTitle"), Note = W("Note");
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px" };
     var rows = [
       ["Activity", "Your outcomes — nominations, claims, saves", "backer.activity"],
       ["Curation chat", "Build a list by describing what you want", "backer.chat"],
       ["Connected accounts", "Sign-in providers, linking, and account deletion", "account.identities"],
       ["Settings", "Account and notice channels", "backer.settings"]
     ];
-    return h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-lg)", padding: "var(--space-lg)" } },
-      rows.map(function (r) {
-        return h("button", { key: r[2], onClick: function () { ctx.go({ name: r[2] }); },
-          style: { textAlign: "left", cursor: "pointer", background: "var(--surface-canvas)", border: "var(--border-level-1)", borderRadius: "var(--radius-sm)", padding: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "2px" } },
-          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r[0]),
-          h("span", { style: { font: "var(--type-caption)", color: "var(--text-secondary)" } }, r[1]));
-      }),
-      ctx.signedIn ? h("div", { style: { borderTop: "var(--border-level-1)", paddingTop: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
-        h(SectionTitle, null, "Role"),
-        h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "maintainer.dashboard" }); } }, "Switch to maintainer"),
-        h(Note, null, "Shown because this account holds a maintainer grant — a Backer who has claimed a page. Single-role backers see no switcher; last-used context returns on login.")) : null);
+    /* Same "card that navigates" pattern as My lists — card system, warms to
+       emerald on hover, arrow advances. Was on the pre-card-system tokens. */
+    var links = rows.map(function (r) {
+      return h("button", { key: r[2], className: "nv-listcard", type: "button", onClick: function () { ctx.go({ name: r[2] }); },
+        style: Object.assign({}, CARD, { padding: "var(--space-lg) var(--space-2xl)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)", cursor: "pointer", textAlign: "left", width: "100%", WebkitAppearance: "none", appearance: "none" }) },
+        h("span", { style: col("2px", { minWidth: 0 }) },
+          h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, r[0]),
+          h("span", { style: caption }, r[1])),
+        h("span", { className: "nv-arrow", style: { color: "var(--volt-text-500)", font: "var(--type-body-lg-strong)" } }, "→"));
+    });
+
+    var role = ctx.signedIn ? h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-2xl)", display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
+      h("span", { style: eyebrow }, "Role"),
+      h("div", null, h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "maintainer.dashboard" }); } }, "Switch to maintainer")),
+      h(Note, null, "Shown because this account holds a maintainer grant — a Backer who has claimed a page. Single-role backers see no switcher; last-used context returns on login.")) : null;
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Backer · Raj"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)" } }, "More")),
+      h("div", { style: col("var(--space-md)") }, links),
+      role);
   }
 
   /* ── My stack — scan results (overrides the compiled ScanResults) ──────────
@@ -1197,7 +1212,7 @@
         h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Run the scan on the server"),
         h(Note, null, "The manifest and its unmatched entries are not retained beyond this session unless you save them. Matched project references persist only as an aggregate count with no scan or account referent.")));
 
-    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    var wrap = { maxWidth: "760px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
     return h("div", { style: wrap },
       h("header", { style: col("var(--space-sm)") },
         h("span", { style: eyebrow }, "My stack"),
@@ -1367,7 +1382,7 @@
       h("header", { style: col("var(--space-sm)") },
         h("span", { style: eyebrow }, "My week · activity"),
         h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "Activity"),
-        h("span", { style: caption }, "The outcomes of what you nominated, listed, and registered interest in.")),
+        h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, "The outcomes of what you nominated, listed, and registered interest in.")),
       seg,
       h("section", { style: Object.assign({}, CARD, col("var(--space-sm)")) }, timeline(items)),
       h(Note, null, "Deadline-ascending where a deadline exists; overlaps collapsed; acted and expired items move to Recent outcomes for 14 days. Where the spec says “notified” without naming a channel, the notice is in-app."));
@@ -1532,7 +1547,7 @@
       h("div", { style: { flex: 1 } }, h(TextInput, { label: "Message", value: input, onChange: function (e) { setInput(e.target.value); }, placeholder: "What are you trying to replace or find?" })),
       h(Button, { variant: "primary" }, "Send"));
 
-    var wrap = { maxWidth: "760px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
     return h("div", { style: wrap },
       h("header", { style: col("var(--space-sm)") },
         h("span", { style: eyebrow }, "Curation chat"),
