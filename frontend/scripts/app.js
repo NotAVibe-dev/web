@@ -100,6 +100,11 @@
       "@keyframes nv-draft-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
       ".nv-chip{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1),color 200ms cubic-bezier(0.16,1,0.3,1)}",
       ".nv-chip:hover{border-color:var(--volt-emerald)!important;color:var(--volt-emerald)!important}",
+      /* Settings consent toggle — the on-state emerald lives in a class, never in
+         a button's inline style, so the button[style*=emerald] escape-hatch can't
+         hijack it into a white pill. */
+      ".nv-toggle{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1),background-color 200ms cubic-bezier(0.16,1,0.3,1),color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-toggle.on{border-color:var(--volt-emerald)!important;background:rgba(0,202,142,0.14)!important;color:var(--volt-emerald)!important}",
       "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta,.nv-draft{transition:none;animation:none}}"
     ].join("");
     document.head.appendChild(s);
@@ -286,38 +291,60 @@
 
   /* ── Backer settings ──────────────────────────────────────────── */
 
-  function StreamRow(props) {
-    return h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-lg)", padding: "var(--space-lg) 0", borderTop: "var(--border-level-1)" } },
-      h("div", { style: col("4px", { maxWidth: "52ch" }) },
-        h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, props.title),
-        h("span", { style: { font: "var(--type-caption)", color: "var(--text-secondary)", textWrap: "pretty" } }, props.body)),
-      props.locked
-        ? h(Badge, { mono: true, tone: "outline" }, "Never unsubscribable")
-        : h("button", {
-            onClick: props.onToggle,
-            style: { minWidth: "96px", minHeight: "32px", cursor: "pointer", borderRadius: "var(--radius-xs)", border: "1px solid var(--border-input)", background: props.on ? "var(--primary)" : "var(--surface-canvas)", color: props.on ? "var(--on-primary)" : "var(--text-body)", font: "var(--type-mono-button)", letterSpacing: "var(--ls-mono-button)", textTransform: "uppercase" }
-          }, props.on ? "On" : "Off"));
-  }
-
+  /* ── Backer settings (card system) ────────────────────────────────────────
+     Brought onto the same 680 reading column + card idiom as the rest of the
+     signed-in backer set. Was on the older pageHeader / SectionTitle / StreamRow
+     chrome. The consent toggles keep On/Off semantics (honest affordance) but the
+     on-state emerald lives in the .nv-toggle class, never inline (footgun-safe). */
   function BackerSettings(props) {
     var ctx = props.ctx;
-    var Note = W("Note"), Held = W("Held"), SectionTitle = W("SectionTitle");
+    var Note = W("Note"), Held = W("Held");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var SCARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
     var s = React.useState(false), digest = s[0], setDigest = s[1];
     var s2 = React.useState(true), updates = s2[0], setUpdates = s2[1];
-    return h(Container, { style: Object.assign({}, PAGE, col("var(--space-3xl)"), { maxWidth: "820px" }) },
-      pageHeader("Settings", "Account and notice channels", "One account, both roles. Nothing here processes money, because nothing in this version does."),
-      h("div", { style: col("0") },
-        h(SectionTitle, null, "Email streams by consent basis"),
-        h(StreamRow, { title: "(a) Transactional and obligation", body: "Verification lapsed, verification restored, page retired, claim revoked, acknowledgements. Delivery-tracked with retry; on persistent failure the obligation surfaces as an in-app pending action.", locked: true }),
-        h(StreamRow, { title: "(b) Project updates", body: "Claim outcomes and terminal state changes on projects in your lists.", on: updates, onToggle: function () { setUpdates(!updates); } }),
-        h(StreamRow, { title: "(c) Platform — the discovery digest", body: "Your Deck as an email. Off at signup; this is the explicit opt-in, never a pre-ticked box.", on: digest, onToggle: function () { setDigest(!digest); } })),
-      digest ? h(Note, null, "Opted in. The digest is this version’s only return-trigger email — and retention is the primary KPI.") : h(Held, { refs: "§9.10" }, "Opted out. A discovery product whose sole return-trigger is off will not retain; the opt-in moment in onboarding is where this is won or lost."),
-      h("div", { style: col("var(--space-md)") },
-        h(SectionTitle, null, "Data"),
-        h("p", { style: BODY }, "Scan manifests and their unmatched entries are not retained beyond the session unless you save them. Matched project references persist as an aggregate count with no scan or account referent."),
-        h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap" } },
-          h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "methodology" }); } }, "Read the data-handling section"),
-          h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "backer.onboarding" }); } }, "Redo the preference profile"))),
+
+    var streams = [
+      { title: "(a) Transactional and obligation", body: "Verification lapsed, verification restored, page retired, claim revoked, acknowledgements. Delivery-tracked with retry; on persistent failure the obligation surfaces as an in-app pending action.", locked: true },
+      { title: "(b) Project updates", body: "Claim outcomes and terminal state changes on projects in your lists.", on: updates, toggle: function () { setUpdates(!updates); } },
+      { title: "(c) Platform — the discovery digest", body: "Your Deck as an email. Off at signup; this is the explicit opt-in, never a pre-ticked box.", on: digest, toggle: function () { setDigest(!digest); } }
+    ];
+    var streamRow = function (r, i) {
+      return h("div", { key: i, style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-lg)", padding: "var(--space-lg) 0", borderTop: i === 0 ? "none" : "1px solid var(--volt-border)" } },
+        h("div", { style: col("4px", { maxWidth: "52ch", minWidth: 0 }) },
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r.title),
+          h("span", { style: Object.assign({ textWrap: "pretty" }, caption) }, r.body)),
+        r.locked
+          ? h(Badge, { mono: true, tone: "outline" }, "Never unsubscribable")
+          : h("button", { type: "button", className: r.on ? "nv-toggle on" : "nv-toggle", onClick: r.toggle,
+              style: { WebkitAppearance: "none", appearance: "none", minWidth: "88px", minHeight: "34px", cursor: "pointer", borderRadius: "999px", border: "1px solid var(--volt-border)", background: "var(--volt-void)", color: "var(--text-secondary)", font: "var(--type-mono-button)", letterSpacing: "var(--ls-mono-button)", textTransform: "uppercase" } },
+              r.on ? "On" : "Off"));
+    };
+
+    var streamsCard = h("section", { style: Object.assign({}, SCARD, col("var(--space-xs)")) },
+      h("span", { style: eyebrow }, "Email streams · by consent basis"),
+      h("div", null, streams.map(streamRow)),
+      h("div", { style: { paddingTop: "var(--space-md)" } },
+        digest
+          ? h(Note, null, "Opted in. The digest is this version’s only return-trigger email — and retention is the primary KPI.")
+          : h(Held, { refs: "§9.10" }, "Opted out. A discovery product whose sole return-trigger is off will not retain; the opt-in moment in onboarding is where this is won or lost.")));
+
+    var dataCard = h("section", { style: Object.assign({}, SCARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Data"),
+      h("p", { style: BODY }, "Scan manifests and their unmatched entries are not retained beyond the session unless you save them. Matched project references persist as an aggregate count with no scan or account referent."),
+      h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap" } },
+        h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "methodology" }); } }, "Read the data-handling section"),
+        h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "backer.onboarding" }); } }, "Redo the preference profile")));
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Backer · Raj"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "Settings"),
+        h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, "One account, both roles. Nothing here processes money, because nothing in this version does.")),
+      streamsCard,
+      dataCard,
       h(Note, null, "No billing, no receipts, no subscriptions surface — pay.notavibe.dev does not exist in this version."));
   }
 
@@ -924,7 +951,7 @@
        surfaces render inside the app shell (sidebar persists) rather than swapping
        to the public marketing shell. Logged-out visitors still get the public
        front door. (Deliberate deviation from §572's top-nav — see ADR.) */
-    var backerDiscovery = ctx.signedIn && /^(discover|category|search|project)$/.test(name);
+    var backerDiscovery = ctx.signedIn && !ctx.route.full && /^(discover|category|search|project)$/.test(name);
     var isApp = APP_ROUTES.test(name) || backerDiscovery;
 
     if (ctx.mobile) {
