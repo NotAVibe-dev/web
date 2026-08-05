@@ -1,28 +1,30 @@
 name: Deploy to GitHub Pages
 
-# One repo, one domain (notavibe.dev). Two sites live here:
-#   landing : the full Astro site at the repo root      -> built to ./dist
-#   splash  : the static placeholder in ./splash          -> served as-is
+# One repo, one domain (notavibe.dev). Three sites live here:
+#   frontend : the static VoltAgent/HashiCorp prototype in ./frontend -> served as-is
+#   landing  : the full Astro site at the repo root      -> built to ./dist
+#   splash   : the static placeholder in ./splash          -> served as-is
 #
 # Deploys are manual for now: run this workflow and choose which site to
-# publish. It defaults to `splash` (the current holding page).
+# publish. It defaults to `frontend` (the current live site).
 #
-# EVENTUALLY, when the splash is retired and only the landing remains:
-#   1. uncomment the `push:` trigger below (pushes to main auto-deploy landing),
-#   2. then delete ./splash and, if you like, the workflow_dispatch input.
-# The build job already resolves a `push` event to the landing site, so
-# enabling auto-deploy is just uncommenting the trigger.
+# EVENTUALLY, when only one site remains:
+#   1. uncomment the `push:` trigger below (pushes to main auto-deploy it),
+#   2. then delete the retired sites and, if you like, the dispatch input.
+# The build job resolves a `push` event to the frontend site, so enabling
+# auto-deploy is just uncommenting the trigger.
 on:
   workflow_dispatch:
     inputs:
       site:
-        description: "Which site to deploy? (defaults to splash)"
+        description: "Which site to deploy? (defaults to frontend)"
         required: true
         type: choice
-        default: splash
+        default: frontend
         options:
-          - splash
+          - frontend
           - landing
+          - splash
   # push:
   #   branches: [main]
 
@@ -45,18 +47,25 @@ jobs:
         id: pick
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
-            SITE=landing            # auto-deploy target once the push trigger is enabled
+            SITE=frontend           # auto-deploy target once the push trigger is enabled
           else
             SITE="${{ inputs.site }}"
           fi
           case "$SITE" in
-            landing|splash) ;;
-            *) echo "::error::Unexpected site '$SITE' (expected landing or splash)."; exit 1 ;;
+            frontend|landing|splash) ;;
+            *) echo "::error::Unexpected site '$SITE' (expected frontend, landing or splash)."; exit 1 ;;
           esac
           echo "site=$SITE" >> "$GITHUB_OUTPUT"
           echo "Deploying **$SITE** to notavibe.dev." >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/configure-pages@v6
+
+      # --- frontend: static prototype (no build) ---
+      - name: Upload frontend artifact
+        if: steps.pick.outputs.site == 'frontend'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./frontend
 
       # --- landing: build the Astro site (repo root) -> ./dist ---
       - name: Set up Node
