@@ -79,6 +79,9 @@
       ".nv-target:hover{border-color:var(--volt-text-500)}",
       ".nv-target.on{border-color:var(--volt-emerald)!important}",
       ".nv-tag.pub{border-color:var(--volt-emerald)!important;color:var(--volt-emerald)!important}",
+      ".nv-listcard{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-listcard:hover{border-color:var(--volt-emerald)}",
+      ".nv-listcard:hover .nv-arrow{transform:translateX(3px)}",
       ".nv-deck-cta{transition:border-color 260ms cubic-bezier(0.16,1,0.3,1),background-color 260ms cubic-bezier(0.16,1,0.3,1)}",
       ".nv-deck-cta:hover{border-color:var(--volt-emerald);background-color:var(--volt-canvas,var(--volt-surface))}",
       ".nv-arrow{display:inline-block;transition:transform 260ms cubic-bezier(0.16,1,0.3,1)}",
@@ -868,6 +871,8 @@
        hoisted function declarations, so the reference is safe before definition. */
     if (name === "backer.dashboard") return BackerHome;
     if (name === "backer.more") return BackerMore;
+    if (name === "backer.lists") return MyListsV2;
+    if (name === "backer.activity") return BackerActivityV2;
     if (name === "stack.connect") return StackConnectV2;
     if (name === "stack.results") return ScanResultsV2;
     if (name === "signin") return SignInV2;
@@ -1173,6 +1178,107 @@
       h("div", null, h(Button, { variant: "primary", size: "lg", disabled: !consent, onClick: run }, "Scan")));
   }
 
+  /* ── My lists (overrides compiled MyLists) ────────────────────────────────
+     List index in the card system. Each list is a clickable card (border warms
+     to emerald on hover) → its detail. New-list flow preserved; designed empty
+     state; the "not a review" note kept. */
+  function MyListsV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var metaMono = { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", textTransform: "uppercase", color: "var(--text-secondary)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px" };
+    var lists = ctx.lists || [];
+    var cs = React.useState(false), creating = cs[0], setCreating = cs[1];
+    var ts = React.useState(""), title = ts[0], setTitle = ts[1];
+
+    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-lg)", flexWrap: "wrap" } },
+      h("div", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Backer · Raj"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)" } }, "My lists")),
+      h(Button, { variant: "primary", onClick: function () { setCreating(true); } }, "New list"));
+
+    var form = creating ? h("form", {
+      onSubmit: function (e) { e.preventDefault(); if (title.trim()) { ctx.createList(title.trim()); setTitle(""); setCreating(false); } },
+      style: Object.assign({}, CARD, { padding: "var(--space-lg) var(--space-2xl)", display: "flex", gap: "var(--space-md)", alignItems: "flex-end", flexWrap: "wrap" })
+    },
+      h("div", { style: { flex: "1 1 240px" } }, h(TextInput, { label: "Title", value: title, onChange: function (e) { setTitle(e.target.value); }, placeholder: "Boring infrastructure I would miss" })),
+      h(Button, { variant: "primary" }, "Create"),
+      h(Button, { variant: "ghost", onClick: function () { setCreating(false); } }, "Cancel")) : null;
+
+    var rows = lists.map(function (l) {
+      return h("button", { key: l.id, className: "nv-listcard", type: "button", onClick: function () { ctx.go({ name: "backer.list", id: l.id }); },
+        style: Object.assign({}, CARD, { padding: "var(--space-lg) var(--space-2xl)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)", cursor: "pointer", textAlign: "left", width: "100%", WebkitAppearance: "none", appearance: "none" }) },
+        h("span", { style: col("6px", { minWidth: 0 }) },
+          h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, l.title),
+          h("span", { style: metaMono }, (l.visibility || "private") + " · " + l.items.length + (l.items.length === 1 ? " item · " : " items · ") + window.maskNumber(l.saves) + " saves")),
+        h("span", { className: "nv-arrow", style: { color: "var(--volt-text-500)", font: "var(--type-body-lg-strong)" } }, "→"));
+    });
+
+    var body = lists.length
+      ? h("div", { style: col("var(--space-md)") }, rows)
+      : h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-3xl) var(--space-2xl)", display: "flex", flexDirection: "column", gap: "6px", alignItems: "center", textAlign: "center" } },
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "No lists yet"),
+          h("span", { style: caption }, "Save a project from Discover or a scan, or start one here."));
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap }, header, form, body, h(Note, null, "No ratings, no scores — a curated list is not a review."));
+  }
+
+  /* ── Activity (overrides compiled BackerActivity) ─────────────────────────
+     The full log behind Home's "See all activity". Same timeline treatment as
+     Home for continuity. Open items (badge) vs Recent outcomes (14-day archive),
+     per §9.6, with the designed empty state each tab requires. */
+  function BackerActivityV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+
+    var acts = (window.ACTIVITY || []).filter(function (a) { return a.when !== "—"; });
+    var daysOf = function (a) { var m = /(\d+)\s*day/.exec(a.when || ""); return m ? +m[1] : 999; };
+    var open = acts.filter(function (a) { return daysOf(a) <= 7; });
+    var recent = acts.filter(function (a) { return daysOf(a) > 7; });
+    var st = React.useState("open"), tab = st[0], setTab = st[1];
+    var items = tab === "open" ? open : recent;
+
+    var timeline = function (list) {
+      if (!list.length) return h("div", { style: { padding: "var(--space-2xl) 0", display: "flex", flexDirection: "column", gap: "4px", alignItems: "center", textAlign: "center" } },
+        h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, tab === "open" ? "Nothing needs you right now" : "No recent outcomes"),
+        h("span", { style: caption }, tab === "open" ? "Outcomes appear here as your nominations, lists and interests resolve." : "Acted and expired items rest here for 14 days, then clear."));
+      return h("div", { style: { position: "relative" } },
+        h("span", { "aria-hidden": "true", style: { position: "absolute", left: "4px", top: "16px", bottom: "16px", width: "1px", background: "var(--volt-border)" } }),
+        list.map(function (a, i) {
+          var neg = a.valence === "Negative";
+          return h("div", { key: i, style: { position: "relative", display: "flex", gap: "var(--space-lg)", alignItems: "flex-start", padding: "var(--space-md) 0" } },
+            h("span", { style: { flex: "0 0 9px", height: "9px", marginTop: "5px", borderRadius: "50%", background: neg ? "var(--volt-text-500)" : "var(--volt-emerald)", boxShadow: "0 0 0 4px var(--volt-surface)" } }),
+            h("div", { style: col("3px", { minWidth: 0 }) },
+              h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", textWrap: "pretty" } }, a.text),
+              h("span", { style: caption }, a.type + " · " + a.when)));
+        }));
+    };
+
+    var seg = h("div", { style: { display: "inline-flex", gap: "4px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "4px", width: "fit-content" } },
+      [["open", "Open"], ["recent", "Recent outcomes"]].map(function (t) {
+        var on = tab === t[0];
+        return h("button", { key: t[0], type: "button", onClick: function () { setTab(t[0]); },
+          style: { WebkitAppearance: "none", appearance: "none", cursor: "pointer", border: "none", borderRadius: "999px", padding: "var(--space-sm) var(--space-lg)", background: on ? "var(--volt-surface)" : "transparent", color: on ? "var(--text-body)" : "var(--text-secondary)", font: on ? "var(--type-body-md-strong)" : "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } },
+          t[1] + (t[0] === "open" && open.length ? "  " + open.length : ""));
+      }));
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "My week · activity"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "Activity"),
+        h("span", { style: caption }, "The outcomes of what you nominated, listed, and registered interest in.")),
+      seg,
+      h("section", { style: Object.assign({}, CARD, col("var(--space-sm)")) }, timeline(items)),
+      h(Note, null, "Deadline-ascending where a deadline exists; overlaps collapsed; acted and expired items move to Recent outcomes for 14 days. Where the spec says “notified” without naming a channel, the notice is in-app."));
+  }
+
   function ScanResultsV2(props) {
     var ctx = props.ctx;
     var scan = ctx.scan;
@@ -1266,6 +1372,8 @@
     BackerSettings: BackerSettings,
     BackerDashboard: BackerHome,
     BackerMore: BackerMore,
+    MyLists: MyListsV2,
+    BackerActivity: BackerActivityV2,
     ScanResults: ScanResultsV2,
     StackConnect: StackConnectV2
   });
