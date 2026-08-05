@@ -1130,13 +1130,18 @@
       h("div", null, h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "maintainer.dashboard" }); } }, "Switch to maintainer")),
       h(Note, null, "Shown because this account holds a maintainer grant — a Backer who has claimed a page. Single-role backers see no switcher; last-used context returns on login.")) : null;
 
+    /* Sign out control (from #23), in the card idiom rather than the pre-card tokens. */
+    var signout = ctx.signedIn ? h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-2xl)" } },
+      h(Button, { variant: "outline", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null;
+
     var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
     return h("div", { style: wrap },
       h("header", { style: col("var(--space-sm)") },
         h("span", { style: eyebrow }, "Backer · Raj"),
         h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)" } }, "More")),
       h("div", { style: col("var(--space-md)") }, links),
-      role);
+      role,
+      signout);
   }
 
   /* ── My stack — scan results (overrides the compiled ScanResults) ──────────
