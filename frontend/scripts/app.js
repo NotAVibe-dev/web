@@ -770,6 +770,94 @@
 
   /* ── router ───────────────────────────────────────────────────── */
 
+  /* ── Auth surfaces (grill-with-docs 2026-08-05 model) ─────────────────────
+     Multi-provider sign-in + account-identity management, hand-authored here and
+     returned from screenFor by LOCAL reference (the DS bundle clobbers window
+     copies — same reason as BackerHome). Provider marks are the official
+     simple-icons paths, filled currentColor so they take the button's own colour. */
+  var NV_GH = "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12";
+  var NV_GL = "m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z";
+  var NV_BB = "M.778 1.213a.768.768 0 00-.768.892l3.263 19.81c.084.5.515.868 1.022.873H19.95a.772.772 0 00.77-.646l3.27-20.03a.768.768 0 00-.768-.891zM14.52 15.53H9.522L8.17 8.466h7.561z";
+  function brandMark(d) {
+    return h("svg", { viewBox: "0 0 24 24", width: 16, height: 16, "aria-hidden": "true", style: { display: "block", flex: "0 0 auto" } },
+      h("path", { fill: "currentColor", d: d }));
+  }
+  var PROVIDER_LABEL = { github: "GitHub", gitlab: "GitLab", bitbucket: "Bitbucket" };
+  var PROVIDER_MARK = { github: NV_GH, gitlab: NV_GL, bitbucket: NV_BB };
+
+  function SignInV2(props) {
+    var ctx = props.ctx, StateShell = W("StateShell"), Note = W("Note");
+    var next = ctx.route.next || { name: "discover" };
+    var labels = { "action.save": "save this project to a list", "action.interest": "register interest",
+      "action.nominate": "nominate this project", "claim.start": "claim this page", "stack.connect": "scan your stack" };
+    var scoped = labels[next.name];
+    var providers = ["github", "gitlab", "bitbucket"];
+    return h(StateShell, { ctx: ctx, eyebrow: "Sign in", title: scoped ? "Sign in to " + scoped : "Sign in to notavibe",
+      back: next.name === "signin" ? { name: "discover" } : next },
+      h("p", { style: { margin: 0, font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)" } },
+        scoped ? "You were doing something specific, so this is scoped to that action — finishing it brings you straight back."
+               : "One account — discover, scan and claim from a single sign-in."),
+      h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
+        providers.map(function (p) {
+          return h(Button, { key: p, variant: "outline", size: "lg", fullWidth: true, icon: brandMark(PROVIDER_MARK[p]),
+            onClick: function () { ctx.signIn(); ctx.go(next); } }, "Continue with " + PROVIDER_LABEL[p]);
+        })),
+      h(Note, null, "Sign in with any provider — connect the others later from your account. Scanning needs GitHub or GitLab; claiming a page needs GitHub."));
+  }
+
+  function AccountIdentities(props) {
+    var ctx = props.ctx, StateShell = W("StateShell"), Note = W("Note"), SectionTitle = W("SectionTitle");
+    var ids = [
+      { prov: "github", handle: "@maghraby", signin: true, blocked: "Resolve or retire your claimed pages first — claims re-verify against GitHub." },
+      { prov: "gitlab", handle: "@maghraby-gl", signin: false, blocked: "" }
+    ];
+    return h(StateShell, { ctx: ctx, eyebrow: "Account", title: "Connected accounts", back: { name: "backer.dashboard" } },
+      h("p", { style: { margin: 0, font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)" } },
+        "Sign in with any of these. Connect more to scan your stack (GitHub or GitLab) or claim a page (GitHub)."),
+      h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
+        ids.map(function (id) {
+          return h("div", { key: id.prov, style: { border: "var(--border-level-1)", borderRadius: "var(--radius-sm)", padding: "var(--space-lg)", background: "var(--surface-canvas)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-lg)", flexWrap: "wrap" } },
+            h("div", { style: { display: "flex", flexDirection: "column", gap: "4px" } },
+              h("span", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)" } },
+                brandMark(PROVIDER_MARK[id.prov]),
+                h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, PROVIDER_LABEL[id.prov]),
+                id.signin ? h(Badge, { tone: "outline", mono: true }, "sign-in") : null),
+              h("span", { style: { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--text-secondary)" } }, id.handle),
+              id.blocked ? h("span", { style: { font: "var(--type-caption)", color: "var(--text-secondary)", maxWidth: "46ch" } }, id.blocked) : null),
+            h(Button, { variant: "outline", disabled: !!id.blocked }, "Disconnect"));
+        })),
+      h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+        h(SectionTitle, null, "Connect another account"),
+        h(Button, { variant: "outline", fullWidth: true, icon: brandMark(NV_BB), onClick: function () { ctx.signIn(); } }, "Connect Bitbucket")),
+      h("div", { style: { borderTop: "var(--border-level-1)", paddingTop: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+        h(SectionTitle, null, "Danger zone"),
+        h(Note, null, "Deleting your account releases your claimed pages (they revert to generated-unclaimed, staying public and claimable) and erases your lists, stacks and registered interest."),
+        h("button", { type: "button", onClick: function () { ctx.go({ name: "account.delete" }); },
+          style: { alignSelf: "flex-start", cursor: "pointer", background: "none", border: "1px solid var(--status-error, #ef4444)", color: "var(--status-error, #ef4444)", borderRadius: "var(--radius-sm)", padding: "var(--space-sm) var(--space-lg)", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } },
+          "Delete your account")));
+  }
+
+  function AccountDelete(props) {
+    var ctx = props.ctx, StateShell = W("StateShell"), Note = W("Note");
+    var st = React.useState(false), reauthed = st[0], setReauthed = st[1];
+    return h(StateShell, { ctx: ctx, eyebrow: "Danger zone", title: "Delete your account", back: { name: "account.identities" } },
+      h("div", { style: { border: "1px solid var(--status-error, #ef4444)", borderRadius: "var(--radius-sm)", padding: "var(--space-lg)", background: "rgba(239,68,68,0.08)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+        h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", color: "var(--status-error, #ef4444)" } }, "This permanently deletes your account"),
+        h("ul", { style: { margin: 0, paddingLeft: "var(--space-lg)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", display: "flex", flexDirection: "column", gap: "4px" } },
+          h("li", null, "Your 2 claimed pages revert to generated-unclaimed (they stay public and claimable)."),
+          h("li", null, "Your lists, stack pages and registered interest are erased."),
+          h("li", null, "This cannot be undone."))),
+      reauthed
+        ? h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
+            h(TextInput, { label: "Type your username to confirm", name: "login", placeholder: "maghraby" }),
+            h("button", { type: "button", onClick: function () { if (ctx.signOut) ctx.signOut(); ctx.go({ name: "discover" }); },
+              style: { alignSelf: "flex-start", cursor: "pointer", background: "var(--status-error, #ef4444)", border: "none", color: "#fff", borderRadius: "var(--radius-sm)", padding: "var(--space-sm) var(--space-lg)", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } },
+              "Permanently delete my account"))
+        : h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+            h(Note, null, "For your security, re-authenticate before deleting."),
+            h(Button, { variant: "outline", onClick: function () { setReauthed(true); } }, "Re-authenticate to continue")));
+  }
+
   function screenFor(name) {
     var NV = { discover: "NvDiscover", project: "NvProjectPage", category: "NvCategory", search: "NvSearch" };
     if (NV[name] && window[NV[name]]) return window[NV[name]];
@@ -782,6 +870,9 @@
     if (name === "backer.more") return BackerMore;
     if (name === "stack.connect") return StackConnectV2;
     if (name === "stack.results") return ScanResultsV2;
+    if (name === "signin") return SignInV2;
+    if (name === "account.identities") return AccountIdentities;
+    if (name === "account.delete") return AccountDelete;
     var T = {
       discover: "Discover", category: "CategoryView", search: "SearchResults", project: "ProjectPage",
       methodology: "MethodologyPage", "list.public": "PublicListPage", "stack.public": "PublicStackPage",
@@ -969,6 +1060,7 @@
     var rows = [
       ["Activity", "Your outcomes — nominations, claims, saves", "backer.activity"],
       ["Curation chat", "Build a list by describing what you want", "backer.chat"],
+      ["Connected accounts", "Sign-in providers, linking, and account deletion", "account.identities"],
       ["Settings", "Account and notice channels", "backer.settings"]
     ];
     return h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-lg)", padding: "var(--space-lg)" } },
