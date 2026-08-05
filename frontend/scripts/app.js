@@ -79,12 +79,28 @@
       ".nv-target:hover{border-color:var(--volt-text-500)}",
       ".nv-target.on{border-color:var(--volt-emerald)!important}",
       ".nv-tag.pub{border-color:var(--volt-emerald)!important;color:var(--volt-emerald)!important}",
+      ".nv-listcard{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-listcard:hover{border-color:var(--volt-emerald)}",
+      ".nv-listcard:hover .nv-arrow{transform:translateX(3px)}",
       ".nv-deck-cta{transition:border-color 260ms cubic-bezier(0.16,1,0.3,1),background-color 260ms cubic-bezier(0.16,1,0.3,1)}",
       ".nv-deck-cta:hover{border-color:var(--volt-emerald);background-color:var(--volt-canvas,var(--volt-surface))}",
       ".nv-arrow{display:inline-block;transition:transform 260ms cubic-bezier(0.16,1,0.3,1)}",
       ".nv-deck-cta:hover .nv-arrow,.nv-home-seeall:hover .nv-arrow{transform:translateX(4px)}",
       ".nv-deck-cta:focus-visible,.nv-home-seeall:focus-visible{outline:2px solid var(--volt-emerald);outline-offset:3px;border-radius:var(--radius-sm)}",
-      "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta{transition:none}}"
+      /* Curation chat — the transcript is chrome, the draft list is the payload.
+         User turns get an emerald-tinted bubble; the curator answers in a plain
+         grounded bubble (no AI house style, per DEC-0031); the draft-list card
+         carries the emerald spine that marks the primary object on the screen.
+         Emerald tints use rgba literals, never the token in a button style. */
+      ".nv-chat-you{align-self:flex-end;max-width:82%;background:rgba(0,202,142,0.12);",
+      "border:1px solid rgba(0,202,142,0.34);border-radius:14px 14px 4px 14px;padding:var(--space-md) var(--space-lg)}",
+      ".nv-chat-curator{align-self:flex-start;max-width:82%;background:var(--volt-void);",
+      "border:1px solid var(--volt-border);border-radius:14px 14px 14px 4px;padding:var(--space-md) var(--space-lg)}",
+      ".nv-draft{position:relative;overflow:hidden;animation:nv-draft-in 420ms cubic-bezier(0.16,1,0.3,1) both}",
+      "@keyframes nv-draft-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
+      ".nv-chip{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1),color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-chip:hover{border-color:var(--volt-emerald)!important;color:var(--volt-emerald)!important}",
+      "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta,.nv-draft{transition:none;animation:none}}"
     ].join("");
     document.head.appendChild(s);
   })();
@@ -868,8 +884,13 @@
        hoisted function declarations, so the reference is safe before definition. */
     if (name === "backer.dashboard") return BackerHome;
     if (name === "backer.more") return BackerMore;
+    if (name === "backer.lists") return MyListsV2;
+    if (name === "backer.list") return ListDetailV2;
+    if (name === "list.public") return PublicListPageV2;
+    if (name === "backer.activity") return BackerActivityV2;
     if (name === "stack.connect") return StackConnectV2;
     if (name === "stack.results") return ScanResultsV2;
+    if (name === "backer.chat") return CurationChatV2;
     if (name === "signin") return SignInV2;
     if (name === "account.identities") return AccountIdentities;
     if (name === "account.delete") return AccountDelete;
@@ -1103,6 +1124,21 @@
     { id: "gl-pub", provider: "GitLab", repo: "raj/pipeline-tools", visibility: "public", publishable: true }
   ];
 
+  /* Scripted curation exchange. Each step is the curator's grounded reply plus
+     the draft list it revises — the conversation narrows the draft rather than
+     producing prose (spec §5.10: "Output is a draft list, not prose"). Illustrative
+     only; a real session grounds every reply in the live catalog. */
+  var CURATION_SUGGESTIONS = [
+    "I need to replace eslint and prettier without a big migration",
+    "A fast test runner for a CI-heavy monorepo",
+    "Something to replace tsup for library builds"
+  ];
+  var CURATION_FLOW = [
+    { reply: "Two projects in the catalog cover both jobs in one binary. I can only talk about the catalog, and each pick links its own page.", title: "Replacing eslint + prettier", items: ["biomejs/biome", "oxc-project/oxlint"] },
+    { reply: "If you'd rather run a single tool, Biome lints and formats on its own — I've dropped oxlint from the draft.", title: "Replacing eslint + prettier", items: ["biomejs/biome"], refine: "Actually, I'd rather run just one tool." },
+    { reply: "That's as tight as the catalog gets for this. Save it as a list, or keep refining.", title: "Replacing eslint + prettier", items: ["biomejs/biome"], refine: "Anything else worth pairing with it?" }
+  ];
+
   /* ── My stack — connect & scan entry (overrides compiled StackConnect) ──────
      Two paths to a Scan: connect a provider repository (read-minimal OAuth) or
      paste a manifest. Consent-gated, retention stated. Card system consistent with
@@ -1171,6 +1207,170 @@
       mode === "oauth" ? providerCard : pasteCard,
       consentRow,
       h("div", null, h(Button, { variant: "primary", size: "lg", disabled: !consent, onClick: run }, "Scan")));
+  }
+
+  /* ── List detail (overrides compiled ListDetail) ──────────────────────────
+     Shared by the private list (backer.list) and the public list page
+     (list.public) via publicView. Numbered items reuse ProjectRow; retired /
+     revoked entries render as dated records; the on-request-removal private
+     note and the visibility actions are preserved. */
+  function ListDetailV2(props) {
+    var ctx = props.ctx;
+    var publicView = props.publicView;
+    var Note = W("Note"), ProjectRow = W("ProjectRow");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var lists = ctx.lists || [];
+    var list = lists.filter(function (l) { return l.id === (ctx.route.id || "l1"); })[0] || lists[0];
+    if (!list) return h("div", { style: { padding: "var(--space-3xl)" } }, h(Note, null, "List not found."));
+    var visible = list.items.filter(function (s) { return ctx.claimState(s) !== "suppressed"; });
+    var removedOnRequest = list.items.some(function (s) { return ctx.claimState(s) === "suppressed"; });
+
+    var actions = publicView
+      ? h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap", alignItems: "center" } },
+          h(Button, { variant: "primary", onClick: function () { ctx.saveListCopy(list.id); } }, "Save this list"),
+          h(Note, null, "Copies it into your own lists as an independent list — not a subscription to the original."))
+      : h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap" } },
+          h(Button, { variant: "outline", onClick: function () { ctx.toggleVisibility(list.id); } }, list.visibility === "public" ? "Unpublish" : "Publish"),
+          h(Button, { variant: "ghost", onClick: function () { ctx.go({ name: "list.public", id: list.id }); } }, "View public page"));
+
+    var header = h("header", { style: col("var(--space-md)") },
+      h("span", { style: eyebrow }, publicView ? "/lists/" + list.handle + "/" + list.slug : (list.visibility || "private") + " list"),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, list.title),
+      list.description ? h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, list.description) : null,
+      actions);
+
+    var itemsList = h("ol", { style: { margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
+      visible.map(function (slug, i) {
+        var p = window.findProject(slug); var st = ctx.claimState(slug);
+        var dated = (st === "retired" || st === "revoked");
+        return h("li", { key: slug, style: { display: "flex", gap: "var(--space-md)", alignItems: "center" } },
+          h("span", { style: { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--text-secondary)", flex: "0 0 20px" } }, i + 1),
+          h("div", { style: { flex: 1, minWidth: 0 } },
+            dated
+              ? h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "var(--radius-sm)", padding: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-xs)" } },
+                  h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, p ? p.name : slug),
+                  h(Note, null, "Renders as a dated record — " + (st === "retired" ? ("retired " + ((p && p.retiredAt) || "")) : "revoked and not indexed") + "."))
+              : h(ProjectRow, { slug: slug, ctx: ctx, compact: true })),
+          !publicView ? h(Button, { variant: "ghost", onClick: function () { ctx.toggleInList(list.id, slug); } }, "Remove") : null);
+      }));
+
+    var removed = (removedOnRequest && !publicView) ? h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-lg) var(--space-2xl)" } },
+      h(Note, null, h("b", { style: { fontWeight: 500, color: "var(--text-body)" } }, "Private note to you:"), " an item was removed from this list on request. It is not named publicly, and your list has not been silently corrupted.")) : null;
+
+    var wrap = publicView
+      ? { display: "flex", flexDirection: "column", gap: "var(--space-2xl)" }
+      : { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap }, header, itemsList, removed);
+  }
+
+  function PublicListPageV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    return h(Container, { style: { padding: "var(--space-5xl) var(--gutter-desktop) var(--space-section)", maxWidth: "760px", display: "flex", flexDirection: "column", gap: "var(--space-2xl)" } },
+      h(ListDetailV2, { ctx: ctx, publicView: true }),
+      h(Note, null, "An acquisition surface: indexed, reachable from search and from its object, never a front-door module. Reserved namespace segment: /lists."));
+  }
+
+  /* ── My lists (overrides compiled MyLists) ────────────────────────────────
+     List index in the card system. Each list is a clickable card (border warms
+     to emerald on hover) → its detail. New-list flow preserved; designed empty
+     state; the "not a review" note kept. */
+  function MyListsV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var metaMono = { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", textTransform: "uppercase", color: "var(--text-secondary)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px" };
+    var lists = ctx.lists || [];
+    var cs = React.useState(false), creating = cs[0], setCreating = cs[1];
+    var ts = React.useState(""), title = ts[0], setTitle = ts[1];
+
+    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-lg)", flexWrap: "wrap" } },
+      h("div", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Backer · Raj"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)" } }, "My lists")),
+      h(Button, { variant: "primary", onClick: function () { setCreating(true); } }, "New list"));
+
+    var form = creating ? h("form", {
+      onSubmit: function (e) { e.preventDefault(); if (title.trim()) { ctx.createList(title.trim()); setTitle(""); setCreating(false); } },
+      style: Object.assign({}, CARD, { padding: "var(--space-lg) var(--space-2xl)", display: "flex", gap: "var(--space-md)", alignItems: "flex-end", flexWrap: "wrap" })
+    },
+      h("div", { style: { flex: "1 1 240px" } }, h(TextInput, { label: "Title", value: title, onChange: function (e) { setTitle(e.target.value); }, placeholder: "Boring infrastructure I would miss" })),
+      h(Button, { variant: "primary" }, "Create"),
+      h(Button, { variant: "ghost", onClick: function () { setCreating(false); } }, "Cancel")) : null;
+
+    var rows = lists.map(function (l) {
+      return h("button", { key: l.id, className: "nv-listcard", type: "button", onClick: function () { ctx.go({ name: "backer.list", id: l.id }); },
+        style: Object.assign({}, CARD, { padding: "var(--space-lg) var(--space-2xl)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)", cursor: "pointer", textAlign: "left", width: "100%", WebkitAppearance: "none", appearance: "none" }) },
+        h("span", { style: col("6px", { minWidth: 0 }) },
+          h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, l.title),
+          h("span", { style: metaMono }, (l.visibility || "private") + " · " + l.items.length + (l.items.length === 1 ? " item · " : " items · ") + window.maskNumber(l.saves) + " saves")),
+        h("span", { className: "nv-arrow", style: { color: "var(--volt-text-500)", font: "var(--type-body-lg-strong)" } }, "→"));
+    });
+
+    var body = lists.length
+      ? h("div", { style: col("var(--space-md)") }, rows)
+      : h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-3xl) var(--space-2xl)", display: "flex", flexDirection: "column", gap: "6px", alignItems: "center", textAlign: "center" } },
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "No lists yet"),
+          h("span", { style: caption }, "Save a project from Discover or a scan, or start one here."));
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap }, header, form, body, h(Note, null, "No ratings, no scores — a curated list is not a review."));
+  }
+
+  /* ── Activity (overrides compiled BackerActivity) ─────────────────────────
+     The full log behind Home's "See all activity". Same timeline treatment as
+     Home for continuity. Open items (badge) vs Recent outcomes (14-day archive),
+     per §9.6, with the designed empty state each tab requires. */
+  function BackerActivityV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+
+    var acts = (window.ACTIVITY || []).filter(function (a) { return a.when !== "—"; });
+    var daysOf = function (a) { var m = /(\d+)\s*day/.exec(a.when || ""); return m ? +m[1] : 999; };
+    var open = acts.filter(function (a) { return daysOf(a) <= 7; });
+    var recent = acts.filter(function (a) { return daysOf(a) > 7; });
+    var st = React.useState("open"), tab = st[0], setTab = st[1];
+    var items = tab === "open" ? open : recent;
+
+    var timeline = function (list) {
+      if (!list.length) return h("div", { style: { padding: "var(--space-2xl) 0", display: "flex", flexDirection: "column", gap: "4px", alignItems: "center", textAlign: "center" } },
+        h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, tab === "open" ? "Nothing needs you right now" : "No recent outcomes"),
+        h("span", { style: caption }, tab === "open" ? "Outcomes appear here as your nominations, lists and interests resolve." : "Acted and expired items rest here for 14 days, then clear."));
+      return h("div", { style: { position: "relative" } },
+        h("span", { "aria-hidden": "true", style: { position: "absolute", left: "4px", top: "16px", bottom: "16px", width: "1px", background: "var(--volt-border)" } }),
+        list.map(function (a, i) {
+          var neg = a.valence === "Negative";
+          return h("div", { key: i, style: { position: "relative", display: "flex", gap: "var(--space-lg)", alignItems: "flex-start", padding: "var(--space-md) 0" } },
+            h("span", { style: { flex: "0 0 9px", height: "9px", marginTop: "5px", borderRadius: "50%", background: neg ? "var(--volt-text-500)" : "var(--volt-emerald)", boxShadow: "0 0 0 4px var(--volt-surface)" } }),
+            h("div", { style: col("3px", { minWidth: 0 }) },
+              h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", textWrap: "pretty" } }, a.text),
+              h("span", { style: caption }, a.type + " · " + a.when)));
+        }));
+    };
+
+    var seg = h("div", { style: { display: "inline-flex", gap: "4px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "4px", width: "fit-content" } },
+      [["open", "Open"], ["recent", "Recent outcomes"]].map(function (t) {
+        var on = tab === t[0];
+        return h("button", { key: t[0], type: "button", onClick: function () { setTab(t[0]); },
+          style: { WebkitAppearance: "none", appearance: "none", cursor: "pointer", border: "none", borderRadius: "999px", padding: "var(--space-sm) var(--space-lg)", background: on ? "var(--volt-surface)" : "transparent", color: on ? "var(--text-body)" : "var(--text-secondary)", font: on ? "var(--type-body-md-strong)" : "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } },
+          t[1] + (t[0] === "open" && open.length ? "  " + open.length : ""));
+      }));
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "My week · activity"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "Activity"),
+        h("span", { style: caption }, "The outcomes of what you nominated, listed, and registered interest in.")),
+      seg,
+      h("section", { style: Object.assign({}, CARD, col("var(--space-sm)")) }, timeline(items)),
+      h(Note, null, "Deadline-ascending where a deadline exists; overlaps collapsed; acted and expired items move to Recent outcomes for 14 days. Where the spec says “notified” without naming a channel, the notice is in-app."));
   }
 
   function ScanResultsV2(props) {
@@ -1257,6 +1457,91 @@
     return h("div", { style: wrap }, header, matchedCard, unmatchedCard, publish, org);
   }
 
+  /* ── Curation chat (overrides compiled CurationChat) ──────────────────────
+     The transcript is chrome; the draft list is the payload. Every exchange
+     narrows a draft rather than emitting prose (§5.10). The draft-list card is
+     the signature moment — emerald spine, cited pages, one primary action. The
+     curator copy is plain and grounded (DEC-0031 bars the AI house style), and
+     the "never a ranking input, never indexed" contract sits under every draft. */
+  function CurationChatV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note"), ProjectRow = W("ProjectRow");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var emEyebrow = Object.assign({}, eyebrow, { color: "var(--volt-emerald)" });
+    var bubbleText = { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", textWrap: "pretty" };
+
+    var t0 = React.useState([]), turns = t0[0], setTurns = t0[1];
+    var i0 = React.useState(""), input = i0[0], setInput = i0[1];
+    var scroller = React.useRef(null);
+    React.useEffect(function () { var el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length]);
+
+    var advance = function (text) {
+      var sent = turns.filter(function (x) { return x.role === "you"; }).length;
+      var step = CURATION_FLOW[Math.min(sent, CURATION_FLOW.length - 1)];
+      setTurns(turns.concat([
+        { role: "you", text: text },
+        { role: "curator", text: step.reply },
+        { role: "draft", title: step.title, items: step.items }
+      ]));
+      setInput("");
+    };
+    var nextRefine = function () {
+      var sent = turns.filter(function (x) { return x.role === "you"; }).length;
+      var step = CURATION_FLOW[Math.min(sent, CURATION_FLOW.length - 1)];
+      return step.refine || "Refine this further.";
+    };
+
+    var draftCard = function (turn, key) {
+      return h("div", { key: key, className: "nv-draft", style: { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)", display: "flex", flexDirection: "column", gap: "var(--space-lg)" } },
+        h("span", { "aria-hidden": "true", style: { position: "absolute", left: 0, top: "16px", bottom: "16px", width: "3px", borderRadius: "0 3px 3px 0", background: "var(--volt-emerald)" } }),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "var(--space-md)", paddingLeft: "var(--space-sm)" } },
+          h("span", { style: emEyebrow }, "Draft list"),
+          h("span", { style: caption }, turn.items.length + (turn.items.length === 1 ? " project · each links its page" : " projects · each links its page"))),
+        h("div", { style: col("var(--space-xs)", { paddingLeft: "var(--space-sm)" }) },
+          turn.items.map(function (slug) { return h(ProjectRow, { key: slug, slug: slug, ctx: ctx, compact: true }); })),
+        h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap", paddingLeft: "var(--space-sm)" } },
+          h(Button, { variant: "primary", onClick: function () { ctx.createList(turn.title, null, turn.items); ctx.go({ name: "backer.lists" }); } }, "Save as a list"),
+          h(Button, { variant: "outline", onClick: function () { advance(nextRefine()); } }, "Refine further")),
+        h(Note, null, h("span", { style: { paddingLeft: "var(--space-sm)", display: "block" } }, "No ratings or scores — a curated list is not a review. Conversations are never a ranking input; transcripts are never indexed.")));
+    };
+
+    var body = turns.length === 0
+      ? h("div", { style: { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-3xl) var(--space-2xl)", display: "flex", flexDirection: "column", gap: "var(--space-lg)" } },
+          h("div", { style: col("4px") },
+            h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, "Describe what you're trying to replace or find"),
+            h("span", { style: caption }, "The curator answers only from the catalog, and hands back a draft list you can save.")),
+          h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+            CURATION_SUGGESTIONS.map(function (s) {
+              return h("button", { key: s, type: "button", className: "nv-chip", onClick: function () { advance(s); },
+                style: { WebkitAppearance: "none", appearance: "none", cursor: "pointer", textAlign: "left", background: "var(--volt-void)", border: "1px solid var(--volt-border)", color: "var(--text-secondary)", borderRadius: "999px", padding: "var(--space-sm) var(--space-lg)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } },
+                "“" + s + "”");
+            })))
+      : h("div", { ref: scroller, style: { display: "flex", flexDirection: "column", gap: "var(--space-lg)", maxHeight: "56vh", overflowY: "auto", paddingRight: "4px" } },
+          turns.map(function (t, i) {
+            if (t.role === "draft") return draftCard(t, i);
+            if (t.role === "you") return h("div", { key: i, className: "nv-chat-you", style: bubbleText }, t.text);
+            return h("div", { key: i, style: col("4px", { alignSelf: "flex-start", maxWidth: "82%" }) },
+              h("span", { style: { display: "inline-flex", alignItems: "center", gap: "6px", font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", textTransform: "uppercase", color: "var(--volt-text-500)" } },
+                h("span", { "aria-hidden": "true", style: { width: "6px", height: "6px", borderRadius: "50%", background: "var(--volt-emerald)" } }), "Curator"),
+              h("div", { className: "nv-chat-curator", style: bubbleText }, t.text));
+          }));
+
+    var form = h("form", { onSubmit: function (e) { e.preventDefault(); if (input.trim()) advance(input.trim()); },
+        style: { display: "flex", gap: "var(--space-md)", alignItems: "flex-end" } },
+      h("div", { style: { flex: 1 } }, h(TextInput, { label: "Message", value: input, onChange: function (e) { setInput(e.target.value); }, placeholder: "What are you trying to replace or find?" })),
+      h(Button, { variant: "primary" }, "Send"));
+
+    var wrap = { maxWidth: "760px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Curation chat"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "A conversation curates"),
+        h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, "Grounded in the catalog only. It won't discuss projects outside it, every pick cites a page, and what it hands back is a draft list — never prose.")),
+      body,
+      form);
+  }
+
   Object.assign(window, {
     NotavibeShell: NotavibeShell,
     EditorialSurface: EditorialSurface,
@@ -1266,7 +1551,12 @@
     BackerSettings: BackerSettings,
     BackerDashboard: BackerHome,
     BackerMore: BackerMore,
+    MyLists: MyListsV2,
+    ListDetail: ListDetailV2,
+    PublicListPage: PublicListPageV2,
+    BackerActivity: BackerActivityV2,
     ScanResults: ScanResultsV2,
-    StackConnect: StackConnectV2
+    StackConnect: StackConnectV2,
+    CurationChat: CurationChatV2
   });
 })();
