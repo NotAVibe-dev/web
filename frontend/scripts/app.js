@@ -56,7 +56,35 @@
       ".nv-app-shell [style*=\"grid-template-columns: 180px 1fr\"],",
       ".nv-app-shell [style*=\"grid-template-columns: 1fr 1fr auto\"]",
       "{grid-template-columns:1fr!important}",
-      "}"
+      "}",
+      /* Signed-in Backers browse discovery inside the workspace shell (see the
+         backerDiscovery branch in NotavibeShell). The front door's marketing hero
+         pitch and the stars-vs-health Proof are logged-out arguments — strip them
+         in-workspace, leaving the search field, intent chips and the browse
+         modules. The 90vh hero collapses to just its content. */
+      ".nv-app-shell .nv-hero{min-height:0!important;align-items:stretch!important}",
+      ".nv-app-shell .nv-hero .nv-hero-pitch{display:none!important}",
+      ".nv-app-shell .nv-proof{display:none!important}",
+      /* The hero's inner container pads 76px to clear the public fixed header,
+         which the workspace shell does not have — reclaim it. */
+      ".nv-app-shell .nv-hero > *:last-child{padding-top:var(--space-2xl)!important;padding-bottom:var(--space-2xl)!important}",
+      /* Backer Home micro-interactions — custom expo-out easing, no default
+         curves. Outcome rows step in on hover; the Deck card warms its border;
+         arrows advance. Honoured only where motion is welcome. */
+      ".nv-home-seeall{color:var(--volt-emerald)}",
+      ".nv-home-seeall:hover{text-decoration:underline;text-underline-offset:3px}",
+      /* Scan-target picker + tags — selected/emerald state via class, never inline,
+         so the button[style*=emerald] escape-hatch never hijacks these controls. */
+      ".nv-target{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-target:hover{border-color:var(--volt-text-500)}",
+      ".nv-target.on{border-color:var(--volt-emerald)!important}",
+      ".nv-tag.pub{border-color:var(--volt-emerald)!important;color:var(--volt-emerald)!important}",
+      ".nv-deck-cta{transition:border-color 260ms cubic-bezier(0.16,1,0.3,1),background-color 260ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-deck-cta:hover{border-color:var(--volt-emerald);background-color:var(--volt-canvas,var(--volt-surface))}",
+      ".nv-arrow{display:inline-block;transition:transform 260ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-deck-cta:hover .nv-arrow,.nv-home-seeall:hover .nv-arrow{transform:translateX(4px)}",
+      ".nv-deck-cta:focus-visible,.nv-home-seeall:focus-visible{outline:2px solid var(--volt-emerald);outline-offset:3px;border-radius:var(--radius-sm)}",
+      "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta{transition:none}}"
     ].join("");
     document.head.appendChild(s);
   })();
@@ -745,6 +773,15 @@
   function screenFor(name) {
     var NV = { discover: "NvDiscover", project: "NvProjectPage", category: "NvCategory", search: "NvSearch" };
     if (NV[name] && window[NV[name]]) return window[NV[name]];
+    /* Resolve the overridden Backer surfaces from local scope, never off window:
+       the design-system bundle re-evaluates its copy of the screen library late
+       and clobbers window.BackerDashboard back to the compiled dashboard (same
+       reason NvPublicHeader is owned here — see the header note above). These are
+       hoisted function declarations, so the reference is safe before definition. */
+    if (name === "backer.dashboard") return BackerHome;
+    if (name === "backer.more") return BackerMore;
+    if (name === "stack.connect") return StackConnectV2;
+    if (name === "stack.results") return ScanResultsV2;
     var T = {
       discover: "Discover", category: "CategoryView", search: "SearchResults", project: "ProjectPage",
       methodology: "MethodologyPage", "list.public": "PublicListPage", "stack.public": "PublicStackPage",
@@ -754,7 +791,7 @@
       "action.save": "SaveToList", "action.interest": "RegisterInterest", "action.nominate": "Nominate",
       "backer.dashboard": "BackerDashboard", "backer.lists": "MyLists", "backer.list": "ListDetail",
       "backer.activity": "BackerActivity", "backer.chat": "CurationChat", "backer.onboarding": "BackerOnboarding",
-      "backer.settings": "BackerSettings",
+      "backer.settings": "BackerSettings", "backer.more": "BackerMore",
       "maintainer.dashboard": "MaintainerDashboard", "maintainer.profile": "MaintainerProfile",
       "maintainer.reach": "MaintainerReach", "maintainer.contest": "MaintainerContest",
       "maintainer.api": "MaintainerApi", "maintainer.settings": "MaintainerSettings"
@@ -771,7 +808,12 @@
     var name = ctx.route.name;
     var Screen = screenFor(name);
     var isAdmin = name.indexOf("admin.") === 0;
-    var isApp = APP_ROUTES.test(name);
+    /* Signed-in Backers keep their workspace chrome while browsing: the discovery
+       surfaces render inside the app shell (sidebar persists) rather than swapping
+       to the public marketing shell. Logged-out visitors still get the public
+       front door. (Deliberate deviation from §572's top-nav — see ADR.) */
+    var backerDiscovery = ctx.signedIn && /^(discover|category|search|project)$/.test(name);
+    var isApp = APP_ROUTES.test(name) || backerDiscovery;
 
     if (ctx.mobile) {
       return h(React.Fragment, null,
@@ -807,12 +849,332 @@
     return h(React.Fragment, null, body, h(window.PrototypeBar, { ctx: ctx }));
   }
 
+  /* ── Backer Home ──────────────────────────────────────────────────────────
+     Overrides the compiled BackerDashboard. The signed-in Backer landing is a
+     "since you were here" return surface — the on-site twin of the discovery
+     digest — not a stats dashboard. Composition (ADR-grounded, §9.6): context +
+     last-visit → outcomes (open badge → recent, deadline-ascending) → Deck delta
+     POINTER (never the grid; the Deck lives on Discover) → thin demoted stats.
+     Fresh accounts (no saved projects, no interests) get the designed first-visit
+     face instead: finish the profile, the Deck is ready. All figures illustrative
+     until a backend exists. Route id stays backer.dashboard, relabelled "Home". */
+  function BackerHome(props) {
+    var ctx = props.ctx;
+    var SectionTitle = W("SectionTitle"), Note = W("Note");
+    var acts = (window.ACTIVITY || []).filter(function (a) { return a.when !== "—"; });
+    var savedCount = ctx.lists.reduce(function (n, l) { return n + l.items.length; }, 0);
+    var interests = ctx.interests.length;
+    var inStack = ctx.scan ? ctx.scan.matched.length : 0;
+    var fresh = savedCount === 0 && interests === 0;
+    /* A focused reading column with real hierarchy. The return surface is scanned
+       top-to-bottom, so a ~680px measure and generous vertical rhythm keep it
+       calm. The outcomes render as a timeline spine (the signature moment), the
+       Deck is a considered emerald CTA, and motion is custom-eased (see CSS). */
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+
+    var header = h("header", { style: col("var(--space-sm)") },
+      h("span", { style: eyebrow }, ctx.signedIn ? "Backer · Raj" : "Backer"),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, fresh ? "Welcome to your Deck" : "Your week"),
+      h("span", { style: caption }, fresh ? "Your first week of discovery starts here." : "Last visit 6 days ago · illustrative data"));
+
+    /* Deck HERO — the ONE section every backer always has: it refreshes weekly
+       regardless of what they've done, and it's the on-site twin of the return
+       digest. So it leads. An emerald spine marks it the primary action; the
+       border warms and the arrow advances on hover. (Outcomes, by contrast, are
+       contribution-contingent — see the adaptive block below.) */
+    var deck = h("button", {
+        className: "nv-deck-cta", type: "button",
+        onClick: function () { ctx.go({ name: "discover" }); },
+        style: { position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)", flexWrap: "wrap", border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" }
+      },
+      h("span", { "aria-hidden": "true", style: { position: "absolute", left: 0, top: "16px", bottom: "16px", width: "3px", borderRadius: "0 3px 3px 0", background: "var(--volt-emerald)" } }),
+      h("div", { style: col("6px", { paddingLeft: "var(--space-sm)" }) },
+        h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Your Deck"),
+        h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, fresh ? "Ready when you are" : "5 new picks this week"),
+        h("span", { style: caption }, "8–12 projects from your preference profile · illustrative data")),
+      h("span", { style: { display: "inline-flex", alignItems: "center", gap: "8px", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", color: "var(--volt-emerald)", whiteSpace: "nowrap" } },
+        "Open Discover", h("span", { className: "nv-arrow" }, "→")));
+
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px" };
+    var dashed = { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-2xl)" };
+
+    if (fresh) {
+      return h("div", { style: wrap },
+        header,
+        deck,
+        h("div", { style: Object.assign({}, dashed, col("var(--space-md)")) },
+          h("span", { style: eyebrow }, "Finish setup"),
+          h("span", { style: BODY }, "Your Deck sharpens as you tell it what you care about — the preference profile is the one step that makes the weekly digest worth returning for."),
+          h("div", { style: { display: "flex", gap: "var(--inline-gap)", flexWrap: "wrap" } },
+            h(Button, { variant: "primary", onClick: function () { ctx.go({ name: "backer.onboarding" }); } }, "Finish your preference profile"),
+            h(Button, { variant: "ghost", onClick: function () { ctx.go({ name: "backer.settings" }); } }, "Turn on the digest"))));
+    }
+
+    var top = acts.slice(0, 4);
+    var hasOutcomes = top.length > 0;
+    /* Outcomes grouped in a card (Gestalt common-region), threaded on a timeline
+       spine: one hairline behind the nodes, each dot ring-punched in the card
+       colour. The feed is read-only, so rows carry NO hover affordance — hover
+       feedback would imply a click that does not exist. */
+    var timeline = h("div", { style: { position: "relative" } },
+      h("span", { "aria-hidden": "true", style: { position: "absolute", left: "4px", top: "16px", bottom: "16px", width: "1px", background: "var(--volt-border)" } }),
+      top.map(function (a, i) {
+        var neg = a.valence === "Negative";
+        return h("div", { key: i, style: { position: "relative", display: "flex", gap: "var(--space-lg)", alignItems: "flex-start", padding: "var(--space-md) 0" } },
+          h("span", { style: { flex: "0 0 9px", height: "9px", marginTop: "5px", borderRadius: "50%", background: neg ? "var(--volt-text-500)" : "var(--volt-emerald)", boxShadow: "0 0 0 4px var(--volt-surface)" } }),
+          h("div", { style: col("3px", { minWidth: 0 }) },
+            h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", textWrap: "pretty" } }, a.text),
+            h("span", { style: caption }, a.type + " · " + a.when)));
+      }));
+
+    var outcomes = h("section", { style: Object.assign({}, CARD, col("var(--space-lg)", { padding: "var(--space-2xl)" })) },
+      h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-md)" } },
+        h("span", { style: eyebrow }, "Recent outcomes"),
+        h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, top.length + " new")),
+      timeline,
+      h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+        h("button", { className: "nv-home-seeall", type: "button", onClick: function () { ctx.go({ name: "backer.activity" }); },
+          /* colour lives in the CSS class, NOT inline — the global escape-hatch
+             rule button[style*="var(--volt-emerald)"] would hijack it otherwise. */
+          style: { display: "inline-flex", alignItems: "center", gap: "6px", WebkitAppearance: "none", appearance: "none", background: "transparent", border: "none", cursor: "pointer", padding: "2px 0", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } },
+          "See all activity", h("span", { className: "nv-arrow" }, "→"))));
+
+    /* Adaptive low state. Outcomes are earned — they only exist once the backer
+       nominates, publishes, registers or claims. With none, an empty card reads
+       as a broken promise, so we show a teaching nudge instead: what to do to
+       start seeing them. This also doubles as onboarding for passive backers. */
+    var nudge = h("div", { style: Object.assign({}, dashed, { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)", flexWrap: "wrap" }) },
+      h("div", { style: col("2px", { minWidth: 0 }) },
+        h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "No outcomes yet"),
+        h("span", { style: caption }, "Nominate a project or publish a list — that's where they show up.")),
+      h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "discover" }); } }, "Explore projects"));
+
+    /* Demoted to a single quiet meta line, sitting outside the cards. */
+    var stats = h("div", { style: { display: "flex", justifyContent: "space-between", gap: "var(--space-md)", flexWrap: "wrap", padding: "0 var(--space-xs)" } },
+      h("span", { style: caption }, savedCount + " in lists · " + interests + " interests · " + inStack + " in your stack"),
+      h("span", { style: caption }, "illustrative data"));
+
+    return h("div", { style: wrap }, header, deck, hasOutcomes ? outcomes : nudge, stats);
+  }
+
+  /* ── Backer "More" (mobile overflow) ──────────────────────────────────────
+     The fifth mobile tab. Home took the first tab and Activity folded into it, so
+     More is the overflow index for secondary destinations + the role switch (the
+     desktop switcher lives in the sidebar footer, which is hidden on the phone). */
+  function BackerMore(props) {
+    var ctx = props.ctx;
+    var SectionTitle = W("SectionTitle"), Note = W("Note");
+    var rows = [
+      ["Activity", "Your outcomes — nominations, claims, saves", "backer.activity"],
+      ["Curation chat", "Build a list by describing what you want", "backer.chat"],
+      ["Settings", "Account and notice channels", "backer.settings"]
+    ];
+    return h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-lg)", padding: "var(--space-lg)" } },
+      rows.map(function (r) {
+        return h("button", { key: r[2], onClick: function () { ctx.go({ name: r[2] }); },
+          style: { textAlign: "left", cursor: "pointer", background: "var(--surface-canvas)", border: "var(--border-level-1)", borderRadius: "var(--radius-sm)", padding: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "2px" } },
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r[0]),
+          h("span", { style: { font: "var(--type-caption)", color: "var(--text-secondary)" } }, r[1]));
+      }),
+      ctx.signedIn ? h("div", { style: { borderTop: "var(--border-level-1)", paddingTop: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+        h(SectionTitle, null, "Role"),
+        h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "maintainer.dashboard" }); } }, "Switch to maintainer"),
+        h(Note, null, "Shown because this account holds a maintainer grant — a Backer who has claimed a page. Single-role backers see no switcher; last-used context returns on login.")) : null);
+  }
+
+  /* ── My stack — scan results (overrides the compiled ScanResults) ──────────
+     Signal-led, two-section results per the grill. "In the catalog": matched
+     deps, each led by a banded health signal (§171 — bands only, never a verdict),
+     with Save-to-list / Register-interest. "Not in the catalog yet": the unmatched
+     entries (derived from the manifest — the §373 Nominate surface, hidden before).
+     Ephemeral: source + retention stated; nothing here is a stored artifact. */
+  function parseManifestDeps(txt) {
+    try {
+      var m = JSON.parse(txt), out = [];
+      ["dependencies", "devDependencies", "peerDependencies"].forEach(function (k) {
+        if (m[k]) out = out.concat(Object.keys(m[k]));
+      });
+      return out;
+    } catch (e) { return []; }
+  }
+  function matchDep(dep) {
+    return window.PROJECTS.find(function (p) {
+      return p.name === dep || p.slug === dep || p.slug.split("/").pop() === dep;
+    });
+  }
+
+  var SCAN_TARGETS_V2 = [
+    { id: "gh-pub", provider: "GitHub", repo: "raj/oss-dashboard", visibility: "public", publishable: true },
+    { id: "gh-priv", provider: "GitHub", repo: "raj/client-billing", visibility: "private", publishable: false },
+    { id: "gl-pub", provider: "GitLab", repo: "raj/pipeline-tools", visibility: "public", publishable: true }
+  ];
+
+  /* ── My stack — connect & scan entry (overrides compiled StackConnect) ──────
+     Two paths to a Scan: connect a provider repository (read-minimal OAuth) or
+     paste a manifest. Consent-gated, retention stated. Card system consistent with
+     the results screen. Selected-repo highlight lives in the .nv-target CSS class,
+     never inline, so it dodges the emerald escape-hatch rule. */
+  function StackConnectV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var metaMono = { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", textTransform: "uppercase", color: "var(--text-secondary)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+
+    var s0 = React.useState("oauth"), mode = s0[0], setMode = s0[1];
+    var s1 = React.useState(""), manifest = s1[0], setManifest = s1[1];
+    var s2 = React.useState(false), consent = s2[0], setConsent = s2[1];
+    var s3 = React.useState(SCAN_TARGETS_V2[0].id), target = s3[0], setTarget = s3[1];
+    var chosen = SCAN_TARGETS_V2.filter(function (t) { return t.id === target; })[0];
+
+    var run = function () {
+      var source = mode === "oauth"
+        ? { kind: "repo", provider: chosen.provider, repo: chosen.repo, visibility: chosen.visibility, publishable: chosen.publishable }
+        : { kind: "manifest", provider: "Pasted manifest", repo: null, visibility: "not applicable", publishable: false };
+      ctx.runScan(source, mode === "oauth" ? window.MANIFEST_SAMPLE : (manifest || window.MANIFEST_SAMPLE));
+      ctx.go({ name: "stack.results" });
+    };
+
+    var seg = h("div", { style: { display: "inline-flex", gap: "4px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "4px", width: "fit-content" } },
+      [["oauth", "Connect a provider"], ["paste", "Paste a manifest"]].map(function (m) {
+        var on = mode === m[0];
+        return h("button", { key: m[0], type: "button", onClick: function () { setMode(m[0]); },
+          style: { WebkitAppearance: "none", appearance: "none", cursor: "pointer", border: "none", borderRadius: "999px", padding: "var(--space-sm) var(--space-lg)", background: on ? "var(--volt-surface)" : "transparent", color: on ? "var(--text-body)" : "var(--text-secondary)", font: on ? "var(--type-body-md-strong)" : "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, m[1]);
+      }));
+
+    var providerCard = h("section", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Repositories · read-minimal OAuth"),
+      h("div", { style: col("var(--space-sm)") }, SCAN_TARGETS_V2.map(function (t) {
+        var on = target === t.id;
+        return h("button", { key: t.id, type: "button", className: on ? "nv-target on" : "nv-target", onClick: function () { setTarget(t.id); },
+          style: { WebkitAppearance: "none", appearance: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-md)", flexWrap: "wrap", borderRadius: "var(--radius-sm)", padding: "var(--space-md) var(--space-lg)", background: "var(--volt-void)", border: "1px solid var(--volt-border)" } },
+          h("span", { style: col("2px", { minWidth: 0 }) },
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, t.repo),
+            h("span", { style: metaMono }, t.provider + " · " + t.visibility)),
+          h("span", { className: t.publishable ? "nv-tag pub" : "nv-tag", style: { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", textTransform: "uppercase", borderRadius: "999px", padding: "2px 10px", whiteSpace: "nowrap", border: "1px solid var(--volt-border)", color: "var(--text-secondary)" } }, t.publishable ? "Publishable" : "Scan only"));
+      })),
+      h(Note, null, "Read-minimal OAuth reports repository visibility, which is what makes the publish test evaluable. The scan reads GitLab-hosted manifests too."));
+
+    var pasteCard = h("section", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Paste a manifest"),
+      h(TextInput, { label: "package.json", multiline: true, rows: 9, value: manifest, onChange: function (e) { setManifest(e.target.value); }, placeholder: window.MANIFEST_SAMPLE }),
+      h(Note, null, "Pasted manifests are scannable and never publishable — the test is source visibility, not who ran the scan."));
+
+    var consentRow = h("label", { style: { display: "flex", gap: "var(--space-md)", alignItems: "flex-start", cursor: "pointer", border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-lg) var(--space-2xl)" } },
+      h("input", { type: "checkbox", checked: consent, onChange: function (e) { setConsent(e.target.checked); }, style: { marginTop: "4px", accentColor: "var(--volt-emerald)" } }),
+      h("span", { style: col("2px") },
+        h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Run the scan on the server"),
+        h(Note, null, "The manifest and its unmatched entries are not retained beyond this session unless you save them. Matched project references persist only as an aggregate count with no scan or account referent.")));
+
+    var wrap = { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "My stack"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "Find what you already depend on"),
+        h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, "The scan runs server-side. Matches resolve against the catalog; everything else is discarded.")),
+      seg,
+      mode === "oauth" ? providerCard : pasteCard,
+      consentRow,
+      h("div", null, h(Button, { variant: "primary", size: "lg", disabled: !consent, onClick: run }, "Scan")));
+  }
+
+  function ScanResultsV2(props) {
+    var ctx = props.ctx;
+    var scan = ctx.scan;
+    if (!scan) return h(StackConnectV2, { ctx: ctx });
+    var Note = W("Note");
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var emEyebrow = Object.assign({}, eyebrow, { color: "var(--volt-emerald)" });
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+
+    var deps = parseManifestDeps(window.MANIFEST_SAMPLE);
+    var seen = {}, matched = [], unmatched = [];
+    deps.forEach(function (d) {
+      var p = matchDep(d);
+      if (p && ctx.claimState(p.slug) !== "suppressed") { if (!seen[p.slug]) { seen[p.slug] = 1; matched.push(p); } }
+      else unmatched.push(d);
+    });
+    var total = deps.length;
+    var pct = total ? Math.round(matched.length / total * 100) : 0;
+    var pubOK = scan.source && scan.source.publishable;
+
+    var header = h("header", { style: col("var(--space-md)") },
+      h("span", { style: eyebrow }, "My stack · scan complete"),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, matched.length + " of " + total + " dependencies are in the catalog"),
+      h("div", { style: { height: "6px", borderRadius: "999px", background: "var(--volt-void)", overflow: "hidden", maxWidth: "340px", border: "1px solid var(--volt-border)" } },
+        h("div", { style: { width: pct + "%", height: "100%", background: "var(--volt-emerald)", borderRadius: "999px" } })),
+      h("span", { style: caption }, "Source: " + (scan.source ? scan.source.provider + (scan.source.repo ? " · " + scan.source.repo + " · " + scan.source.visibility : "") : "—") + " · the manifest and unmatched entries are not retained."));
+
+    var matchedRows = matched.map(function (p, i) {
+      var s = p.signals || {};
+      var lead = s.response || s.updates || s.breadth;
+      var leadLabel = s.response ? "Responsiveness" : s.updates ? "Release rhythm" : "Contribution";
+      return h("div", { key: p.slug, style: { display: "flex", gap: "var(--space-lg)", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", padding: "var(--space-lg) 0", borderTop: i === 0 ? "none" : "1px solid var(--volt-border)" } },
+        h("div", { style: col("4px", { minWidth: 0, flex: "1 1 300px" }) },
+          lead ? h("span", { style: emEyebrow }, leadLabel + " · " + lead.band) : null,
+          h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, p.name, h("span", { style: Object.assign({ marginLeft: "8px" }, caption) }, p.owner)),
+          h("span", { style: caption }, lead ? lead.detail : p.description)),
+        h("div", { style: { display: "flex", gap: "var(--space-xs)", flexWrap: "wrap", alignItems: "center" } },
+          h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "action.save", slug: p.slug }); } }, "Save to list"),
+          h(Button, { variant: "ghost", onClick: function () { ctx.go({ name: "action.interest", slug: p.slug }); } }, "Register interest")));
+    });
+    var matchedCard = h("section", { style: Object.assign({}, CARD, col("var(--space-xs)")) },
+      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "var(--space-md)" } },
+        h("span", { style: eyebrow }, "In the catalog"),
+        h("span", { style: emEyebrow }, String(matched.length))),
+      h("div", null, matchedRows.length ? matchedRows : h("span", { style: caption }, "None of your dependencies are in the catalog yet.")));
+
+    var unmatchedRows = unmatched.map(function (d, i) {
+      return h("div", { key: d, style: { display: "flex", gap: "var(--space-md)", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "var(--space-md) 0", borderTop: i === 0 ? "none" : "1px solid var(--volt-border)" } },
+        h("span", { style: { fontFamily: "var(--font-mono)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, d),
+        h("button", { className: "nv-home-seeall", type: "button", onClick: function () { ctx.go({ name: "action.nominate", slug: d, from: { name: "stack.results" } }); },
+          style: { display: "inline-flex", alignItems: "center", gap: "6px", WebkitAppearance: "none", appearance: "none", background: "transparent", border: "none", cursor: "pointer", padding: "2px 0", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } },
+          "Nominate", h("span", { className: "nv-arrow" }, "→")));
+    });
+    var unmatchedCard = unmatched.length ? h("section", { style: Object.assign({}, CARD, col("var(--space-sm)")) },
+      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "var(--space-md)" } },
+        h("span", { style: eyebrow }, "Not in the catalog yet"),
+        h("span", { style: eyebrow }, String(unmatched.length))),
+      h(Note, null, "Nominating asks the platform to generate a page. These entries are not retained beyond this session."),
+      h("div", null, unmatchedRows)) : null;
+
+    var publish = h("section", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Publish this scan"),
+      pubOK
+        ? h(React.Fragment, null,
+            h("span", { style: BODY }, "This scan’s source is a public repository, so the matched set can be published as a shareable stack page."),
+            h("div", null, h(Button, { variant: "primary", onClick: function () { ctx.go({ name: "stack.publish" }); } }, "Publish stack page")))
+        : h(React.Fragment, null,
+            h("span", { style: BODY }, "This scan can’t be published."),
+            h(Note, null, (scan.source && scan.source.kind === "manifest") ? "Pasted manifests are never publishable." : "Private-repository scans are never publishable.", " The test is source visibility — never publish a dependency inventory that is not otherwise public.")));
+
+    var org = h("section", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Scanning for an organisation?"),
+      h("span", { style: BODY }, "Tell us and we’ll reach out when the organisation tooling opens."),
+      ctx.orgWaitlisted
+        ? h(Badge, { tone: "neutral", mono: true }, "Received — acknowledgement sent")
+        : h("form", { onSubmit: function (e) { e.preventDefault(); ctx.joinOrgWaitlist(); }, style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap", alignItems: "flex-end" } },
+            h(TextInput, { label: "Company", name: "company", placeholder: "Meridian" }),
+            h(Button, { variant: "outline" }, "Join the waitlist")));
+
+    var wrap = { maxWidth: "760px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
+    return h("div", { style: wrap }, header, matchedCard, unmatchedCard, publish, org);
+  }
+
   Object.assign(window, {
     NotavibeShell: NotavibeShell,
     EditorialSurface: EditorialSurface,
     ShipWeekHub: ShipWeekHub,
     AlternativesPage: AlternativesPage,
     ComparePage: ComparePage,
-    BackerSettings: BackerSettings
+    BackerSettings: BackerSettings,
+    BackerDashboard: BackerHome,
+    BackerMore: BackerMore,
+    ScanResults: ScanResultsV2,
+    StackConnect: StackConnectV2
   });
 })();

@@ -949,7 +949,7 @@ function AppNav({
   ctx,
   kind
 }) {
-  const items = kind === "maintainer" ? [["Dashboard", "maintainer.dashboard"], ["Discovery presence — profile", "maintainer.profile"], ["Discovery presence — reach", "maintainer.reach"], ["Claim contest", "maintainer.contest"], ["API & webhooks", "maintainer.api"], ["Project settings", "maintainer.settings"]] : [["Discover", "discover"], ["My stack", "stack.connect"], ["My lists", "backer.lists"], ["Activity", "backer.activity"], ["Curation chat", "backer.chat"], ["Settings", "backer.settings"]];
+  const items = kind === "maintainer" ? [["Dashboard", "maintainer.dashboard"], ["Discovery presence — profile", "maintainer.profile"], ["Discovery presence — reach", "maintainer.reach"], ["Claim contest", "maintainer.contest"], ["API & webhooks", "maintainer.api"], ["Project settings", "maintainer.settings"]] : [["Home", "backer.dashboard"], ["Discover", "discover"], ["My stack", "stack.connect"], ["My lists", "backer.lists"], ["Curation chat", "backer.chat"], ["Settings", "backer.settings"]];
   const dark = kind === "admin";
   return /*#__PURE__*/React.createElement("aside", {
     className: "nv-app-nav",
@@ -3500,6 +3500,7 @@ function BackerOnboarding({
 Object.assign(window, {
   BackerDashboard,
   BackerActivity,
+  ACTIVITY,
   MyLists,
   ListDetail,
   PublicListPage,
@@ -6341,11 +6342,11 @@ function MobileHeader({
     strokeColor: "var(--text-secondary)"
   })));
 }
-const TABS = [["Discover", "discover", "search"], ["My stack", "stack.connect", "layers"], ["My lists", "backer.lists", "bookmark"], ["Activity", "backer.activity", "bell"], ["More", "backer.dashboard", "menu"]];
+const TABS = [["Home", "backer.dashboard", "home"], ["Discover", "discover", "search"], ["My lists", "backer.lists", "bookmark"], ["My stack", "stack.connect", "layers"], ["More", "backer.more", "menu"]];
 function MobileTabBar({
   ctx
 }) {
-  const active = name => ctx.route.name === name || name === "discover" && ["category", "project", "search"].includes(ctx.route.name) || name === "stack.connect" && ctx.route.name.startsWith("stack.") || name === "backer.lists" && ctx.route.name === "backer.list";
+  const active = name => ctx.route.name === name || name === "discover" && ["category", "project", "search"].includes(ctx.route.name) || name === "stack.connect" && ctx.route.name.startsWith("stack.") || name === "backer.lists" && ctx.route.name === "backer.list" || name === "backer.more" && ["backer.more", "backer.chat", "backer.settings", "backer.activity"].includes(ctx.route.name);
   return /*#__PURE__*/React.createElement("nav", {
     style: {
       flex: "0 0 " + TABBAR_H + "px",
@@ -6777,7 +6778,10 @@ const MOBILE_TITLES = {
   category: "Category",
   "backer.lists": "My lists",
   "backer.activity": "Activity",
-  "backer.dashboard": "More",
+  "backer.dashboard": "Home",
+  "backer.more": "More",
+  "backer.chat": "Curation chat",
+  "backer.settings": "Settings",
   "stack.connect": "My stack"
 };
 function MobileShell({
@@ -6807,11 +6811,7 @@ function MobileShell({
       overflowY: "auto",
       position: "relative"
     }
-  }, ctx.route.name === "backer.dashboard" ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "var(--space-lg) var(--space-lg) 0"
-    }
-  }, /*#__PURE__*/React.createElement(Note, null, "The More index is a Dashboard state, not a screen \u2014 this is the dashboard, entered from the fifth tab.")) : null, /*#__PURE__*/React.createElement(Body, {
+  }, /*#__PURE__*/React.createElement(Body, {
     ctx: ctx
   })), showTabs ? /*#__PURE__*/React.createElement(MobileTabBar, {
     ctx: ctx
