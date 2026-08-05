@@ -136,6 +136,16 @@
   var gate = document.getElementById("nv-gate");
   if (!gate) return;
 
+  /* Local-development bypass. The gate only guards deployed hosts; on localhost
+     (and a bare file:// open) it removes itself so dev never has to type it. */
+  var host = location.hostname;
+  var isLocal = !host || host === "localhost" || host === "127.0.0.1"
+    || host === "::1" || host === "[::1]" || /\.localhost$/.test(host);
+  if (isLocal) {
+    gate.parentNode && gate.parentNode.removeChild(gate);
+    return;
+  }
+
   var root = document.documentElement;
   function lock()   { root.style.overflow = "hidden"; }
   function unlock() { root.style.overflow = ""; }
