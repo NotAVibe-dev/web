@@ -7,6 +7,24 @@
   var Button = DS.Button, Badge = DS.Badge, Eyebrow = DS.Eyebrow, Container = DS.Container,
       Icon = DS.Icon, TextInput = DS.TextInput, StatsCard = DS.StatsCard;
 
+  /* Dev-only prototype chrome (the bottom PrototypeRail + the floating
+     PrototypeBar navigator) is gated behind this flag so the public site never
+     shows it, while internal walkthroughs keep the full click-through to the
+     backer/maintainer/admin surfaces the public nav does not link. Turn it on
+     with ?dev in the URL (persists to storage so it survives in-app hash nav);
+     turn it off with ?dev=0. */
+  var NV_DEV = (function () {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.has("dev")) {
+        var v = params.get("dev");
+        if (v === "0" || v === "off" || v === "false") { localStorage.removeItem("nv-dev"); return false; }
+        localStorage.setItem("nv-dev", "1"); return true;
+      }
+      return localStorage.getItem("nv-dev") === "1";
+    } catch (e) { return false; }
+  })();
+
   function W(name) { return window[name]; }
   var col = function (gap, extra) {
     return Object.assign({ display: "flex", flexDirection: "column", gap: gap }, extra || {});
@@ -741,7 +759,7 @@
     if (ctx.mobile) {
       return h(React.Fragment, null,
         h(window.MobileShell, { ctx: ctx, Screen: Screen }),
-        h(window.PrototypeBar, { ctx: ctx }));
+        (NV_DEV ? h(window.PrototypeBar, { ctx: ctx }) : null));
     }
 
     var body;
@@ -754,7 +772,7 @@
         h(window.AppNav, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } },
           h("div", { style: { flex: 1 } }, h(Screen, { ctx: ctx })),
-          h(PrototypeRail, { ctx: ctx })));
+          (NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null)));
     } else {
       body = h("div", { style: { minHeight: "100vh", background: "var(--volt-void)", display: "flex", flexDirection: "column" } },
         h(NvPublicHeader, { ctx: ctx }),
@@ -766,10 +784,10 @@
         h("main", {
           style: { flex: 1, paddingTop: name === "discover" ? 0 : "76px" }
         }, h(Screen, { ctx: ctx })),
-        h(PrototypeRail, { ctx: ctx }),
+        (NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null),
         h(DS.FooterWordmark, null, "notavibe"));
     }
-    return h(React.Fragment, null, body, h(window.PrototypeBar, { ctx: ctx }));
+    return h(React.Fragment, null, body, (NV_DEV ? h(window.PrototypeBar, { ctx: ctx }) : null));
   }
 
   Object.assign(window, {

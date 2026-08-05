@@ -258,7 +258,7 @@
             h("div", { style: { display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" } },
               h(Button, { variant: "primary", onClick: function () { ctx.go({ name: "stack.connect" }); } }, "Scan my stack"),
               h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "methodology" }); } }, "How it works")),
-            h("span", { style: MONO }, "8,412 pages generated · " + unclaimed + " of the " + total + " seeded here unclaimed · schema v1")),
+            h("span", { style: MONO }, "8,412 pages generated · " + unclaimed + " of the " + total + " seeded here unclaimed · schema v1 · illustrative data")),
           h(CodeMockup, {
             filename: "terminal",
             code: "$ npx notavibe scan\n\n  reading package.json … 34 deps\n  resolving against catalog …\n\n  ✓ 11 matched\n  · 23 not in catalog yet\n\n  vitest        steady     broad\n  hono          steady     narrowing\n  drizzle-orm   quiet      single-author\n\n  → notavibe.dev/stack/a91f2c",
