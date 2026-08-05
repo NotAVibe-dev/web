@@ -5,14 +5,10 @@ name: Deploy to GitHub Pages
 #   landing  : the full Astro site at the repo root      -> built to ./dist
 #   splash   : the static placeholder in ./splash          -> served as-is
 #
-# Deploys are manual for now: run this workflow and choose which site to
-# publish. It defaults to `frontend` (the current live site).
-#
-# EVENTUALLY, when only one site remains:
-#   1. uncomment the `push:` trigger below (pushes to main auto-deploy it),
-#   2. then delete the retired sites and, if you like, the dispatch input.
-# The build job resolves a `push` event to the frontend site, so enabling
-# auto-deploy is just uncommenting the trigger.
+# Auto-deploy: a push to main that touches the frontend (or this workflow)
+# ships it to notavibe.dev. workflow_dispatch stays for on-demand deploys and
+# for publishing landing/splash instead. The build job resolves a `push` event
+# to the frontend site.
 on:
   workflow_dispatch:
     inputs:
@@ -25,8 +21,11 @@ on:
           - frontend
           - landing
           - splash
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy.yml'
 
 permissions:
   contents: read
