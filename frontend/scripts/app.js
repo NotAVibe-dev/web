@@ -969,6 +969,8 @@
       body = h("div", { className: "nv-app-shell", style: { display: "flex", minHeight: "100vh", background: "var(--surface-canvas)" } },
         h(window.AppNav, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } },
+          ctx.signedIn ? h("div", { style: { display: "flex", justifyContent: "flex-end", padding: "var(--space-md) var(--gutter-desktop) 0" } },
+            h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null,
           h("div", { style: { flex: 1 } }, h(Screen, { ctx: ctx })),
           h(PrototypeRail, { ctx: ctx })));
     } else {
