@@ -473,6 +473,15 @@ const PERSIST = ["claims", "lists", "interests", "requests", "publishedStack", "
    the sign-in redirect) is deliberately not encoded — it is transient in-session
    state, not something a shared link should carry. */
 const URL_FIELDS = ["id", "q", "system", "type"];
+/* The public "front door" shell (marketing chrome, no workspace sidebar) is a
+   place a signed-in user deliberately enters via the wordmark / "My workspace"
+   link, which sets route.full. Browsing WITHIN it — running a search, opening a
+   category or a project — must keep them in that shell rather than dropping
+   them into the workspace app shell (the `backerDiscovery` rule in app.js keys
+   off !route.full). So go() carries `full` forward across these public browse
+   routes; any workspace/app route (backer.*, maintainer.*, stack.*, the
+   dashboard, …) is absent here, so navigating to one naturally exits the mode. */
+const PUBLIC_BROWSE = /^(discover|category|search|project|methodology|editorial|list\.public|stack\.public|alternatives|compare|shipweek)$/;
 function buildHash(route) {
   if (!route || !route.name) return "#/discover";
   let path = "/" + route.name;
@@ -651,7 +660,16 @@ class Component extends DCLogic {
       orderViolated: this.state.moduleOrder.join(",") !== CANON.join(","),
 
       go(route) {
-        const r = route || { name: "discover" };
+        const r = Object.assign({}, route || { name: "discover" });
+        /* Keep a signed-in visitor in the public front-door shell while they
+           browse public surfaces (see PUBLIC_BROWSE). Only inherit when the
+           caller didn't decide `full` itself, and never manufacture it for a
+           logged-out visitor (their front door has no `full` to carry). */
+        if (r.full == null && self.state.signedIn
+            && self.state.route && self.state.route.full
+            && PUBLIC_BROWSE.test(r.name || "")) {
+          r.full = true;
+        }
         self.setState({ route: r, focusSlug: r.slug || self.state.focusSlug });
         window.scrollTo(0, 0);
       },
