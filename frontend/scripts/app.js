@@ -19,6 +19,105 @@
   var CARD = { border: "var(--border-level-1)", borderRadius: "var(--radius-sm)", padding: "var(--card-padding)", background: "var(--surface-card)" };
   var MONO = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase" };
 
+  /* ── Theme (light / dark) ─────────────────────────────────────────────────────
+     The resolved theme lives as data-theme on <html> and is set pre-paint by the
+     inline script in index.html (remembered choice → OS setting → dark). These
+     controls just flip that attribute and persist the choice; because every
+     surface is CSS-variable driven, flipping the attribute IS the whole switch —
+     nothing in the React tree needs to re-render for the page to restyle. The
+     local state below exists only so the control's own icon/label follow the
+     current theme, and a broadcast event keeps every mounted control in sync (the
+     desktop icon button and the burger segment can both be live at once). */
+  var THEME_KEY = "nv-theme";
+  function currentTheme() {
+    return (typeof document !== "undefined" &&
+      document.documentElement.getAttribute("data-theme") === "light") ? "light" : "dark";
+  }
+  function applyTheme(t) {
+    if (t !== "light" && t !== "dark") return;
+    document.documentElement.setAttribute("data-theme", t);
+    document.documentElement.style.colorScheme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* storage blocked */ }
+    try { document.dispatchEvent(new CustomEvent("nv-theme-change", { detail: t })); } catch (e) {}
+  }
+  /* Subscribe a setter to theme changes from any control; returns the unsubscribe. */
+  function onThemeChange(fn) {
+    var on = function (e) { fn(e.detail === "light" ? "light" : "dark"); };
+    document.addEventListener("nv-theme-change", on);
+    return function () { document.removeEventListener("nv-theme-change", on); };
+  }
+  (function injectThemeCSS() {
+    if (typeof document === "undefined" || document.getElementById("nv-theme-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-theme-css";
+    s.textContent = [
+      ".nv-theme-btn{transition:background-color 150ms ease,color 150ms ease,border-color 150ms ease}",
+      ".nv-theme-btn:hover{background:color-mix(in srgb, var(--volt-surface) 75%, transparent)!important;color:var(--volt-white)!important}",
+      ".nv-theme-btn svg{display:block}",
+      ".nv-theme-opt{transition:background-color 150ms ease,color 150ms ease}",
+      ".nv-theme-opt:hover{color:var(--volt-white)}"
+    ].join("");
+    document.head.appendChild(s);
+  })();
+
+  var ICON_SUN = h("svg", { viewBox: "0 0 24 24", width: 18, height: 18, fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+    h("circle", { cx: 12, cy: 12, r: 4 }),
+    h("path", { d: "M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" }));
+  var ICON_MOON = h("svg", { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+    h("path", { d: "M20.5 13.4A8.2 8.2 0 1 1 10.6 3.5a6.4 6.4 0 0 0 9.9 9.9z" }));
+
+  /* Desktop: a single icon button in the header right zone. Shows the CURRENT
+     theme (moon on dark, sun on light) and flips to the other on click. */
+  function ThemeToggle(props) {
+    var st = React.useState(currentTheme());
+    var theme = st[0], setTheme = st[1];
+    React.useEffect(function () { return onThemeChange(setTheme); }, []);
+    var next = theme === "light" ? "dark" : "light";
+    var label = "Switch to " + next + " theme";
+    return h("button", {
+      type: "button", className: "nv-theme-btn",
+      "aria-label": label, title: label,
+      onClick: function () { applyTheme(next); },
+      style: Object.assign({
+        width: "36px", height: "36px", flexShrink: 0, padding: 0,
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        background: "transparent", border: "1px solid transparent",
+        borderRadius: "var(--radius-pill, 9999px)",
+        color: "var(--volt-text-200)", cursor: "pointer"
+      }, props && props.style)
+    }, theme === "light" ? ICON_SUN : ICON_MOON);
+  }
+
+  /* Burger / touch: an explicit two-option selector so the choice reads as a
+     choice, matching the header's other segmented controls. */
+  function ThemeSegment(props) {
+    var st = React.useState(currentTheme());
+    var theme = st[0], setTheme = st[1];
+    React.useEffect(function () { return onThemeChange(setTheme); }, []);
+    var opts = [ { k: "light", label: "Light", icon: ICON_SUN }, { k: "dark", label: "Dark", icon: ICON_MOON } ];
+    return h("div", { style: Object.assign({ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-between" }, props && props.style) },
+      h("span", { style: { font: "var(--type-body-md)", fontWeight: 500, color: "var(--volt-text-500)" } }, "Appearance"),
+      h("div", { role: "group", "aria-label": "Theme", style: { display: "inline-flex", gap: "4px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "4px" } },
+        opts.map(function (o) {
+          var on = theme === o.k;
+          return h("button", {
+            key: o.k, type: "button", className: "nv-theme-opt",
+            "aria-pressed": on ? "true" : "false",
+            onClick: function () { applyTheme(o.k); },
+            style: {
+              WebkitAppearance: "none", appearance: "none", cursor: "pointer",
+              display: "inline-flex", alignItems: "center", gap: "6px",
+              padding: "7px 12px", borderRadius: "999px", border: "none",
+              font: "var(--type-caption-strong)",
+              background: on ? "var(--volt-surface)" : "transparent",
+              color: on ? "var(--volt-white)" : "var(--volt-text-500)"
+            }
+          }, o.icon, o.label);
+        })));
+  }
+  window.NvThemeToggle = ThemeToggle;
+  window.NvThemeSegment = ThemeSegment;
+
   /* ── App-shell responsive rules ───────────────────────────────────────────
      The backer/maintainer/admin surfaces are a fixed 232–248px sidebar next to
      the screen. Below 860px that sidebar eats half a phone and the content is
@@ -705,6 +804,9 @@
        burger only on a narrow viewport, where the three inline controls would
        otherwise collide (this is the same 760px break the nav links fold at). */
     var right = h("div", { style: Object.assign({}, ZONE, { justifyContent: "flex-end" }) },
+      /* Theme switch keeps a permanent desktop slot; on narrow it folds into the
+         burger (as a labelled segment) alongside the account action. */
+      narrow ? null : h(ThemeToggle, { key: "theme" }),
       narrow ? null : (ctx.signedIn
         ? h(Button, { variant: "outline", size: "sm", onClick: goAccount, style: { whiteSpace: "nowrap", flexShrink: 0 } }, accountLabel)
         : h("a", {
@@ -760,6 +862,18 @@
          desktop it keeps its permanent slot in the right zone, so the menu stays
          sections-only there. Set off by a hairline, bottom-most so it leads the
          reveal and is the closest tap target to the burger that opened it. */
+      /* Appearance selector — leads the panel (top slot) on narrow, where the
+         desktop right-zone toggle isn't shown. Set off by a hairline below. */
+      if (narrow) items.unshift(h("div", {
+        key: "__theme",
+        style: {
+          padding: "6px 10px 12px", margin: "0 6px 6px",
+          borderBottom: "1px solid color-mix(in srgb, var(--volt-border-hover) 45%, transparent)",
+          opacity: menuOpen ? 1 : 0,
+          transform: menuOpen ? "translateY(0)" : "translateY(16px)",
+          transition: "opacity 240ms ease 0ms, transform 320ms cubic-bezier(0.2,0.9,0.2,1) 0ms"
+        }
+      }, h(ThemeSegment, null)));
       if (narrow) items.push(h("a", {
         key: "__account", href: accountHref,
         onClick: function (e) { e.preventDefault(); setMenuOpen(false); goAccount(); },

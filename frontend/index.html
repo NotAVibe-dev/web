@@ -3,6 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ── Theme resolution (pre-paint) ─────────────────────────────────────────────
+     Sets data-theme on <html> BEFORE any stylesheet or paint, so there is no
+     flash of the wrong theme. Resolution order: a remembered manual choice
+     (localStorage "nv-theme") wins; otherwise follow the OS setting; failing
+     both, dark — the canonical default. The <html> element survives the app
+     mount (the runtime only swaps a node inside <body>), so this attribute set
+     once here holds for the whole session and is what every [data-theme] CSS
+     rule keys off. The theme name is also mirrored on <meta name=color-scheme>
+     so form controls, scrollbars and the like adopt the right native palette. -->
+<meta name="color-scheme" content="dark light">
+<script>
+(function () {
+  var t = "dark";
+  try {
+    var saved = localStorage.getItem("nv-theme");
+    if (saved === "light" || saved === "dark") {
+      t = saved;
+    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      t = "light";
+    }
+  } catch (e) { /* storage blocked (private mode / sandboxed) → dark */ }
+  document.documentElement.setAttribute("data-theme", t);
+  document.documentElement.style.colorScheme = t;  /* native scrollbars / form controls */
+})();
+</script>
 <script src="scripts/runtime.js"></script>
 </head>
 <body>
@@ -371,51 +396,110 @@
 }
   </style>
   <style>
-/* ── Light inversion ─────────────────────────────────────────────────────────
-   VoltAgent ships no light mode, so this re-points its base ramp rather than
-   inventing a second system: canvas order inverted, text ramp inverted, the
-   emerald deepened for text roles (#00d992 stays for fills, dots and status
-   where it carries contrast). Hairlines still do the elevation work — no
-   card shadows — and hover now darkens the fill instead of lightening it. */
-:root {
-  --volt-void:#ffffff;        /* page + hero */
+/* ── Light theme ─────────────────────────────────────────────────────────────
+   Dark is the base :root (see hashicorp-tokens.css, loaded last) and is never
+   touched — this block is a pure OVERRIDE that only applies when the page is in
+   light mode. It wins over the base by SPECIFICITY, not document order:
+   `:root[data-theme="light"]` is (0,2,0) vs a bare `:root` at (0,1,0), so it
+   still overrides the HashiCorp layer even though it is declared before it.
+   Toggle by setting/clearing data-theme="light" on <html> (see the head script
+   and the header control) — no stylesheet swap, the CSS variables just re-resolve.
+
+   Design brief (per the design direction): the HashiCorp IDENTITY is kept in
+   both themes — type scale, 96px rhythm, 8px corners, non-pill CTA all live in
+   the base :root and are theme-independent. Only what carries LIGHTNESS moves
+   here: the surface/text/border ramp inverts, the primary CTA flips to
+   inverse-canvas (near-black fill, white label — the mirror of dark's white-on-
+   black), and hover darkens the fill instead of lightening it. Accent hues stay
+   put; the green deepens only where it becomes text/line work on paper. */
+:root[data-theme="light"] {
+  /* Surfaces — paper, cool-neutral. Sections still separate by surface lift
+     (void → canvas → surface) reinforced by hairlines, exactly as on dark. */
+  --volt-void:#ffffff;        /* page + hero canvas */
   --volt-ink-black:#fbfbfa;
-  --volt-canvas:#f6f6f4;      /* band fill + default card fill */
-  --volt-surface:#ebebe8;     /* hover / selected / input recess */
-  --volt-panel:#eceef0;       /* code-mockup header, cool-shifted */
+  --volt-canvas:#f5f6f7;      /* band fill + default card fill */
+  --volt-surface:#eaecef;     /* hover / selected / input recess */
+  --volt-panel:#eceef1;       /* code-mockup header */
+  --volt-grey-dark:#f5f6f7;
+  --volt-black:#ffffff;       /* "deepest surface" role → paper on light */
+  --volt-node-canvas:#f5f6f7;
+  --volt-node-row:#eceef1;
+  --volt-node-fill:#eceef1;
 
-  --volt-emerald:#00d992;         /* unchanged: CTA fill, dots, live status */
-  --volt-emerald-soft:#059669;    /* accent text needs contrast on white */
-  --volt-emerald-deep:#047857;    /* links, lockup */
-  --volt-emerald-400:#10b981;
-  --volt-emerald-08:rgba(0,217,146,0.10);
-  --volt-emerald-10:rgba(0,217,146,0.14);
-  --volt-emerald-20:rgba(4,120,87,0.20);
-  --volt-emerald-30:rgba(4,120,87,0.30);
-  --volt-on-emerald:#101010;
+  /* Text — inverted ramp: near-black ink at the top, mid-grey at the subtle end. */
+  --volt-white:#0b0d10;       /* ink: headlines + emphasised body */
+  --volt-text-100:#141719;
+  --volt-text-200:#22262b;    /* body */
+  --volt-text-300:#3a3f46;
+  --volt-text-400:#565c64;    /* eyebrow labels */
+  --volt-text-500:#5e646c;    /* muted / secondary body */
+  --volt-text-600:#787f88;    /* fine print, timestamps */
+  --volt-zinc-300:#3a3f46;
+  --volt-zinc-400:#565c64;
+  --volt-zinc-700:#eaecef;
+  --volt-zinc-800:#f5f6f7;
+  --volt-gray-400:#565c64;
+  --text-code:#1b1f24;
 
-  --volt-border:#e3e3df;
-  --volt-border-hover:#c7c7c1;
-  --volt-border-faint:rgba(0,0,0,0.09);
-  --volt-border-dashed:rgba(79,93,117,0.35);
+  /* Borders — hairlines carry the elevation on light too, as translucent ink. */
+  --volt-border:rgba(11,13,16,0.12);
+  --volt-border-faint:rgba(11,13,16,0.08);
+  --volt-border-hover:rgba(11,13,16,0.22);
+  --volt-hairline-soft:rgba(11,13,16,0.08);
+  --volt-border-dashed:rgba(11,13,16,0.18);
 
-  --volt-white:#0d0d0d;       /* the heading role, inverted */
-  --volt-text-100:#171717;
-  --volt-text-200:#232323;    /* body */
-  --volt-text-300:#33312f;
-  --volt-text-400:#57534e;    /* eyebrow labels */
-  --volt-text-500:#635e59;    /* muted body */
-  --volt-text-600:#6b655f;    /* fine print */
-  --volt-zinc-300:#3f3f46;
-  --volt-zinc-400:#52525b;
+  /* Accent — Nomad green. The #00ca8e fill/dot/status colour reads on white and
+     stays; the "soft/deep" roles (used as accent TEXT and lockup) deepen so they
+     clear AA contrast on paper. */
+  --volt-emerald:#00ca8e;
+  --volt-emerald-400:#00b37e;
+  --volt-emerald-soft:#047857;
+  --volt-emerald-deep:#047857;
+  --volt-emerald-08:rgba(0,202,142,0.10);
+  --volt-emerald-10:rgba(0,202,142,0.14);
+  --volt-emerald-20:rgba(0,202,142,0.22);
+  --volt-emerald-30:rgba(0,202,142,0.32);
+  --volt-on-emerald:#04120d;
 
-  --text-code:#1b1b1b;
+  /* Per-product indigo shows only as the hero gradient wash; lightened so it
+     tints the paper rather than muddying it. Other product hues (Vault yellow,
+     Terraform purple, etc.) stay at their brand values — they read on white. */
+  --volt-indigo:#c9d4ff;
+
+  /* Primary action — HashiCorp points --primary at "inverse-canvas". On light
+     that is the exact mirror of dark: near-black fill, white label. The
+     button[style*=--volt-emerald] escape-hatch in hashicorp-tokens.css reads
+     --primary/--on-primary, so the CTA flips automatically. */
+  --primary:#0b0d10;
+  --on-primary:#ffffff;
+
+  /* Links — HashiCorp's Vagrant blue, darkened for AA on white. (Bare <a> tags
+     use --volt-emerald-deep via the base anchor rule; this is for the components
+     that read --link.) */
+  --link:#1868f2;
+  --link-hover:#0b4fd0;
+  --link-on-dark:#1868f2;
+  --link-on-dark-hover:#0b4fd0;
+
+  /* Secondary accent surfaces */
+  --accent-mint:rgba(0,202,142,0.14);
+  --accent-periwinkle:#eaecef;
+  --wordmark-tint:#f5f6f7;
+  --brand-gradient:#f5f6f7;
+  --brand-gradient-soft:#f5f6f7;
+
+  /* Elevation + hover. Still no drop shadows: a single hairline ring separates
+     cards, and hover DARKENS the fill on light instead of lightening it. */
   --elev-2:0 0 0 1px var(--volt-border-hover);
+  --hover-lighten-on-dark:rgba(11,13,16,0.05);
+  --hover-darken-on-light:rgba(11,13,16,0.05);
 }
   </style>
-  <!-- HashiCorp token layer. Last stylesheet in the helmet, so it wins on
-       document order over the VoltAgent bridge and the light inversion above
-       without either being edited. Remove this one line to revert. -->
+  <!-- HashiCorp token layer = the DARK base. Its bare `:root` sets the dark
+       colour ramp plus the theme-independent HashiCorp identity (type, spacing,
+       radii, CTA shape). The light block above overrides only the colour half
+       by specificity when data-theme="light". Loaded last so it also wins over
+       the VoltAgent bridge for dark. -->
   <link rel="stylesheet" href="styles/hashicorp-tokens.css">
   <script src="design-system/voltagent/ds-bundle.js"></script>
   <script src="scripts/voltagent-adapter.js"></script>
