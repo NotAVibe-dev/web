@@ -327,7 +327,29 @@
         on ? "Registered — withdraw" : "Register interest"));
   }
 
+  /* Responsive rules for the project page, injected once (same pattern as
+     app.js injectAppShellCSS). The health DataTable is a 5-column table whose
+     wrapper clips overflow; on phones we reflow it into stacked rows so the
+     sourced fact, source and fetched date never disappear off the edge. */
+  function ensureProjectCSS() {
+    if (typeof document === "undefined" || document.getElementById("nv-project-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-project-css";
+    s.textContent = [
+      "@media (max-width: 640px){",
+      ".nv-pp-health table,.nv-pp-health tbody,.nv-pp-health tr,.nv-pp-health td{display:block;width:100%}",
+      ".nv-pp-health thead{display:none}",
+      ".nv-pp-health tr{padding:14px 0}",
+      ".nv-pp-health td{padding:2px 16px!important}",
+      ".nv-pp-health td:first-child{font-size:15px;font-weight:600;color:var(--volt-text-200)!important;padding-top:8px!important}",
+      ".nv-pp-health td:nth-child(2){padding-top:6px!important;padding-bottom:6px!important}",
+      "}"
+    ].join("");
+    (document.head || document.documentElement).appendChild(s);
+  }
+
   function NvProjectPage(props) {
+    ensureProjectCSS();
     var ctx = props.ctx;
     var p = window.findProject(ctx.route.slug || ctx.focusSlug) || window.PROJECTS[0];
     var state = ctx.claimState(p.slug);
@@ -391,6 +413,8 @@
             h("h2", { style: Object.assign({}, H2, { fontSize: "28px", lineHeight: "34px" }) }, "Health breakdown"),
             h("span", { style: MONO }, dated ? "FROZEN AT RETIREMENT" : "FIVE SIGNALS · EXTERNALLY SOURCED · BANDED")),
           h(DataTable, {
+            className: "nv-pp-health",
+            style: { overflowX: "auto" },
             columns: ["Signal", "Band", "What it counts", "Source", "Fetched"],
             rows: window.SIGNAL_META.map(function (m) {
               var s = signalOf(p, m.key, ctx.ghDegraded);
