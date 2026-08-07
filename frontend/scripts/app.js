@@ -350,6 +350,20 @@
 
   /* ── prototype rail for surfaces product chrome does not link ──── */
 
+  /* The rail and the bottom navigator are prototype scaffolding, not product
+     chrome. They render in local dev and when ?dev is present, and stay out of
+     the deployed product. Same host-detection idiom as the password gate in
+     index.html — localhost (and file://) is dev; everything else is production. */
+  var NV_DEV = window.NV_DEV = (function () {
+    try {
+      var host = location.hostname;
+      var isLocal = !host || host === "localhost" || host === "127.0.0.1"
+        || host === "::1" || host === "[::1]" || /\.localhost$/.test(host);
+      var forced = /(?:^|[?&])dev(?:=|&|$)/.test(location.search);
+      return isLocal || forced;
+    } catch (e) { return false; }
+  })();
+
   var RAIL = [
     ["Alternatives", "alternatives"], ["Comparison", "compare"],
     ["Backer onboarding", "backer.onboarding"], ["Activity", "backer.activity"],
@@ -957,7 +971,7 @@
     if (ctx.mobile) {
       return h(React.Fragment, null,
         h(window.MobileShell, { ctx: ctx, Screen: Screen }),
-        h(window.PrototypeBar, { ctx: ctx }));
+        NV_DEV ? h(window.PrototypeBar, { ctx: ctx }) : null);
     }
 
     var body;
@@ -972,7 +986,7 @@
           ctx.signedIn ? h("div", { style: { display: "flex", justifyContent: "flex-end", padding: "var(--space-md) var(--gutter-desktop) 0" } },
             h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null,
           h("div", { style: { flex: 1 } }, h(Screen, { ctx: ctx })),
-          h(PrototypeRail, { ctx: ctx })));
+          NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null));
     } else {
       body = h("div", { style: { minHeight: "100vh", background: "var(--volt-void)", display: "flex", flexDirection: "column" } },
         h(NvPublicHeader, { ctx: ctx }),
@@ -984,10 +998,10 @@
         h("main", {
           style: { flex: 1, paddingTop: name === "discover" ? 0 : "76px" }
         }, h(Screen, { ctx: ctx })),
-        h(PrototypeRail, { ctx: ctx }),
+        NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null,
         h(DS.FooterWordmark, null, "notavibe"));
     }
-    return h(React.Fragment, null, body, h(window.PrototypeBar, { ctx: ctx }));
+    return h(React.Fragment, null, body, NV_DEV ? h(window.PrototypeBar, { ctx: ctx }) : null);
   }
 
   /* ── Backer Home ──────────────────────────────────────────────────────────
