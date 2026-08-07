@@ -376,21 +376,14 @@
             h(SignalTile, { label: "Contribution breadth", value: breadth.band, detail: breadth.detail })) : null)),
 
       h(Band, { tone: "canvas" },
-        state === "generated"
-          ? h(Card, { padding: "32px", style: col("12px") },
-              h(Eyebrow, null, "Pre-claim"),
-              h("p", { style: Object.assign({}, H3, { fontWeight: 400, fontSize: "24px", lineHeight: "32px" }) },
-                window.maskCount(p.listCount, "have this in a list") + " · " + window.maskCount(p.stackCount, "have this in their stack") + ". Claim this page to see more."),
-              h("p", { style: SMALL }, "Every count carries the below-4 outcome-only mask — at launch volume, “2 people have this in their stack” on a niche package is close to naming them."))
-          : null,
-
-        claimed || state === "generated"
-          ? h(Card, { padding: "32px", style: col("0") },
-              h("div", { style: col("8px", { paddingBottom: "16px" }) },
-                h(Eyebrow, null, "Coming to notavibe"),
-                h("span", { style: H3 }, "Two systems are specified and not yet built"),
-                h("span", { style: SMALL }, "Registering interest subscribes you to nothing. One per account per project per system; re-clicking withdraws.")),
-              systems.map(function (s) { return h(InterestRow, { key: s.key, ctx: ctx, project: p, sys: s, claimed: claimed }); }))
+        /* Editorial verdict promoted above the fold-break: on a claimed page the
+           human read is the answer-first signal, so it leads the section rather
+           than sitting under health / vocab / dependents. */
+        claimed && p.verdict
+          ? h(Card, { emphasized: true, padding: "32px", style: col("12px") },
+              h(Eyebrow, { accent: true }, "Editorial verdict"),
+              h("p", { style: Object.assign({}, H3, { fontWeight: 400, fontSize: "24px", lineHeight: "32px" }) }, p.verdict.text),
+              h("span", { style: MONO }, p.verdict.author.toUpperCase() + " · " + p.verdict.date))
           : null,
 
         h("div", { style: col("16px") },
@@ -435,11 +428,24 @@
                 h("span", { style: Object.assign({}, MONO, { color: "var(--volt-text-200)" }) }, "notavibe"),
                 h("span", { style: Object.assign({}, MONO, { color: state === "active" ? "var(--volt-emerald-deep)" : "var(--volt-text-600)" }) }, state === "active" ? "verified" : "unclaimed"))))),
 
-        claimed && p.verdict
-          ? h(Card, { emphasized: true, padding: "32px", style: col("12px") },
-              h(Eyebrow, { accent: true }, "Editorial verdict"),
-              h("p", { style: Object.assign({}, H3, { fontWeight: 400, fontSize: "24px", lineHeight: "32px" }) }, p.verdict.text),
-              h("span", { style: MONO }, p.verdict.author.toUpperCase() + " · " + p.verdict.date))
+        /* Funding demoted below the evidence: the pre-claim teaser and the
+           "not yet built" interest systems follow health, vocab and dependents
+           rather than opening the section. */
+        state === "generated"
+          ? h(Card, { padding: "32px", style: col("12px") },
+              h(Eyebrow, null, "Pre-claim"),
+              h("p", { style: Object.assign({}, H3, { fontWeight: 400, fontSize: "24px", lineHeight: "32px" }) },
+                window.maskCount(p.listCount, "have this in a list") + " · " + window.maskCount(p.stackCount, "have this in their stack") + ". Claim this page to see more."),
+              h("p", { style: SMALL }, "Every count carries the below-4 outcome-only mask — at launch volume, “2 people have this in their stack” on a niche package is close to naming them."))
+          : null,
+
+        claimed || state === "generated"
+          ? h(Card, { padding: "32px", style: col("0") },
+              h("div", { style: col("8px", { paddingBottom: "16px" }) },
+                h(Eyebrow, null, "Coming to notavibe"),
+                h("span", { style: H3 }, "Two systems are specified and not yet built"),
+                h("span", { style: SMALL }, "Registering interest subscribes you to nothing. One per account per project per system; re-clicking withdraws.")),
+              systems.map(function (s) { return h(InterestRow, { key: s.key, ctx: ctx, project: p, sys: s, claimed: claimed }); }))
           : null,
 
         claimed && p.recommendations && p.recommendations.length
