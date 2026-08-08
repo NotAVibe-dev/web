@@ -383,16 +383,19 @@
               h("span", { style: MONO_MD }, p.slug),
               h("p", { style: Object.assign({}, BODY_LG, { maxWidth: "56ch" }) }, p.description),
               h("div", { style: { display: "flex", gap: "16px", flexWrap: "wrap", paddingTop: "8px" } },
-                h(Button, { variant: "primary", onClick: function () { ctx.go({ name: "action.save", slug: p.slug }); } }, saved ? "Saved to a list" : "Save to list"),
+                /* Unclaimed pages lead with Claim as the primary action and demote
+                   Save to a secondary; claimed / dated pages keep Save primary. */
+                state === "generated"
+                  ? h(Button, { variant: "primary", onClick: function () { ctx.go({ name: "claim.start", slug: p.slug }); } }, "Claim this page")
+                  : null,
+                h(Button, { variant: state === "generated" ? "outline" : "primary", onClick: function () { ctx.go({ name: "action.save", slug: p.slug }); } }, saved ? "Saved to a list" : "Save to list"),
                 h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "alternatives", slug: p.slug }); } }, "See alternatives"))),
             h(Card, { padding: "24px", style: col("12px", { flex: "0 1 320px" }) },
               h("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
                 h(PillTag, { tone: line.tone, dot: line.tone === "accent" }, line.label.toLowerCase())),
               h("span", { style: SMALL }, line.body),
               !dated ? h("span", { style: MONO },
-                "npm " + updates.fetched + " · github " + breadth.fetched + " · ossf " + p.signals.security.fetched) : null,
-              state === "generated" ? h("div", { style: { paddingTop: "4px" } },
-                h(Button, { variant: "primary", size: "sm", onClick: function () { ctx.go({ name: "claim.start", slug: p.slug }); } }, "Claim this page")) : null)),
+                "npm " + updates.fetched + " · github " + breadth.fetched + " · ossf " + p.signals.security.fetched) : null)),
           live ? h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" } },
             h(SignalTile, { label: "Maintenance rhythm", value: updates.band, detail: updates.detail }),
             h(SignalTile, { label: "Contribution breadth", value: breadth.band, detail: breadth.detail })) : null)),
