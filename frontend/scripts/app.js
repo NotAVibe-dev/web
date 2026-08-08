@@ -236,6 +236,12 @@
       "@keyframes nv-spark-draw{to{stroke-dashoffset:0}}",
       ".nv-spark-dot{opacity:0;animation:nv-spark-pop 320ms cubic-bezier(0.16,1,0.3,1) 1200ms forwards}",
       "@keyframes nv-spark-pop{to{opacity:1}}",
+      /* Maintainer form fields — card-system inputs (profile vocabulary, contest
+         evidence, settings confirm). Emerald focus border, kept off inline styles. */
+      ".nv-field{width:100%;box-sizing:border-box;border:1px solid var(--volt-border);background:var(--volt-void);color:var(--text-primary);border-radius:8px;padding:var(--space-sm) var(--space-md);font:var(--type-body-md);letter-spacing:var(--ls-body-md);transition:border-color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-field:focus{outline:none;border-color:var(--volt-emerald)}",
+      ".nv-field::placeholder{color:var(--volt-text-500)}",
+      "textarea.nv-field{resize:vertical;min-height:64px;font-family:inherit;line-height:1.55}",
       "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta,.nv-draft,.nv-claim-step,.nv-steprail-dot,.nv-steprail-bar,.nv-reveal,.nv-reveal-up{transition:none;animation:none}.nv-spark-line{stroke-dashoffset:0;animation:none}.nv-spark-dot{opacity:1;animation:none}}"
     ].join("");
     document.head.appendChild(s);
@@ -1368,6 +1374,237 @@
       h("div", { className: "nv-claim-step", key: step }, content));
   }
 
+  /* ── Maintainer dashboard ─────────────────────────────────────────────────
+     Overrides the compiled MaintainerDashboard (old-chrome StatsCards + primary
+     accent) into the card system. The Maintainer-context landing: §9.3's two
+     compositions — the discovery-analytics roll-up (the claim hook) + pending
+     actions across projects — plus the "what's not here" honesty strip. All
+     aggregate, no visitor-level data; the interest count renders with its stated
+     constraint, never a revenue projection. This is where "See the demand" lands
+     from a claim, so the analytics carry the same demand-as-motion language (ADR
+     0007): trend and breakdown, not a roster, and the below-4 mask holds. */
+  function MaintainerDashboardV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    var lapsed = ctx.claimState(p.slug) === "lapsed";
+    var mask = window.maskNumber || function (n) { return n; };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+    var wrap = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-3xl)", padding: "var(--space-section) var(--space-2xl)" };
+
+    function sparkSvg() {
+      var pts = "3,26 20,22 37,24 54,16 71,17 88,10 105,8 128,3";
+      return h("svg", { viewBox: "0 0 131 30", width: "100%", height: 34, preserveAspectRatio: "none", fill: "none", "aria-hidden": "true", style: { overflow: "visible", marginTop: "4px" } },
+        h("polyline", { className: "nv-spark-line", points: pts, stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" }),
+        h("circle", { className: "nv-spark-dot", cx: 128, cy: 3, r: 3, fill: "var(--volt-emerald)" }));
+    }
+    function tile(label, value, cap, spark) {
+      return h("div", { style: Object.assign({}, CARD, col("var(--space-xs)")) },
+        h("span", { style: eyebrow }, label),
+        h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+        spark ? sparkSvg() : null,
+        h("span", { style: caption }, cap));
+    }
+    function bar(label, pct) {
+      return h("div", { key: label, style: col("4px") },
+        h("div", { style: { display: "flex", justifyContent: "space-between", font: "var(--type-caption)" } },
+          h("span", null, label), h("span", { style: { color: "var(--text-secondary)" } }, pct + "%")),
+        h("div", { style: { height: "6px", background: "var(--volt-void)", borderRadius: "3px", overflow: "hidden" } },
+          h("div", { style: { width: pct + "%", height: "100%", background: "var(--volt-emerald)", borderRadius: "3px" } })));
+    }
+
+    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-lg)", flexWrap: "wrap" } },
+      h("div", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Maintainer · Maya"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, p.owner + "/" + p.repo),
+        h("span", { style: caption }, "Aggregate discovery analytics · illustrative data")),
+      h("label", { style: col("4px") },
+        h("span", { style: eyebrow }, "Project"),
+        h("select", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", color: "var(--text-primary)", borderRadius: "8px", padding: "var(--space-sm) var(--space-md)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", cursor: "pointer" } },
+          h("option", null, p.owner + "/" + p.repo), h("option", null, "unjs/unbuild"))));
+
+    var pending = lapsed
+      ? h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-md)")) },
+          h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Pending action · act by day 30"),
+          h("p", { style: { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } }, "Re-verification is required. Uncured at day 30, this page becomes a dated catalog record and stays indexed."),
+          h("div", null, h(Button, { variant: "primary", onClick: function () { ctx.setClaimState(p.slug, "active"); } }, "Re-verify now")),
+          h(Note, null, "Surfaced in-app as well as by email, because an act-by clock may never depend solely on email delivery. No payout freeze, no held accruals, no billing — those are foreshadowed."))
+      : h("div", { style: Object.assign({}, CARD, col("var(--space-sm)")) },
+          h("span", { style: eyebrow }, "Pending actions · across projects"),
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Nothing needs you right now"),
+          h(Note, null, "This surface exists for three carried invariants: the default in-app notice posture, the delivery-failure fallback, and the 30-day cure clock."));
+
+    var stats = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "var(--space-lg)" } },
+      tile("Discovery volume", "3,180", "Page views · trending, 30 days", true),
+      tile("Deck appearances", "412", "Times shown in a Your Deck"),
+      tile("List membership", mask(p.listCount), "Lists containing this project"),
+      tile("Stack membership", mask(p.stackCount), "Scans that matched it"));
+
+    var interest = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Interest register"),
+      [["Subscriptions and tiers", p.interest.subscriptions], ["Bounties and escrow", p.interest.bounties]].map(function (r) {
+        return h("div", { key: r[0], style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+          h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, r[0]),
+          h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, mask(r[1])));
+      }),
+      h("div", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-lg)" } },
+        h(Note, null, h("b", { style: { fontWeight: 500, color: "var(--text-primary)" } }, "What this count means."), " “I'd fund this” is not “I will pay $5 a month.” It is an expression of interest in a system that does not exist yet, from people who have committed nothing. It is never a revenue projection, implied or computed.")),
+      h(Note, null, "Identities are never shown. No visitor-level data reaches a maintainer."));
+
+    var referrers = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Where discovery came from"),
+      h("div", { style: col("var(--space-sm)") }, [["Search engines", 46], ["Direct", 21], ["Your Deck", 18], ["Lists and stack pages", 9], ["Editorial", 6]].map(function (r) { return bar(r[0], r[1]); })),
+      h("div", { style: { display: "flex", gap: "var(--space-lg)", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+        h("span", { style: caption }, "Human 71%"),
+        h("span", { style: Object.assign({}, caption, { color: "var(--text-secondary)" }) }, "Crawler 29%")),
+      h(Note, null, "Crawler and human traffic are split, not merged. Campaign traffic is absent from this panel by construction — the campaign wall."));
+
+    var analytics = h("section", { style: col("var(--space-lg)") },
+      h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-md)", flexWrap: "wrap" } },
+        h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Discovery analytics — the claim hook"),
+        h("span", { style: eyebrow }, "Aggregate only")),
+      stats,
+      h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "var(--space-lg)" } }, interest, referrers),
+      h(Note, null, "Data only the platform holds, costing no payment rail. This roll-up is the reason a maintainer claims a page at all."));
+
+    var absent = h("section", { style: col("var(--space-md)") },
+      h("span", { style: eyebrow }, "What is not here"),
+      h("div", { style: { display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" } },
+        ["Tiers & pricing", "Subscribers", "Payouts", "Bounties inbox", "Bounty detail", "Epoch create", "Epoch results", "Gates", "Posts & artifacts", "Campaigns", "Campaign detail"].map(function (x) {
+          return h("span", { key: x, style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)", border: "1px solid var(--volt-border)", borderRadius: "6px", padding: "4px 9px" } }, x);
+        })),
+      h(Note, null, "No money surfaces of any kind. Maintainer campaigns are out too — a lightweight maintainer platform does not ship an ad panel."));
+
+    return h("div", { style: wrap }, header, pending, analytics, absent);
+  }
+
+  /* ── Maintainer surfaces (profile · reach · contest · api · settings) ──────
+     The standing per-project surfaces, ported into the card system to match the
+     dashboard and the claim flow. Content stays spec-faithful (§8.5, §9.1–9.3);
+     every honesty rule is preserved verbatim. Shared card-system helpers below. */
+  var MEB = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+  var MCAP = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+  var MCARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+  var MBODY = { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" };
+  function mWrap(w) { return { maxWidth: (w || 680) + "px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" }; }
+  function mHeader(eb, title, sub) {
+    return h("header", { style: col("var(--space-sm)") },
+      h("span", { style: MEB }, eb),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, title),
+      sub ? h("span", { style: MCAP }, sub) : null);
+  }
+  function mField(label, o) {
+    o = o || {};
+    var el = o.multiline
+      ? h("textarea", { className: "nv-field", rows: o.rows || 3, defaultValue: o.value || "", placeholder: o.placeholder || "" })
+      : h("input", { className: "nv-field", defaultValue: o.value || "", placeholder: o.placeholder || "" });
+    return h("label", { key: label, style: col("6px") }, h("span", { style: MEB }, label), el, o.hint ? h("span", { style: MCAP }, o.hint) : null);
+  }
+  function mBadge(t) {
+    return h("span", { key: t, style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)", border: "1px solid var(--volt-border)", borderRadius: "6px", padding: "4px 9px", whiteSpace: "nowrap" } }, t);
+  }
+  function mSparkSvg() {
+    return h("svg", { viewBox: "0 0 131 30", width: "100%", height: 34, preserveAspectRatio: "none", fill: "none", "aria-hidden": "true", style: { overflow: "visible", marginTop: "4px" } },
+      h("polyline", { className: "nv-spark-line", points: "3,26 20,22 37,24 54,16 71,17 88,10 105,8 128,3", stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" }),
+      h("circle", { className: "nv-spark-dot", cx: 128, cy: 3, r: 3, fill: "var(--volt-emerald)" }));
+  }
+  function mTile(label, value, cap, spark) {
+    return h("div", { key: label, style: Object.assign({}, MCARD, col("var(--space-xs)")) },
+      h("span", { style: MEB }, label),
+      h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+      spark ? mSparkSvg() : null,
+      h("span", { style: MCAP }, cap));
+  }
+
+  function MaintainerProfileV2(props) {
+    var Note = W("Note");
+    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    return h("div", { style: mWrap(680) },
+      mHeader("Discovery presence — profile", "Keep the page accurate", "This is what visitors and the AEO composition read — make it yours instead of leaving it on inferred data."),
+      h("div", { style: Object.assign({}, MCARD, col("var(--space-lg)")) },
+        mField("Answer-first summary", { multiline: true, rows: 2, value: p.description, hint: "This sentence is what the AEO composition quotes. One sentence." }),
+        h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-lg)" } },
+          (window.VOCAB_DIMENSIONS || []).map(function (d) { return mField(d, { value: p.vocab[d] }); })),
+        h(Note, null, "Your declared vocabulary replaces whatever the pipeline inferred. No maintainer-editable field feeds ranking — that is what keeps this surface from becoming a placement lever."),
+        h("div", null, h(Button, { variant: "primary" }, "Save profile"))),
+      h("section", { style: col("var(--space-md)") },
+        h("span", { style: MEB }, "Peer recommendations you have authored"),
+        h("div", { style: Object.assign({}, MCARD, col("var(--space-sm)")) },
+          h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, "“Does the boring part of shipping a library correctly.”"),
+          h("span", { style: MCAP }, "About unjs/unbuild · rendered on their page, attributed to yours")),
+        h(Note, null, "Claimed projects only, in both directions. The attribution is the mechanism — the growth comes from your audience seeing it.")));
+  }
+
+  function MaintainerReachV2(props) {
+    var Note = W("Note");
+    return h("div", { style: mWrap(820) },
+      mHeader("Discovery presence — reach", "Who discovered you", null),
+      h(Note, null, "Aggregate only, at day granularity. There is no visitor-level view here and never will be."),
+      h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "var(--space-lg)" } },
+        mTile("Discovery volume", "3,180", "Page views · 30 days", true),
+        mTile("Deck appearances", "412", "Times shown in a Your Deck"),
+        mTile("Crawler share", "29%", "Split from human traffic")));
+  }
+
+  function MaintainerContestV2(props) {
+    var fs = React.useState(false), filed = fs[0], setFiled = fs[1];
+    var Note = W("Note");
+    return h("div", { style: mWrap(680) },
+      mHeader("Claim contest — evidence & outcome", "Contest on unjs/unbuild", null),
+      h("div", { style: { display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" } }, mBadge("72-hour SLA"), mBadge("Page stays live during review")),
+      filed
+        ? h("div", { className: "nv-claim-spine", style: Object.assign({}, MCARD, col("var(--space-md)")) },
+            h("span", { style: Object.assign({}, MEB, { color: "var(--volt-emerald)" }) }, "Evidence filed"),
+            h("p", { style: MBODY }, "Both parties file here and read the ruling here."),
+            h(Note, null, "Revoke-and-reset is the only remedy — there is no forced transfer. Revoke-and-reset resets the contest, not the claim state."))
+        : h("form", { onSubmit: function (e) { e.preventDefault(); setFiled(true); }, style: Object.assign({}, MCARD, col("var(--space-lg)")) },
+            mField("Your evidence", { multiline: true, rows: 4, placeholder: "Why the current claim is wrong, with links." }),
+            h("div", null, h(Button, { variant: "primary", size: "lg", type: "submit" }, "File evidence"))),
+      h(Note, null, "A queue with an SLA and no counterparty surface would invert the report-control rule. This is that surface."));
+  }
+
+  function MaintainerApiV2(props) {
+    var Note = W("Note");
+    return h("div", { style: mWrap(760) },
+      mHeader("API & webhooks", "Read API, MCP and webhooks", null),
+      h("section", { style: col("var(--space-md)") },
+        h("span", { style: MEB }, "Webhook events"),
+        h("div", { style: col("var(--space-sm)") }, ["project.verification_changed", "claim.state_changed", "page.published", "page.suppressed"].map(function (e) {
+          return h("div", { key: e, style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-md)", border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "10px", padding: "var(--space-md) var(--space-lg)" } },
+            h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-primary)" } }, e), mBadge("HMAC-signed"));
+        })),
+        h(Note, null, "Retries and a delivery log. No subscribers endpoint — there are no subscribers, which discharges the held consent instrument.")),
+      h("section", { style: col("var(--space-md)") },
+        h("span", { style: MEB }, "Catalog MCP · read-only"),
+        h("pre", { style: { margin: 0, border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "12px", padding: "var(--space-lg)", overflowX: "auto", font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--text-secondary)", lineHeight: 1.7 } },
+          "search_projects\nget_project\ncompare_projects\nget_lists   # public lists only\n\n# suppressed projects are absent from every response\n# launches against schema v1"),
+        h(Note, null, "Registry-listed. Auth: none or API key. Tool descriptions are treated as a poisoning surface.")));
+  }
+
+  function MaintainerSettingsV2(props) {
+    var ctx = props.ctx, Note = W("Note");
+    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    var name = p.owner + "/" + p.repo;
+    var ts = React.useState(""), typed = ts[0], setTyped = ts[1];
+    var rs = React.useState(ctx.claimState(p.slug) === "retired"), retired = rs[0], setRetired = rs[1];
+    return h("div", { style: mWrap(680) },
+      mHeader("Project settings", "Exits", null),
+      h("div", { style: Object.assign({}, MCARD, col("var(--space-md)")) },
+        h("span", { style: MEB }, "Voluntary retirement · the default"),
+        h("p", { style: MBODY }, "The page becomes a dated catalog record and stays indexed. Dated facts survive frozen; live relationships and interactive surfaces close."),
+        h("label", { style: col("6px") }, h("span", { style: MEB }, "Type " + name + " to confirm"),
+          h("input", { className: "nv-field", value: typed, onChange: function (e) { setTyped(e.target.value); }, placeholder: name })),
+        h("div", null, h(Button, { variant: "primary", disabled: typed !== name, onClick: function () { ctx.setClaimState(p.slug, "retired"); setRetired(true); } }, "Retire this page"))),
+      h("div", { style: Object.assign({}, MCARD, col("var(--space-md)"), { opacity: retired ? 1 : 0.55 }) },
+        h("span", { style: MEB }, "Suppress the retired record"),
+        h("p", { style: MBODY }, "Also yours, because claiming was consent and consent is withdrawable. Nothing then renders on any surface."),
+        h(Note, null, retired ? "Edge 4 — requires proving repository admin now. Writes a PageRequest (type: suppression, basis: own-behalf) so the lift trigger exists." : "Available once the page is retired. An Active page is never suppressed while claimed."),
+        h("div", null, h(Button, { variant: "outline", disabled: !retired, onClick: function () { ctx.go({ name: "suppress.start", slug: p.slug }); } }, "Request suppression"))),
+      h(Note, null, "Why the dated record yields here and not in the full-vision spec: no money flows in this version, so nothing was relied upon that the record protects."));
+  }
+
   function screenFor(name) {
     var NV = { discover: "NvDiscover", project: "NvProjectPage", category: "NvCategory", search: "NvSearch" };
     if (NV[name] && window[NV[name]]) return window[NV[name]];
@@ -1387,6 +1624,12 @@
     if (name === "backer.chat") return CurationChatV2;
     if (name === "signin") return SignInV2;
     if (name === "claim.start") return ClaimFlowV2;
+    if (name === "maintainer.dashboard") return MaintainerDashboardV2;
+    if (name === "maintainer.profile") return MaintainerProfileV2;
+    if (name === "maintainer.reach") return MaintainerReachV2;
+    if (name === "maintainer.contest") return MaintainerContestV2;
+    if (name === "maintainer.api") return MaintainerApiV2;
+    if (name === "maintainer.settings") return MaintainerSettingsV2;
     if (name === "account.identities") return AccountIdentities;
     if (name === "account.delete") return AccountDelete;
     var T = {
