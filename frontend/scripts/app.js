@@ -204,7 +204,45 @@
          hijack it into a white pill. */
       ".nv-toggle{transition:border-color 200ms cubic-bezier(0.16,1,0.3,1),background-color 200ms cubic-bezier(0.16,1,0.3,1),color 200ms cubic-bezier(0.16,1,0.3,1)}",
       ".nv-toggle.on{border-color:var(--volt-emerald)!important;background:rgba(0,202,142,0.14)!important;color:var(--volt-emerald)!important}",
-      "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta,.nv-draft{transition:none;animation:none}}"
+      /* Claim flow — the conversion moment. Each step enters expo-out; the step
+         rail marks progress in emerald via CLASS (never inline — escape-hatch safe);
+         the success card carries the emerald spine that marks the primary object,
+         the same signature used by the Deck hero and the curation draft list. */
+      ".nv-claim-step{animation:nv-claim-in 460ms cubic-bezier(0.16,1,0.3,1) both}",
+      "@keyframes nv-claim-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}",
+      ".nv-steprail{display:flex;align-items:center;gap:var(--space-sm);flex-wrap:wrap}",
+      ".nv-steprail-node{display:flex;align-items:center;gap:var(--space-xs);font:var(--type-mono-label);letter-spacing:var(--ls-mono-label);text-transform:uppercase;color:var(--volt-text-500)}",
+      ".nv-steprail-node.on{color:var(--text-primary)}",
+      ".nv-steprail-dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--volt-border);color:var(--volt-text-500);font-size:11px;flex:0 0 auto;transition:border-color 300ms cubic-bezier(0.16,1,0.3,1),color 300ms cubic-bezier(0.16,1,0.3,1),background-color 300ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-steprail-node.done .nv-steprail-dot{border-color:var(--volt-emerald);color:var(--volt-emerald)}",
+      ".nv-steprail-node.on .nv-steprail-dot{border-color:var(--volt-emerald);background:rgba(0,202,142,0.14);color:var(--volt-emerald)}",
+      ".nv-steprail-bar{flex:1;height:1px;min-width:14px;background:var(--volt-border);transition:background-color 400ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-steprail-bar.done{background:var(--volt-emerald)}",
+      ".nv-claim-spine{position:relative;padding-left:calc(var(--space-2xl) + 3px)}",
+      ".nv-claim-spine::before{content:\"\";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px;background:var(--volt-emerald)}",
+      ".nv-claim-choice{transition:border-color 240ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-claim-choice:hover{border-color:var(--volt-emerald)}",
+      ".nv-claim-choice:hover .nv-arrow{transform:translateX(4px)}",
+      ".nv-claim-choice:focus-visible{outline:2px solid var(--volt-emerald);outline-offset:3px;border-radius:12px}",
+      /* Success reveal — the payoff choreography: the card enters, then the demand
+         reveal rises in a beat later (orchestration, not a simultaneous fade). */
+      ".nv-reveal{animation:nv-claim-in 620ms cubic-bezier(0.16,1,0.3,1) 180ms both}",
+      ".nv-reveal-up{display:inline-block;animation:nv-rise 760ms cubic-bezier(0.16,1,0.3,1) 440ms both}",
+      "@keyframes nv-rise{0%{opacity:0;transform:translateY(7px)}62%{opacity:1;transform:translateY(-2px)}100%{opacity:1;transform:none}}",
+      /* Demand-as-motion, literally: the interest line DRAWS itself on entrance
+         (stroke-dashoffset), then the leading dot lands. Embodies the thesis the
+         copy states — motion, not a number. */
+      ".nv-spark-line{stroke-dasharray:200;stroke-dashoffset:200;animation:nv-spark-draw 1000ms cubic-bezier(0.16,1,0.3,1) 340ms forwards}",
+      "@keyframes nv-spark-draw{to{stroke-dashoffset:0}}",
+      ".nv-spark-dot{opacity:0;animation:nv-spark-pop 320ms cubic-bezier(0.16,1,0.3,1) 1200ms forwards}",
+      "@keyframes nv-spark-pop{to{opacity:1}}",
+      /* Maintainer form fields — card-system inputs (profile vocabulary, contest
+         evidence, settings confirm). Emerald focus border, kept off inline styles. */
+      ".nv-field{width:100%;box-sizing:border-box;border:1px solid var(--volt-border);background:var(--volt-void);color:var(--text-primary);border-radius:8px;padding:var(--space-sm) var(--space-md);font:var(--type-body-md);letter-spacing:var(--ls-body-md);transition:border-color 200ms cubic-bezier(0.16,1,0.3,1)}",
+      ".nv-field:focus{outline:none;border-color:var(--volt-emerald)}",
+      ".nv-field::placeholder{color:var(--volt-text-500)}",
+      "textarea.nv-field{resize:vertical;min-height:64px;font-family:inherit;line-height:1.55}",
+      "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta,.nv-draft,.nv-claim-step,.nv-steprail-dot,.nv-steprail-bar,.nv-reveal,.nv-reveal-up{transition:none;animation:none}.nv-spark-line{stroke-dashoffset:0;animation:none}.nv-spark-dot{opacity:1;animation:none}}"
     ].join("");
     document.head.appendChild(s);
   })();
@@ -688,6 +726,10 @@
     var NAV = [
       { label: "Discover", route: { name: "discover" }, on: r.name === "discover" || r.name === "category" },
       { label: "Scan your stack", route: { name: "stack.connect" }, on: r.name === "stack.connect" || r.name === "stack.results" },
+      /* Self-serve maintainer entry (§8.1) — the cold claim path, on the public
+         chrome so a maintainer arriving cold can reach it from any marketing page.
+         Routes to claim.start with no slug → the value pitch + resolve. */
+      { label: "Claim your project", route: { name: "claim.start" }, on: r.name === "claim.start" },
       (window.NvShipWeekLive && window.NvShipWeekLive(ctx))
         ? { label: "Ship Week", route: { name: "shipweek" }, on: r.name === "shipweek" }
         : null
@@ -1029,6 +1071,540 @@
             h(Button, { variant: "outline", onClick: function () { setReauthed(true); } }, "Re-authenticate to continue")));
   }
 
+  /* ── Claim flow ───────────────────────────────────────────────────────────
+     Overrides the compiled ClaimFlow (the old-chrome 820px spec-explainer wizard).
+     The conversion moment that turns a Backer into a Maintainer and a generated
+     Page into an Active one — rebuilt into the card system, value-first spine.
+     STAGE 0: the four steps (sign in → install → verify → claimed) ported into the
+     card idiom with craft — an emerald step rail, expo-out step entrances, the
+     signature emerald spine on success. Behaviour is unchanged from the compiled
+     flow (the Simulate toggles remain the prototype's engine, gated behind NV_DEV);
+     the branch redesigns (identity-first recovery, parked org-approval, cold
+     resolve, author-first success, pre-check) land in later stages. Resolved from
+     LOCAL scope in screenFor — never window — so the DS bundle can't clobber it. */
+  function slugProj(slug) {
+    var i = slug.indexOf("/");
+    return i < 0 ? { slug: slug, owner: slug, repo: slug, name: slug } : { slug: slug, owner: slug.slice(0, i), repo: slug.slice(i + 1), name: slug.slice(i + 1) };
+  }
+  /* Pending claims (Q12): a claim that has begun but not yet produced a grant —
+     parked on org approval, or held as a contest challenger. The claimant is still
+     a Backer, so it lives in Backer context (Home) with a resume link, and clears
+     when the grant lands (migrating to the maintainer dashboard's pending actions). */
+  function addPending(slug, kind) {
+    window.PENDING_CLAIMS = window.PENDING_CLAIMS || [];
+    if (!window.PENDING_CLAIMS.some(function (c) { return c.slug === slug; })) window.PENDING_CLAIMS.push({ slug: slug, kind: kind });
+  }
+  function clearPending(slug) {
+    window.PENDING_CLAIMS = (window.PENDING_CLAIMS || []).filter(function (c) { return c.slug !== slug; });
+  }
+  function ClaimFlowV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    /* Entry mode (Q5): in-context = arrived from a project page (route carries a
+       slug), so the value pitch already happened there → open straight on verify.
+       Cold self-serve = no referrer (no slug) → open on the value pitch, then a
+       resolve step (pick from your admin repos, Q11) that folds the GitHub sign-in
+       in, then the same verify gate. */
+    var cold = !ctx.route.slug;
+    var s6 = React.useState(cold ? null : (ctx.route.slug || ctx.focusSlug)), chosen = s6[0], setChosen = s6[1];
+    var p = chosen ? (window.findProject(chosen) || slugProj(chosen)) : null;
+    /* Pre-check (Q13): a claim on a retired or suppressed predecessor routes before
+       the verify gate. For in-context entries we know the state at mount, so we open
+       on the pre-check; cold entries hit it after resolve. */
+    var predState = p ? ctx.claimState(p.slug) : null;
+    var needsPrecheck = predState === "retired" || predState === "suppressed";
+    var s0 = React.useState(cold ? "value" : (needsPrecheck ? "precheck" : "signin")), step = s0[0], setStep = s0[1];
+    var s7 = React.useState("objection"), supBasis = s7[0], setSupBasis = s7[1];
+    var s1 = React.useState("admin"), permission = s1[0], setPermission = s1[1];
+    var s2 = React.useState(false), contested = s2[0], setContested = s2[1];
+    var s3 = React.useState("solo"), orgApproval = s3[0], setOrgApproval = s3[1];
+    var s4 = React.useState(false), linkCopied = s4[0], setLinkCopied = s4[1];
+    var s5 = React.useState(false), interested = s5[0], setInterested = s5[1];
+    var pageClaimed = p ? ctx.claimState(p.slug) === "active" : false;
+
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+    var bodyTxt = { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" };
+    /* The verify-gate rail. Cold entries open the gate with "Repo" (resolve) where
+       in-context entries open with "Sign in" — sign-in is folded into resolve for
+       the cold path (Q11), so both rails are three nodes. */
+    var railSteps = cold ? [["resolve", "Repo"], ["install", "Install"], ["check", "Verify"]] : [["signin", "Sign in"], ["install", "Install"], ["check", "Verify"]];
+    var order = cold ? { value: -1, resolve: 0, install: 1, parked: 1, check: 2, done: 3 } : { signin: 0, install: 1, parked: 1, check: 2, done: 3 };
+    var cur = order[step];
+
+    function rail() {
+      if (step === "value" || step === "precheck") return null;
+      var labels = railSteps;
+      var nodes = [];
+      labels.forEach(function (l, i) {
+        var done = i < cur, on = i === cur;
+        nodes.push(h("div", { key: l[0], className: "nv-steprail-node " + (done ? "done" : on ? "on" : "") },
+          h("span", { className: "nv-steprail-dot" }, done ? "✓" : String(i + 1)),
+          h("span", null, l[1])));
+        if (i < 2) nodes.push(h("div", { key: "bar" + i, className: "nv-steprail-bar " + (i < cur ? "done" : "") }));
+      });
+      return h("div", { className: "nv-steprail" }, nodes);
+    }
+
+    function permRow(k, v) {
+      return h("tr", { key: k, style: { borderTop: "1px solid var(--volt-border)" } },
+        h("td", { style: { padding: "var(--space-sm) 0", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, k),
+        h("td", { style: { padding: "var(--space-sm) 0", textAlign: "right", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: v === "Read" ? "var(--volt-emerald)" : "var(--volt-text-500)" } }, v));
+    }
+    function chip(label, active, onClick) {
+      return h("button", { key: label, className: "nv-chip", onClick: onClick, style: { border: "1px solid var(--volt-border)", background: active ? "rgba(0,202,142,0.14)" : "transparent", color: active ? "var(--volt-emerald)" : "var(--text-secondary)", borderRadius: "var(--radius-xs)", padding: "var(--space-xs) var(--space-md)", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", cursor: "pointer" } }, label);
+    }
+    function simBox(label, chips) {
+      return window.NV_DEV ? h("div", { style: Object.assign({}, col("var(--space-sm)"), { padding: "var(--space-md)", border: "1px dashed var(--volt-border)", borderRadius: "10px" }) },
+        h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-text-500)" }) }, label),
+        h("div", { style: { display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" } }, chips)) : null;
+    }
+    function copyRow(url) {
+      return h("div", { style: { display: "flex", gap: "var(--space-xs)", alignItems: "stretch", flexWrap: "wrap" } },
+        h("code", { style: { flex: "1 1 220px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--volt-border)", borderRadius: "8px", background: "var(--volt-void)", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)" } }, url),
+        h(Button, { variant: "outline", onClick: function () { setLinkCopied(true); } }, linkCopied ? "Copied ✓" : "Copy link"));
+    }
+
+    function motionStat(label, value, moving) {
+      return h("div", { style: col("2px") },
+        h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" } }, label),
+        h("span", { style: { display: "flex", alignItems: "baseline", gap: "6px", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", color: "var(--text-primary)" } }, value, moving ? h("span", { style: { font: "var(--type-mono-label)", color: "var(--volt-emerald)" } }, moving) : null));
+    }
+    function sparkline(w, hgt) {
+      w = w || 132; hgt = hgt || 40;
+      var pts = [[0, 30], [18, 26], [36, 28], [54, 19], [72, 21], [90, 12], [108, 9], [130, 3]];
+      var d = pts.map(function (pt) { return (pt[0] / 130 * (w - 6) + 3).toFixed(1) + "," + (pt[1] / 32 * (hgt - 6) + 3).toFixed(1); });
+      var last = d[d.length - 1].split(",");
+      return h("svg", { className: "nv-spark", viewBox: "0 0 " + w + " " + hgt, width: w, height: hgt, fill: "none", "aria-hidden": "true", style: { overflow: "visible" } },
+        h("polyline", { className: "nv-spark-line", points: d.join(" "), stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }),
+        h("circle", { className: "nv-spark-dot", cx: last[0], cy: last[1], r: 3, fill: "var(--volt-emerald)" }));
+    }
+    function repoRow(slug, inCatalog) {
+      return h("button", { key: slug, className: "nv-claim-choice", onClick: function () { if (ctx.signIn && !ctx.signedIn) ctx.signIn(); setChosen(slug); var stt = ctx.claimState(slug); setStep(stt === "retired" || stt === "suppressed" ? "precheck" : "install"); }, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-md)", width: "100%", textAlign: "left", border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-lg) var(--space-xl)", cursor: "pointer", color: "var(--text-primary)" } },
+        h("span", { style: col("2px") },
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, slug),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: inCatalog ? "var(--volt-text-500)" : "var(--volt-emerald)" } }, inCatalog ? "In the catalog" : "New page · we'll generate it")),
+        h("span", { className: "nv-arrow", style: { color: "var(--volt-text-500)" } }, "→"));
+    }
+
+    var content;
+    var afterPrecheck = cold ? "install" : "signin";
+    if (step === "precheck") {
+      /* Q13 — read the predecessor state before the gate. Retired → claim afresh;
+         suppressed/own-behalf → reactivate (edge 3); suppressed/objection → hard
+         stop + legal contact, before any sign-in. */
+      if (predState === "retired") {
+        content = h("div", { style: col("var(--space-lg)") },
+          h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+            h("span", { style: eyebrow }, "This project was retired"),
+            h("p", { style: bodyTxt }, p.owner + "/" + p.repo + " was retired, and its record stays as history — a retired record doesn't reopen. But the repository can be claimed afresh: a new, Active page under the same name."),
+            h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { setStep(afterPrecheck); } }, "Claim it afresh →"))),
+          h(Note, null, "The dated retired record remains indexed; claiming creates a new binding, it doesn't revive the old one."));
+      } else {
+        var objection = supBasis === "objection";
+        content = h("div", { style: col("var(--space-lg)") },
+          simBox("Prototype · why was it suppressed?", [
+            chip("own request", !objection, function () { setSupBasis("own-behalf"); }),
+            chip("third-party objection", objection, function () { setSupBasis("objection"); })
+          ]),
+          objection
+            ? h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+                h("span", { style: eyebrow }, "This page is suppressed"),
+                h("p", { style: bodyTxt }, "This page was suppressed after a third-party objection. At MVP that's terminal — a claim can't reopen it, because the platform won't hand the reversal to the party the suppression was granted against. We'll route you to our legal contact."),
+                h("div", null, h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "methodology" }); } }, "Read the legal route")))
+            : h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+                h("span", { style: eyebrow }, "You suppressed this page" ),
+                h("p", { style: bodyTxt }, "This page was suppressed at your own request. A verified claim reactivates it — suppressed → Active — because claiming was consent and consent is yours to give again."),
+                h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { setStep(afterPrecheck); } }, "Reactivate by claiming →"))));
+      }
+    } else if (step === "value") {
+      /* The value pitch (Q2/Q3), shown only on the cold self-serve entry. Honest
+         per ADR 0007: demand is MOTION, not a roster — no exact small counts, no
+         who, no money. The one primary object gets the emerald spine. */
+      content = h("div", { style: col("var(--space-lg)") },
+        h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-lg)")) },
+          h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Claim your project"),
+          h("h2", { style: { margin: 0, font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)", textWrap: "balance" } }, "See how interest is moving — and make the page yours."),
+          h("p", { style: bodyTxt }, "notavibe already generated a page for your project from public signals. Claim it to watch demand move — how it trends in lists, stacks and interest over time — and to author the page yourself instead of leaving it on auto-generated data."),
+          h("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "var(--space-2xl)", flexWrap: "wrap" } },
+            h("div", { style: { display: "flex", gap: "var(--space-2xl)", flexWrap: "wrap" } },
+              motionStat("In lists", "trending", "↑"),
+              motionStat("Interest", "this month", "↑"),
+              motionStat("In stacks", "watched", null)),
+            h("div", { style: col("4px", { alignItems: "flex-end" }) },
+              sparkline(140, 44),
+              h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" } }, "Interest · 8 weeks"))),
+          h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { setStep("resolve"); } }, "Find your project →"))),
+        h(Note, null, "Metadata (read) only, no write access, ever. No money changes hands yet — claiming flips the interest control from “Would you fund this?” to “I'd fund this.” Illustrative data."));
+    } else if (step === "resolve") {
+      /* Resolve which repo (Q11): connect GitHub, then pick from the repos you
+         administer — pre-filtered to what you can actually claim. An uncataloged
+         pick generates its page (claim-creates-page). Sign-in is folded in here. */
+      var mine = (window.PROJECTS || []).filter(function (x) { return ctx.claimState(x.slug) === "generated"; }).slice(0, 3).map(function (x) { return x.slug; });
+      if (!ctx.signedIn) {
+        content = h("div", { style: col("var(--space-lg)") },
+          h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+            h("span", { style: eyebrow }, "Step · Connect GitHub"),
+            h("p", { style: bodyTxt }, "Connect GitHub so we can list the repositories you administer. Claiming needs GitHub — metadata (read) only, no write access, ever."),
+            h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { if (ctx.signIn) ctx.signIn(); }, icon: h(Icon, { name: "github", size: 16, strokeColor: "#fff" }) }, "Connect GitHub"))));
+      } else {
+        content = h("div", { style: col("var(--space-lg)") },
+          h("div", { style: col("var(--space-sm)") },
+            h("span", { style: eyebrow }, "Your repositories · admin only"),
+            h("p", { style: bodyTxt }, "Pick the project you want to claim. This list is only the repositories you administer, so anything here is claimable.")),
+          h("div", { style: col("var(--space-sm)") },
+            mine.map(function (s) { return repoRow(s, true); }).concat([repoRow("maghraby/rate-limiter", false)])),
+          h(Note, null, "Don't see it? A repo outside the catalog still gets a page the moment you claim it — the floor bounds the catalog, not who may join."));
+      }
+    } else if (step === "signin") {
+      content = h("div", { style: col("var(--space-lg)") },
+        h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+          h("span", { style: eyebrow }, "Step 1 · GitHub"),
+          h("p", { style: bodyTxt }, "Sign in with GitHub so we can check your permission on this repository. Claiming a page needs GitHub — metadata (read) only, no write access, ever."),
+          h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { if (ctx.signIn) ctx.signIn(); setStep("install"); } }, "Continue with GitHub"))),
+        h(Note, null, "A page below the selection floor, outside the wedge, or never reached can still be claimed — the floor bounds the catalog, not who may join."));
+    } else if (step === "install") {
+      content = h("div", { style: col("var(--space-lg)") },
+        simBox("Prototype · will your org approve solo?", [
+          chip("solo install", orgApproval === "solo", function () { setOrgApproval("solo"); }),
+          chip("needs org approval", orgApproval !== "solo", function () { setOrgApproval("needs-approval"); })
+        ]),
+        h("div", { style: Object.assign({}, CARD, col("var(--space-lg)")) },
+          h("span", { style: eyebrow }, "Step 2 · Claim App permissions"),
+          h("table", { style: { borderCollapse: "collapse", width: "100%" } },
+            h("tbody", null, permRow("Metadata", "Read"), permRow("Contents", "No access"), permRow("Issues", "No access"), permRow("Pull requests", "No access"), permRow("Actions", "No access"))),
+          h(Note, null, "The App install is the ownership proof — GitHub only lets a repo admin perform it. Metadata (read) only. No write access, ever."),
+          h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { if (orgApproval === "solo") { setStep("check"); } else { addPending(p.slug, "parked"); setStep("parked"); } } }, "Install on " + p.owner + "/" + p.repo))));
+    } else if (step === "parked") {
+      content = h("div", { style: col("var(--space-lg)") },
+        h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+          h("span", { style: eyebrow }, "Waiting on your org"),
+          h("p", { style: bodyTxt }, "GitHub needs an owner of " + p.owner + " to approve the notavibe Claim App before the install completes. We've requested it — you'll finish the moment it's approved, no need to start over."),
+          copyRow("notavibe.dev/approve/" + p.owner),
+          h(Note, null, "This claim is saved on your Home while it waits — an act-by step never depends on email alone. Send the link to an org owner to speed it up.")),
+        simBox("Prototype · the org owner responds", [
+          chip("approve now", false, function () { setStep("check"); })
+        ]));
+    } else if (step === "check") {
+      var sim = simBox("Prototype · simulate the GitHub answer", [
+        chip("admin", permission === "admin", function () { setPermission("admin"); }),
+        chip("maintain", permission === "maintain", function () { setPermission("maintain"); }),
+        chip("write", permission === "write", function () { setPermission("write"); }),
+        chip("existing claim", contested, function () { setContested(!contested); })
+      ]);
+
+      var verdict;
+      if (permission !== "admin") {
+        /* Q6 identity-first recovery — the admin check fails for two very different
+           reasons the copy must separate: the wrong GitHub identity (personal vs
+           work, common), or genuinely not an admin. Lead with connecting another
+           identity; the co-maintainer/link fallback is secondary and claim-state
+           aware (Q7 — an unclaimed page has no grantor). */
+        var fallback = pageClaimed
+          ? h("div", { style: col("var(--space-sm)") },
+              h("span", { style: eyebrow }, "Not an admin anywhere?"),
+              h("p", { style: bodyTxt }, "This page is held by its maintainer. Ask them for a co-maintainer grant — granted inside notavibe and accepted by you, never auto-synced from GitHub."))
+          : h("div", { style: col("var(--space-sm)") },
+              h("span", { style: eyebrow }, "Not an admin anywhere?"),
+              h("p", { style: bodyTxt }, "Only a repo admin can claim " + p.owner + "/" + p.repo + ". Send whoever admins it this link, or register your interest so you're counted — and told if it's claimed."),
+              copyRow("notavibe.dev/claim/" + p.slug),
+              h("div", null, h(Button, { variant: "outline", onClick: function () { setInterested(true); } }, interested ? "Interest registered ✓" : "Register interest instead")));
+        verdict = h("div", { style: Object.assign({}, CARD, col("var(--space-lg)")) },
+          h("div", { style: col("var(--space-md)") },
+            h("span", { style: eyebrow }, "Not an admin under @maghraby"),
+            h("p", { style: bodyTxt }, ["Your permission on " + p.owner + "/" + p.repo + " is ", h("b", { key: "b", style: { fontWeight: 500, color: "var(--text-primary)" } }, permission), ", and a claim needs ", h("b", { key: "a", style: { fontWeight: 500, color: "var(--text-primary)" } }, "admin"), ". Hold admin under a different GitHub account? Personal-vs-work is common — connect the right one."]),
+            h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { setPermission("admin"); }, icon: h(Icon, { name: "github", size: 16, strokeColor: "#fff" }) }, "Connect another GitHub account"))),
+          h("div", { style: { height: 1, background: "var(--volt-border)" } }),
+          fallback);
+      } else if (contested) {
+        verdict = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+          h("span", { style: eyebrow }, "This page is already claimed"),
+          h("p", { style: bodyTxt }, "Another verified admin claimed it first. You can open a contest."),
+          h(Note, null, "First verified claim wins. Contests ride the 72-hour SLA; revoke-and-reset is the only remedy; no forced transfer; the page stays live during review."),
+          h("div", null, h(Button, { variant: "primary", onClick: function () { addPending(p.slug, "contest"); ctx.go({ name: "maintainer.contest" }); } }, "File a contest with evidence")));
+      } else {
+        verdict = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+          h("span", { style: eyebrow }, "Check passed"),
+          h("p", { style: bodyTxt }, "Numeric repository and owner IDs stored with a slug snapshot. The identity anchor is the repository ID, not the slug."),
+          h("div", null, h(Button, { variant: "primary", size: "lg", onClick: function () { ctx.setClaimState(p.slug, "active"); clearPending(p.slug); setStep("done"); } }, "Claim " + p.owner + "/" + p.repo)));
+      }
+      content = h("div", { style: col("var(--space-lg)") }, sim, verdict);
+    } else {
+      /* Success (Q9): the primary action is AUTHOR — the page is Active but still
+         wears generated content, and this is peak engagement. The demand reveal is
+         the reward FLOURISH (rises in a beat after the card), honest per ADR 0007:
+         motion, never a roster or exact small count. */
+      var activeGrants = (window.PROJECTS || []).filter(function (x) { return ctx.claimState(x.slug) === "active"; }).length;
+      var firstGrant = activeGrants <= 1; /* Q10 — the Backer just became a Maintainer */
+      var reveal = h("div", { className: "nv-reveal", style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2xl)", flexWrap: "wrap", padding: "var(--space-md) 0", borderTop: "1px solid var(--volt-border)", borderBottom: "1px solid var(--volt-border)" } },
+        h("div", { style: { display: "flex", gap: "var(--space-2xl)", flexWrap: "wrap" } },
+          motionStat("In lists", "trending", h("span", { className: "nv-reveal-up" }, "↑")),
+          motionStat("Interest", "up this month", h("span", { className: "nv-reveal-up" }, "↑")),
+          motionStat("In stacks", "watched", null)),
+        sparkline(120, 40));
+      var onboarding = firstGrant ? h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+        h("span", { style: eyebrow }, "You're a maintainer now"),
+        h("div", { style: col("var(--space-sm)") },
+          h("p", { style: bodyTxt }, ["", h("b", { key: "a", style: { color: "var(--text-primary)", fontWeight: 500 } }, "Switch contexts"), " — a role switcher now flips you between your Backer week and your maintainer view."]),
+          h("p", { style: bodyTxt }, ["", h("b", { key: "b", style: { color: "var(--text-primary)", fontWeight: 500 } }, "One page at a time"), " — claim more and a project switcher scopes the maintainer view to each."]),
+          h("p", { style: bodyTxt }, ["", h("b", { key: "c", style: { color: "var(--text-primary)", fontWeight: 500 } }, "No payouts yet"), " — you can keep the page accurate and watch demand; funding is foreshadowed, and the interest control now reads “I'd fund this.”"]))) : null;
+      content = h("div", { style: col("var(--space-lg)") },
+        h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-lg)")) },
+          h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Claimed"),
+          h("h2", { style: { margin: 0, font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)", textWrap: "balance" } }, "You hold " + p.owner + "/" + p.repo),
+          h("p", { style: bodyTxt }, "Here's what was waiting for you —"),
+          reveal,
+          h("p", { style: bodyTxt }, "The page is Active, but it still shows auto-generated data. Make it yours: fix the vocabulary, write the profile, speak for your project."),
+          h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+            h(Button, { variant: "primary", size: "lg", onClick: function () { ctx.go({ name: "maintainer.profile", slug: p.slug }); } }, "Author your page →"),
+            h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "maintainer.dashboard" }); } }, "See the demand"))),
+        onboarding,
+        h(Note, null, "Webhooks fired: claim.state_changed, project.verification_changed. Repo rename or transfer re-derives the slug with a 301."));
+    }
+
+    var titleText = p ? (p.owner + "/" + p.repo) : (step === "value" ? "Claim your project" : "Find your repository");
+    var subText = p ? "The page already exists. Claiming binds a human to it — it doesn't create it."
+      : (step === "value" ? "Take authorship of the page notavibe already generated for your work." : "Pick the repository you administer.");
+    return h("div", { style: { maxWidth: "680px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" } },
+      h("header", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Claim a page"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, titleText),
+        h("span", { style: { font: "var(--type-caption)", color: "var(--text-secondary)" } }, subText)),
+      rail(),
+      h("div", { className: "nv-claim-step", key: step }, content));
+  }
+
+  /* ── Maintainer dashboard ─────────────────────────────────────────────────
+     Overrides the compiled MaintainerDashboard (old-chrome StatsCards + primary
+     accent) into the card system. The Maintainer-context landing: §9.3's two
+     compositions — the discovery-analytics roll-up (the claim hook) + pending
+     actions across projects — plus the "what's not here" honesty strip. All
+     aggregate, no visitor-level data; the interest count renders with its stated
+     constraint, never a revenue projection. This is where "See the demand" lands
+     from a claim, so the analytics carry the same demand-as-motion language (ADR
+     0007): trend and breakdown, not a roster, and the below-4 mask holds. */
+  function MaintainerDashboardV2(props) {
+    var ctx = props.ctx;
+    var Note = W("Note");
+    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    var lapsed = ctx.claimState(p.slug) === "lapsed";
+    var mask = window.maskNumber || function (n) { return n; };
+    var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+    var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+    var wrap = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-3xl)", padding: "var(--space-section) var(--space-2xl)" };
+
+    function sparkSvg() {
+      var pts = "3,26 20,22 37,24 54,16 71,17 88,10 105,8 128,3";
+      return h("svg", { viewBox: "0 0 131 30", width: "100%", height: 34, preserveAspectRatio: "none", fill: "none", "aria-hidden": "true", style: { overflow: "visible", marginTop: "4px" } },
+        h("polyline", { className: "nv-spark-line", points: pts, stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" }),
+        h("circle", { className: "nv-spark-dot", cx: 128, cy: 3, r: 3, fill: "var(--volt-emerald)" }));
+    }
+    function tile(label, value, cap, spark) {
+      return h("div", { style: Object.assign({}, CARD, col("var(--space-xs)")) },
+        h("span", { style: eyebrow }, label),
+        h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+        spark ? sparkSvg() : null,
+        h("span", { style: caption }, cap));
+    }
+    function bar(label, pct) {
+      return h("div", { key: label, style: col("4px") },
+        h("div", { style: { display: "flex", justifyContent: "space-between", font: "var(--type-caption)" } },
+          h("span", null, label), h("span", { style: { color: "var(--text-secondary)" } }, pct + "%")),
+        h("div", { style: { height: "6px", background: "var(--volt-void)", borderRadius: "3px", overflow: "hidden" } },
+          h("div", { style: { width: pct + "%", height: "100%", background: "var(--volt-emerald)", borderRadius: "3px" } })));
+    }
+
+    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-lg)", flexWrap: "wrap" } },
+      h("div", { style: col("var(--space-sm)") },
+        h("span", { style: eyebrow }, "Maintainer · Maya"),
+        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, p.owner + "/" + p.repo),
+        h("span", { style: caption }, "Aggregate discovery analytics · illustrative data")),
+      h("label", { style: col("4px") },
+        h("span", { style: eyebrow }, "Project"),
+        h("select", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", color: "var(--text-primary)", borderRadius: "8px", padding: "var(--space-sm) var(--space-md)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", cursor: "pointer" } },
+          h("option", null, p.owner + "/" + p.repo), h("option", null, "unjs/unbuild"))));
+
+    var pending = lapsed
+      ? h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-md)")) },
+          h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Pending action · act by day 30"),
+          h("p", { style: { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } }, "Re-verification is required. Uncured at day 30, this page becomes a dated catalog record and stays indexed."),
+          h("div", null, h(Button, { variant: "primary", onClick: function () { ctx.setClaimState(p.slug, "active"); } }, "Re-verify now")),
+          h(Note, null, "Surfaced in-app as well as by email, because an act-by clock may never depend solely on email delivery. No payout freeze, no held accruals, no billing — those are foreshadowed."))
+      : h("div", { style: Object.assign({}, CARD, col("var(--space-sm)")) },
+          h("span", { style: eyebrow }, "Pending actions · across projects"),
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Nothing needs you right now"),
+          h(Note, null, "This surface exists for three carried invariants: the default in-app notice posture, the delivery-failure fallback, and the 30-day cure clock."));
+
+    var stats = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "var(--space-lg)" } },
+      tile("Discovery volume", "3,180", "Page views · trending, 30 days", true),
+      tile("Deck appearances", "412", "Times shown in a Your Deck"),
+      tile("List membership", mask(p.listCount), "Lists containing this project"),
+      tile("Stack membership", mask(p.stackCount), "Scans that matched it"));
+
+    var interest = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Interest register"),
+      [["Subscriptions and tiers", p.interest.subscriptions], ["Bounties and escrow", p.interest.bounties]].map(function (r) {
+        return h("div", { key: r[0], style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+          h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, r[0]),
+          h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, mask(r[1])));
+      }),
+      h("div", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-lg)" } },
+        h(Note, null, h("b", { style: { fontWeight: 500, color: "var(--text-primary)" } }, "What this count means."), " “I'd fund this” is not “I will pay $5 a month.” It is an expression of interest in a system that does not exist yet, from people who have committed nothing. It is never a revenue projection, implied or computed.")),
+      h(Note, null, "Identities are never shown. No visitor-level data reaches a maintainer."));
+
+    var referrers = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Where discovery came from"),
+      h("div", { style: col("var(--space-sm)") }, [["Search engines", 46], ["Direct", 21], ["Your Deck", 18], ["Lists and stack pages", 9], ["Editorial", 6]].map(function (r) { return bar(r[0], r[1]); })),
+      h("div", { style: { display: "flex", gap: "var(--space-lg)", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+        h("span", { style: caption }, "Human 71%"),
+        h("span", { style: Object.assign({}, caption, { color: "var(--text-secondary)" }) }, "Crawler 29%")),
+      h(Note, null, "Crawler and human traffic are split, not merged. Campaign traffic is absent from this panel by construction — the campaign wall."));
+
+    var analytics = h("section", { style: col("var(--space-lg)") },
+      h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-md)", flexWrap: "wrap" } },
+        h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Discovery analytics — the claim hook"),
+        h("span", { style: eyebrow }, "Aggregate only")),
+      stats,
+      h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "var(--space-lg)" } }, interest, referrers),
+      h(Note, null, "Data only the platform holds, costing no payment rail. This roll-up is the reason a maintainer claims a page at all."));
+
+    var absent = h("section", { style: col("var(--space-md)") },
+      h("span", { style: eyebrow }, "What is not here"),
+      h("div", { style: { display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" } },
+        ["Tiers & pricing", "Subscribers", "Payouts", "Bounties inbox", "Bounty detail", "Epoch create", "Epoch results", "Gates", "Posts & artifacts", "Campaigns", "Campaign detail"].map(function (x) {
+          return h("span", { key: x, style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)", border: "1px solid var(--volt-border)", borderRadius: "6px", padding: "4px 9px" } }, x);
+        })),
+      h(Note, null, "No money surfaces of any kind. Maintainer campaigns are out too — a lightweight maintainer platform does not ship an ad panel."));
+
+    return h("div", { style: wrap }, header, pending, analytics, absent);
+  }
+
+  /* ── Maintainer surfaces (profile · reach · contest · api · settings) ──────
+     The standing per-project surfaces, ported into the card system to match the
+     dashboard and the claim flow. Content stays spec-faithful (§8.5, §9.1–9.3);
+     every honesty rule is preserved verbatim. Shared card-system helpers below. */
+  var MEB = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+  var MCAP = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+  var MCARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+  var MBODY = { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" };
+  function mWrap(w) { return { maxWidth: (w || 680) + "px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" }; }
+  function mHeader(eb, title, sub) {
+    return h("header", { style: col("var(--space-sm)") },
+      h("span", { style: MEB }, eb),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, title),
+      sub ? h("span", { style: MCAP }, sub) : null);
+  }
+  function mField(label, o) {
+    o = o || {};
+    var el = o.multiline
+      ? h("textarea", { className: "nv-field", rows: o.rows || 3, defaultValue: o.value || "", placeholder: o.placeholder || "" })
+      : h("input", { className: "nv-field", defaultValue: o.value || "", placeholder: o.placeholder || "" });
+    return h("label", { key: label, style: col("6px") }, h("span", { style: MEB }, label), el, o.hint ? h("span", { style: MCAP }, o.hint) : null);
+  }
+  function mBadge(t) {
+    return h("span", { key: t, style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)", border: "1px solid var(--volt-border)", borderRadius: "6px", padding: "4px 9px", whiteSpace: "nowrap" } }, t);
+  }
+  function mSparkSvg() {
+    return h("svg", { viewBox: "0 0 131 30", width: "100%", height: 34, preserveAspectRatio: "none", fill: "none", "aria-hidden": "true", style: { overflow: "visible", marginTop: "4px" } },
+      h("polyline", { className: "nv-spark-line", points: "3,26 20,22 37,24 54,16 71,17 88,10 105,8 128,3", stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" }),
+      h("circle", { className: "nv-spark-dot", cx: 128, cy: 3, r: 3, fill: "var(--volt-emerald)" }));
+  }
+  function mTile(label, value, cap, spark) {
+    return h("div", { key: label, style: Object.assign({}, MCARD, col("var(--space-xs)")) },
+      h("span", { style: MEB }, label),
+      h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+      spark ? mSparkSvg() : null,
+      h("span", { style: MCAP }, cap));
+  }
+
+  function MaintainerProfileV2(props) {
+    var Note = W("Note");
+    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    return h("div", { style: mWrap(680) },
+      mHeader("Discovery presence — profile", "Keep the page accurate", "This is what visitors and the AEO composition read — make it yours instead of leaving it on inferred data."),
+      h("div", { style: Object.assign({}, MCARD, col("var(--space-lg)")) },
+        mField("Answer-first summary", { multiline: true, rows: 2, value: p.description, hint: "This sentence is what the AEO composition quotes. One sentence." }),
+        h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-lg)" } },
+          (window.VOCAB_DIMENSIONS || []).map(function (d) { return mField(d, { value: p.vocab[d] }); })),
+        h(Note, null, "Your declared vocabulary replaces whatever the pipeline inferred. No maintainer-editable field feeds ranking — that is what keeps this surface from becoming a placement lever."),
+        h("div", null, h(Button, { variant: "primary" }, "Save profile"))),
+      h("section", { style: col("var(--space-md)") },
+        h("span", { style: MEB }, "Peer recommendations you have authored"),
+        h("div", { style: Object.assign({}, MCARD, col("var(--space-sm)")) },
+          h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, "“Does the boring part of shipping a library correctly.”"),
+          h("span", { style: MCAP }, "About unjs/unbuild · rendered on their page, attributed to yours")),
+        h(Note, null, "Claimed projects only, in both directions. The attribution is the mechanism — the growth comes from your audience seeing it.")));
+  }
+
+  function MaintainerReachV2(props) {
+    var Note = W("Note");
+    return h("div", { style: mWrap(820) },
+      mHeader("Discovery presence — reach", "Who discovered you", null),
+      h(Note, null, "Aggregate only, at day granularity. There is no visitor-level view here and never will be."),
+      h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "var(--space-lg)" } },
+        mTile("Discovery volume", "3,180", "Page views · 30 days", true),
+        mTile("Deck appearances", "412", "Times shown in a Your Deck"),
+        mTile("Crawler share", "29%", "Split from human traffic")));
+  }
+
+  function MaintainerContestV2(props) {
+    var fs = React.useState(false), filed = fs[0], setFiled = fs[1];
+    var Note = W("Note");
+    return h("div", { style: mWrap(680) },
+      mHeader("Claim contest — evidence & outcome", "Contest on unjs/unbuild", null),
+      h("div", { style: { display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" } }, mBadge("72-hour SLA"), mBadge("Page stays live during review")),
+      filed
+        ? h("div", { className: "nv-claim-spine", style: Object.assign({}, MCARD, col("var(--space-md)")) },
+            h("span", { style: Object.assign({}, MEB, { color: "var(--volt-emerald)" }) }, "Evidence filed"),
+            h("p", { style: MBODY }, "Both parties file here and read the ruling here."),
+            h(Note, null, "Revoke-and-reset is the only remedy — there is no forced transfer. Revoke-and-reset resets the contest, not the claim state."))
+        : h("form", { onSubmit: function (e) { e.preventDefault(); setFiled(true); }, style: Object.assign({}, MCARD, col("var(--space-lg)")) },
+            mField("Your evidence", { multiline: true, rows: 4, placeholder: "Why the current claim is wrong, with links." }),
+            h("div", null, h(Button, { variant: "primary", size: "lg", type: "submit" }, "File evidence"))),
+      h(Note, null, "A queue with an SLA and no counterparty surface would invert the report-control rule. This is that surface."));
+  }
+
+  function MaintainerApiV2(props) {
+    var Note = W("Note");
+    return h("div", { style: mWrap(760) },
+      mHeader("API & webhooks", "Read API, MCP and webhooks", null),
+      h("section", { style: col("var(--space-md)") },
+        h("span", { style: MEB }, "Webhook events"),
+        h("div", { style: col("var(--space-sm)") }, ["project.verification_changed", "claim.state_changed", "page.published", "page.suppressed"].map(function (e) {
+          return h("div", { key: e, style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-md)", border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "10px", padding: "var(--space-md) var(--space-lg)" } },
+            h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-primary)" } }, e), mBadge("HMAC-signed"));
+        })),
+        h(Note, null, "Retries and a delivery log. No subscribers endpoint — there are no subscribers, which discharges the held consent instrument.")),
+      h("section", { style: col("var(--space-md)") },
+        h("span", { style: MEB }, "Catalog MCP · read-only"),
+        h("pre", { style: { margin: 0, border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "12px", padding: "var(--space-lg)", overflowX: "auto", font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--text-secondary)", lineHeight: 1.7 } },
+          "search_projects\nget_project\ncompare_projects\nget_lists   # public lists only\n\n# suppressed projects are absent from every response\n# launches against schema v1"),
+        h(Note, null, "Registry-listed. Auth: none or API key. Tool descriptions are treated as a poisoning surface.")));
+  }
+
+  function MaintainerSettingsV2(props) {
+    var ctx = props.ctx, Note = W("Note");
+    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    var name = p.owner + "/" + p.repo;
+    var ts = React.useState(""), typed = ts[0], setTyped = ts[1];
+    var rs = React.useState(ctx.claimState(p.slug) === "retired"), retired = rs[0], setRetired = rs[1];
+    return h("div", { style: mWrap(680) },
+      mHeader("Project settings", "Exits", null),
+      h("div", { style: Object.assign({}, MCARD, col("var(--space-md)")) },
+        h("span", { style: MEB }, "Voluntary retirement · the default"),
+        h("p", { style: MBODY }, "The page becomes a dated catalog record and stays indexed. Dated facts survive frozen; live relationships and interactive surfaces close."),
+        h("label", { style: col("6px") }, h("span", { style: MEB }, "Type " + name + " to confirm"),
+          h("input", { className: "nv-field", value: typed, onChange: function (e) { setTyped(e.target.value); }, placeholder: name })),
+        h("div", null, h(Button, { variant: "primary", disabled: typed !== name, onClick: function () { ctx.setClaimState(p.slug, "retired"); setRetired(true); } }, "Retire this page"))),
+      h("div", { style: Object.assign({}, MCARD, col("var(--space-md)"), { opacity: retired ? 1 : 0.55 }) },
+        h("span", { style: MEB }, "Suppress the retired record"),
+        h("p", { style: MBODY }, "Also yours, because claiming was consent and consent is withdrawable. Nothing then renders on any surface."),
+        h(Note, null, retired ? "Edge 4 — requires proving repository admin now. Writes a PageRequest (type: suppression, basis: own-behalf) so the lift trigger exists." : "Available once the page is retired. An Active page is never suppressed while claimed."),
+        h("div", null, h(Button, { variant: "outline", disabled: !retired, onClick: function () { ctx.go({ name: "suppress.start", slug: p.slug }); } }, "Request suppression"))),
+      h(Note, null, "Why the dated record yields here and not in the full-vision spec: no money flows in this version, so nothing was relied upon that the record protects."));
+  }
+
   function screenFor(name) {
     var NV = { discover: "NvDiscover", project: "NvProjectPage", category: "NvCategory", search: "NvSearch" };
     if (NV[name] && window[NV[name]]) return window[NV[name]];
@@ -1047,6 +1623,13 @@
     if (name === "stack.results") return ScanResultsV2;
     if (name === "backer.chat") return CurationChatV2;
     if (name === "signin") return SignInV2;
+    if (name === "claim.start") return ClaimFlowV2;
+    if (name === "maintainer.dashboard") return MaintainerDashboardV2;
+    if (name === "maintainer.profile") return MaintainerProfileV2;
+    if (name === "maintainer.reach") return MaintainerReachV2;
+    if (name === "maintainer.contest") return MaintainerContestV2;
+    if (name === "maintainer.api") return MaintainerApiV2;
+    if (name === "maintainer.settings") return MaintainerSettingsV2;
     if (name === "account.identities") return AccountIdentities;
     if (name === "account.delete") return AccountDelete;
     var T = {
@@ -1169,9 +1752,26 @@
     var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px" };
     var dashed = { border: "1px dashed var(--volt-border)", borderRadius: "12px", padding: "var(--space-2xl)" };
 
+    /* Pending claims (Q12) — a parked or contested claim has no grant yet, so the
+       claimant is still a Backer and it surfaces here with a resume link. Given as
+       its own card above outcomes because an org-approval clock is act-by. */
+    var pending = window.PENDING_CLAIMS || [];
+    var pendingCard = pending.length ? h("section", { style: Object.assign({}, CARD, col("var(--space-md)", { padding: "var(--space-2xl)" })) },
+      h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-md)" } },
+        h("span", { style: eyebrow }, "Claims in progress"),
+        h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, pending.length + " pending")),
+      h("div", null, pending.map(function (c, i) {
+        return h("div", { key: c.slug, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-md)", flexWrap: "wrap", padding: "var(--space-md) 0", borderTop: i === 0 ? "none" : "1px solid var(--volt-border)" } },
+          h("div", { style: col("2px", { minWidth: 0 }) },
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, c.slug),
+            h("span", { style: caption }, c.kind === "contest" ? "In contest · your page stays live during review" : "Waiting on an org owner to approve the Claim App")),
+          h("button", { className: "nv-home-seeall", type: "button", onClick: function () { ctx.go({ name: "claim.start", slug: c.slug }); }, style: { display: "inline-flex", alignItems: "center", gap: "6px", WebkitAppearance: "none", appearance: "none", background: "transparent", border: "none", cursor: "pointer", padding: "2px 0", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Resume", h("span", { className: "nv-arrow" }, "→")));
+      }))) : null;
+
     if (fresh) {
       return h("div", { style: wrap },
         header,
+        pendingCard,
         deck,
         h("div", { style: Object.assign({}, dashed, col("var(--space-md)")) },
           h("span", { style: eyebrow }, "Finish setup"),
@@ -1225,7 +1825,7 @@
       h("span", { style: caption }, savedCount + " in lists · " + interests + " interests · " + inStack + " in your stack"),
       h("span", { style: caption }, "illustrative data"));
 
-    return h("div", { style: wrap }, header, deck, hasOutcomes ? outcomes : nudge, stats);
+    return h("div", { style: wrap }, header, deck, pendingCard, hasOutcomes ? outcomes : nudge, stats);
   }
 
   /* ── Backer "More" (mobile overflow) ──────────────────────────────────────
@@ -1260,7 +1860,6 @@
       h("div", null, h(Button, { variant: "outline", onClick: function () { ctx.go({ name: "maintainer.dashboard" }); } }, "Switch to maintainer")),
       h(Note, null, "Shown because this account holds a maintainer grant — a Backer who has claimed a page. Single-role backers see no switcher; last-used context returns on login.")) : null;
 
-    /* Sign out control (from #23), in the card idiom rather than the pre-card tokens. */
     var signout = ctx.signedIn ? h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-2xl)" } },
       h(Button, { variant: "outline", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null;
 
