@@ -1663,7 +1663,11 @@
        to the public marketing shell. Logged-out visitors still get the public
        front door. (Deliberate deviation from §572's top-nav — see ADR.) */
     var backerDiscovery = ctx.signedIn && !ctx.route.full && /^(discover|category|search|project)$/.test(name);
-    var isApp = APP_ROUTES.test(name) || backerDiscovery;
+    /* A logged-out visitor reaching a stack surface (paste needs no account) renders
+       in the PUBLIC chrome, not the signed-in Backer workspace — otherwise they'd
+       see the workspace sidebar and a signed-in person's connected repositories. */
+    var loggedOutStack = !ctx.signedIn && /^stack\.(connect|results|publish)/.test(name);
+    var isApp = (APP_ROUTES.test(name) || backerDiscovery) && !loggedOutStack;
 
     if (ctx.mobile) {
       return h(React.Fragment, null,
@@ -1973,6 +1977,20 @@
         h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Run the scan on the server"),
         h(Note, null, "The manifest and its unmatched entries are not retained beyond this session unless you save them. Matched project references persist only as an aggregate count with no scan or account referent.")));
 
+    /* Logged out, "Connect a provider" is an OAuth prompt — not a pre-loaded repo
+       list (which would leak a signed-in person's repositories to a visitor).
+       Reading a repo's manifest needs GitHub or GitLab; pasting needs no account. */
+    var connectCard = h("section", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Connect a provider"),
+      h("p", { style: { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } }, "Scanning a repository needs GitHub or GitLab — read-minimal OAuth that reports only repository visibility. Prefer not to connect? Paste a manifest instead — no account needed."),
+      h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+        h(Button, { variant: "primary", onClick: function () { if (ctx.signIn) ctx.signIn(); }, icon: h(Icon, { name: "github", size: 16, strokeColor: "#fff" }) }, "Connect GitHub"),
+        h(Button, { variant: "outline", onClick: function () { if (ctx.signIn) ctx.signIn(); } }, "Connect GitLab")),
+      h(Note, null, "First connection also signs you in — there's no separate signup. Read-minimal only, never any write access."));
+
+    /* The scan controls only make sense once there's something to scan: any paste,
+       or a connected provider. Logged out on the connect tab, we show the prompt. */
+    var showScan = mode === "paste" || ctx.signedIn;
     var wrap = { maxWidth: "760px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-section) var(--space-2xl)" };
     return h("div", { style: wrap },
       h("header", { style: col("var(--space-sm)") },
@@ -1980,9 +1998,9 @@
         h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, "Find what you already depend on"),
         h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, "The scan runs server-side. Matches resolve against the catalog; everything else is discarded.")),
       seg,
-      mode === "oauth" ? providerCard : pasteCard,
-      consentRow,
-      h("div", null, h(Button, { variant: "primary", size: "lg", disabled: !consent, onClick: run }, "Scan")));
+      mode === "oauth" ? (ctx.signedIn ? providerCard : connectCard) : pasteCard,
+      showScan ? consentRow : null,
+      showScan ? h("div", null, h(Button, { variant: "primary", size: "lg", disabled: !consent, onClick: run }, "Scan")) : null);
   }
 
   /* ── List detail (overrides compiled ListDetail) ──────────────────────────
