@@ -1650,6 +1650,211 @@
     return window[T[name] || "Discover"] || window.Discover;
   }
 
+  /* ── AppNav (workspace sidebar) — overrides the compiled screens.js AppNav ──
+     The standing side menu for the Backer / Maintainer surfaces. The compiled
+     version was a flat, undifferentiated link list: a single grey box marked the
+     active item, hover gave no feedback, the brand accent appeared nowhere in
+     the nav body, and the long maintainer labels ("Discovery presence — profile")
+     wrapped inside 232px. This rebuild keeps every destination and the three
+     class hooks the responsive collapse depends on (nv-app-nav / nv-app-navlinks
+     / nv-app-foot), and adds: sectioned hierarchy under mono eyebrows (the two
+     long maintainer labels shorten to Profile / Reach under a "Discovery presence"
+     header), an emerald active state carrying a sliding accent rail — the
+     signature, echoing the Backer Home timeline spine and the Deck CTA's emerald
+     spine so the nav reads as THIS product — custom expo-out motion on hover /
+     focus / entrance, and the role switch rebuilt as a segmented control with a
+     sliding thumb (the honest single-role Note is kept). All colour and motion
+     live in classes, never inline, so the inline-style escape-hatch rules can't
+     hijack them; motion is dropped under prefers-reduced-motion and in the
+     collapsed top-strip. Wired from NotavibeShell by LOCAL reference (never
+     window) so the DS bundle can't clobber it — same rule as the Backer surfaces. */
+  (function injectAppNavCSS() {
+    if (typeof document === "undefined" || document.getElementById("nv-appnav-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-appnav-css";
+    var EXPO = "cubic-bezier(0.16, 1, 0.3, 1)";
+    s.textContent = [
+      /* Link: the rail lives on ::before so it slides independently; the label
+         nudges via padding-left, leaving transform free for the entrance. */
+      ".nv-appnav-link{position:relative;display:block;text-decoration:none;",
+      "font:var(--type-body-md);letter-spacing:var(--ls-body-md);color:var(--text-secondary);",
+      "background:transparent;border-radius:var(--radius-md);padding:8px 12px;",
+      "transition:color .3s " + EXPO + ",background .3s " + EXPO + ",padding-left .3s " + EXPO + ";}",
+      ".nv-appnav-link::before{content:\"\";position:absolute;left:0;top:7px;bottom:7px;width:3px;",
+      "border-radius:0 3px 3px 0;background:var(--volt-emerald);opacity:0;transform:scaleX(0);",
+      "transform-origin:left center;transition:transform .4s " + EXPO + ",opacity .3s " + EXPO + ";}",
+      ".nv-appnav-link:hover{color:var(--text-body);background:var(--hover-lighten-on-dark);padding-left:16px;}",
+      ".nv-appnav-link:hover::before{opacity:.45;transform:scaleX(1);}",
+      ".nv-appnav-link:focus-visible{outline:2px solid var(--volt-emerald);outline-offset:2px;}",
+      ".nv-appnav-link--on{color:var(--volt-emerald);font:var(--type-body-md-strong);letter-spacing:var(--ls-body-md);background:var(--volt-emerald-08);}",
+      ".nv-appnav-link--on::before,.nv-appnav-link--on:hover::before{opacity:1;transform:scaleX(1);}",
+      ".nv-appnav-link--on:hover{color:var(--volt-emerald);background:var(--volt-emerald-10);}",
+      /* Section eyebrow */
+      ".nv-appnav-grouplabel{display:block;font:var(--type-mono-eyebrow);letter-spacing:var(--ls-mono-eyebrow);",
+      "text-transform:uppercase;color:var(--volt-text-600);padding:0 12px;margin:18px 0 4px;}",
+      /* Entrance stagger — opacity + lift, delay set inline from the index. Runs
+         once per mount; the links are keyed by route, so they only remount when
+         the workspace kind flips — it plays on entering a workspace, not on
+         every in-workspace click. */
+      "@keyframes nv-appnav-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
+      ".nv-appnav-link,.nv-appnav-grouplabel{animation:nv-appnav-in .5s " + EXPO + " both;}",
+      /* Role segment — sliding thumb, custom eased. */
+      ".nv-appnav-seg{position:relative;display:flex;padding:4px;border:1px solid var(--volt-border);",
+      "border-radius:var(--radius-md);background:var(--volt-void);}",
+      ".nv-appnav-thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/2);",
+      "border-radius:calc(var(--radius-md) - 2px);background:var(--volt-surface);border:1px solid var(--volt-border);",
+      "transition:transform .45s " + EXPO + ";}",
+      ".nv-appnav-seg[data-active=\"maintainer\"] .nv-appnav-thumb{transform:translateX(100%);}",
+      ".nv-appnav-seg button{position:relative;z-index:1;flex:1 1 0;min-width:0;background:transparent;border:none;",
+      "cursor:pointer;padding:8px 4px;font:var(--type-mono-eyebrow);letter-spacing:var(--ls-mono-eyebrow);",
+      "text-transform:uppercase;color:var(--text-secondary);transition:color .3s " + EXPO + ";}",
+      ".nv-appnav-seg button[aria-pressed=\"true\"]{color:var(--text-body);}",
+      ".nv-appnav-seg button:focus-visible{outline:2px solid var(--volt-emerald);outline-offset:2px;border-radius:var(--radius-sm);}",
+      /* Admin variant — the admin chrome is a darker surface with its own text
+         ramp, so reuse the rail / hover / active / focus from .nv-appnav-link
+         but retune colour and scale for it, and swap the per-item entrance for a
+         per-group cascade (14 links stagger cleaner by group than one-by-one). */
+      ".nv-appnav-admin .nv-appnav-link{font:var(--type-caption);padding:6px 10px;color:var(--text-on-dark-secondary);animation:none;}",
+      ".nv-appnav-admin .nv-appnav-link:hover{color:var(--text-on-dark);background:var(--hover-lighten-on-dark);padding-left:14px;}",
+      ".nv-appnav-admin .nv-appnav-link--on{color:var(--volt-emerald);font:var(--type-caption-strong);background:var(--volt-emerald-08);}",
+      ".nv-appnav-admin .nv-appnav-link--on:hover{color:var(--volt-emerald);background:var(--volt-emerald-10);}",
+      ".nv-adminnav-group{animation:nv-appnav-in .5s " + EXPO + " both;}",
+      /* Collapsed top-strip (761–860px, above the mobile-tabs breakpoint): drop
+         the rail, the section eyebrows and the entrance lift so the horizontal
+         scroller stays clean. */
+      "@media (max-width:860px){",
+      ".nv-appnav-grouplabel{display:none!important}",
+      ".nv-appnav-link::before{display:none}",
+      ".nv-appnav-link{padding:6px 12px!important}",
+      ".nv-appnav-link,.nv-appnav-grouplabel,.nv-adminnav-group{animation:none}",
+      "}",
+      "@media (prefers-reduced-motion: reduce){",
+      ".nv-appnav-link,.nv-appnav-grouplabel,.nv-adminnav-group{animation:none}",
+      ".nv-appnav-link,.nv-appnav-link::before,.nv-appnav-thumb{transition:none}",
+      "}"
+    ].join("");
+    document.head.appendChild(s);
+  })();
+
+  function AppNavV2(props) {
+    var ctx = props.ctx, kind = props.kind;
+    var Note = W("Note");
+    /* Same destinations as the compiled AppNav; only grouping and the two long
+       maintainer labels change (the "Discovery presence" context moves to the
+       section header, so the items read Profile / Reach). */
+    var groups = kind === "maintainer" ? [
+      { items: [["Dashboard", "maintainer.dashboard"]] },
+      { label: "Discovery presence", items: [["Profile", "maintainer.profile"], ["Reach", "maintainer.reach"]] },
+      { label: "Operations", items: [["Claim contest", "maintainer.contest"], ["API & webhooks", "maintainer.api"], ["Project settings", "maintainer.settings"]] }
+    ] : [
+      { items: [["Home", "backer.dashboard"], ["Discover", "discover"]] },
+      { label: "Your library", items: [["My stack", "stack.connect"], ["My lists", "backer.lists"], ["Curation chat", "backer.chat"]] },
+      { label: "Account", items: [["Settings", "backer.settings"]] }
+    ];
+
+    /* Flatten to one ordered stream so the links stay DIRECT children of
+       .nv-app-navlinks (the responsive collapse targets ".nv-app-navlinks a");
+       the eyebrows are siblings, hidden in the collapsed strip. A running index
+       drives the entrance stagger across both labels and links. */
+    var nodes = [], idx = 0;
+    groups.forEach(function (g, gi) {
+      if (g.label) {
+        nodes.push(h("span", { key: "grp-" + gi, className: "nv-appnav-grouplabel",
+          style: { animationDelay: (idx * 45) + "ms" } }, g.label));
+        idx++;
+      }
+      g.items.forEach(function (it) {
+        var label = it[0], name = it[1], on = ctx.route.name === name;
+        nodes.push(h("a", { key: name, href: "#",
+          className: "nv-appnav-link" + (on ? " nv-appnav-link--on" : ""),
+          "aria-current": on ? "page" : null,
+          style: { animationDelay: (idx * 45) + "ms" },
+          onClick: function (e) { e.preventDefault(); ctx.go({ name: name }); } }, label));
+        idx++;
+      });
+    });
+
+    var wordmark = h("a", { href: "#", "aria-label": "notavibe — front door",
+      onClick: function (e) { e.preventDefault(); ctx.go({ name: "discover", full: true }); },
+      style: { display: "inline-flex", alignItems: "center", alignSelf: "flex-start", textDecoration: "none", cursor: "pointer" } },
+      window.NvWordmark ? h(window.NvWordmark, { size: 18 })
+        : h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-body)" } }, "notavibe"));
+
+    /* Provenance kept honest (the app subdomain), but split into two tidy lines
+       so it never wraps mid-token as it did before; the emerald "you are here"
+       dot carries the brand into the header. */
+    var context = h("div", { style: col("3px", { marginTop: "2px" }) },
+      h("span", { style: { font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--volt-text-600)", whiteSpace: "nowrap" } }, "app.notavibe.dev"),
+      h("span", { style: { display: "inline-flex", alignItems: "center", gap: "7px", font: "var(--type-caption)", color: "var(--text-secondary)" } },
+        h("span", { "aria-hidden": "true", style: { flex: "0 0 6px", width: "6px", height: "6px", borderRadius: "50%", background: "var(--volt-emerald)", boxShadow: "0 0 0 3px var(--volt-emerald-20)" } }),
+        (kind === "maintainer" ? "Maintainer" : "Backer") + " workspace"));
+
+    var roles = [["Backer", "backer.dashboard"], ["Maintainer", "maintainer.dashboard"]];
+    var segment = h("div", { className: "nv-appnav-seg", "data-active": kind === "maintainer" ? "maintainer" : "backer" },
+      h("span", { className: "nv-appnav-thumb", "aria-hidden": "true" }),
+      roles.map(function (r) {
+        var isCur = (r[0] === "Maintainer") === (kind === "maintainer");
+        return h("button", { key: r[0], type: "button", "aria-pressed": isCur ? "true" : "false",
+          onClick: function () { ctx.go({ name: r[1] }); } }, r[0]);
+      }));
+
+    var foot = h("div", { className: "nv-app-foot", style: { marginTop: "auto", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+      h(Eyebrow, { size: "caption" }, "Role"),
+      segment,
+      h(Note, null, "Last-used context on login. Single-role users see no switcher."));
+
+    return h("aside", { className: "nv-app-nav",
+      style: { width: "232px", flex: "0 0 232px", borderRight: "var(--border-level-1)", background: "var(--surface-canvas)",
+               padding: "var(--space-2xl) var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", minHeight: "100vh" } },
+      h("div", { style: col("var(--space-sm)") }, wordmark, context),
+      h("nav", { className: "nv-app-navlinks", style: { display: "flex", flexDirection: "column", gap: "2px" } }, nodes),
+      foot);
+  }
+
+  /* ── AdminNav — overrides the compiled screens.js AdminNav ─────────────────
+     The admin console side menu (separate SSO+VPN deployment). Same structure,
+     destinations and dark chrome as the compiled version — it keeps its four
+     labelled groups and the "Back to catalog" ghost footer untouched — but the
+     links gain the same craft as the workspace nav: the emerald active state
+     with the sliding accent rail, expo-out hover, and focus-visible, retuned
+     for the darker surface (see .nv-appnav-admin in injectAppNavCSS). Entrance
+     cascades per group rather than per item. Wired by LOCAL reference. */
+  function AdminNavV2(props) {
+    var ctx = props.ctx;
+    var groups = [
+      ["Adjudication", [["Claim contest queue", "admin.contests"], ["Nomination inbox", "admin.nominations"]]],
+      ["Catalog", [["Catalog ingestion", "admin.ingestion"], ["Page corrections & takedowns", "admin.corrections"], ["Taxonomy & categories", "admin.taxonomy"], ["Vocabulary contests", "admin.vocab"], ["Anomaly quarantine", "admin.anomaly"]]],
+      ["Integrity", [["Sybil detection", "admin.sybil"], ["Project moderation", "admin.moderation"], ["Audit log", "admin.audit"]]],
+      ["Platform", [["User lookup", "admin.users"], ["Editorial tools", "admin.editorial"], ["Demand signals", "admin.demand"], ["Config", "admin.config"]]]
+    ];
+
+    var link = function (label, name) {
+      var on = ctx.route.name === name;
+      return h("a", { key: name, href: "#",
+        className: "nv-appnav-link" + (on ? " nv-appnav-link--on" : ""),
+        "aria-current": on ? "page" : null,
+        onClick: function (e) { e.preventDefault(); ctx.go({ name: name }); } }, label);
+    };
+
+    var header = h("div", { className: "nv-adminnav-group", style: col("var(--space-xxs)", { animationDelay: "0ms" }) },
+      h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", color: "var(--text-on-dark)" } }, "notavibe admin"),
+      h(Eyebrow, { tone: "onDarkMuted", size: "caption" }, "SSO + VPN · separate deployment"));
+
+    var groupEls = groups.map(function (g, i) {
+      return h("div", { key: g[0], className: "nv-adminnav-group", style: col("var(--space-xs)", { animationDelay: (70 + i * 70) + "ms" }) },
+        h(Eyebrow, { tone: "onDarkMuted", size: "caption" }, g[0]),
+        g[1].map(function (it) { return link(it[0], it[1]); }));
+    });
+
+    var foot = h("div", { style: { marginTop: "auto" } },
+      h(Button, { variant: "ghost", fullWidth: true, onClick: function () { ctx.go({ name: "discover" }); } }, "Back to catalog"));
+
+    return h("aside", { className: "nv-app-nav nv-appnav-admin",
+      style: { width: "248px", flex: "0 0 248px", background: "var(--surface-dark)", borderRight: "1px solid var(--border-hairline-dark)",
+               padding: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-lg)", minHeight: "100vh" } },
+      header, groupEls, foot);
+  }
+
   var APP_ROUTES = /^(backer\.|maintainer\.|stack\.(connect|results|publish))/;
 
   function NotavibeShell(props) {
@@ -1678,11 +1883,11 @@
     var body;
     if (isAdmin) {
       body = h("div", { className: "nv-app-shell", style: { display: "flex", minHeight: "100vh", background: "var(--surface-canvas)" } },
-        h(window.AdminNav, { ctx: ctx }),
+        h(AdminNavV2, { ctx: ctx }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex" } }, h(Screen, { ctx: ctx })));
     } else if (isApp) {
       body = h("div", { className: "nv-app-shell", style: { display: "flex", minHeight: "100vh", background: "var(--surface-canvas)" } },
-        h(window.AppNav, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
+        h(AppNavV2, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } },
           ctx.signedIn ? h("div", { style: { display: "flex", justifyContent: "flex-end", padding: "var(--space-md) var(--gutter-desktop) 0" } },
             h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null,
