@@ -1494,10 +1494,16 @@
           h("p", { style: { margin: 0, font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } }, "Re-verification is required. Uncured at day 30, this page becomes a dated catalog record and stays indexed."),
           h("div", null, h(Button, { variant: "primary", onClick: function () { ctx.setClaimState(p.slug, "active"); } }, "Re-verify now")),
           h(Note, null, "Surfaced in-app as well as by email, because an act-by clock may never depend solely on email delivery. No payout freeze, no held accruals, no billing — those are foreshadowed."))
-      : h("div", { style: Object.assign({}, CARD, col("var(--space-sm)")) },
-          h("span", { style: eyebrow }, "Pending actions · across projects"),
-          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Nothing needs you right now"),
-          h(Note, null, "This surface exists for three carried invariants: the default in-app notice posture, the delivery-failure fallback, and the 30-day cure clock."));
+      /* Empty state stays recessive — a filled card here gave a null state
+         primary weight above the analytics that are the actual reason to visit.
+         The prominent card is reserved for a real pending action (the lapsed
+         branch above); "all clear" is a slim, quiet line. The three carried
+         invariants (in-app notice posture, delivery-failure fallback, 30-day
+         cure clock) still live here — folded into plain copy rather than a
+         meta-note about why the surface exists. */
+      : h("div", { style: Object.assign({}, VOIDBOX, { display: "flex", alignItems: "center", gap: "var(--space-sm)", flexWrap: "wrap", padding: "var(--space-sm) var(--space-lg)" }) },
+          h("span", { "aria-hidden": "true", style: { color: "var(--volt-emerald)", font: "var(--type-body-md-strong)" } }, "✓"),
+          h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } }, "Nothing needs you right now — no re-verification or cure-clock notices across your projects."));
 
     var m = metricsFor(p);
     var fmt = function (n) { return n.toLocaleString ? n.toLocaleString() : String(n); };
