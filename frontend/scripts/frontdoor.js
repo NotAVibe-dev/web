@@ -322,13 +322,15 @@
       + ".nv-cat-grid{grid-template-columns:repeat(2,1fr)!important}"
       + ".nv-cat-grid>a{grid-column:auto!important}}"
       + "@media (max-width: 520px){"
-      + ".nv-cat-grid{grid-template-columns:1fr!important}"
-      /* On phones the hero content is taller and the 90vh shorter, so the
-         centred block rides up until the headline nearly touches the fixed
+      + ".nv-cat-grid{grid-template-columns:1fr!important}}"
+      /* On narrow viewports the hero content is taller and the 90vh shorter, so
+         the centred block rides up until the headline nearly touches the fixed
          header — the 76px asymmetric top padding is the only buffer left.
-         Enlarge that buffer at phone width so the headline clears the header
-         with real breathing room. (More specific .nv-app-shell rule keeps the
-         signed-in in-workspace hero unaffected.) */
+         Enlarge that buffer below 600px so the headline clears the header with
+         real breathing room. Kept in its own query (not the 520px one) so the
+         category grid keeps its own breakpoint. (More specific .nv-app-shell
+         rule keeps the signed-in in-workspace hero unaffected.) */
+      + "@media (max-width: 600px){"
       + ".nv-hero>*:last-child{padding-top:150px!important}}";
     document.head.appendChild(s);
   })();
