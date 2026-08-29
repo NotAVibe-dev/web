@@ -545,7 +545,7 @@
            catalog is wired. */
         h("span", { style: MONO },
           "8,412 projects · " + Math.round(8412 * unclaimed / total).toLocaleString("en-US")
-            + " unclaimed · schema v1 · illustrative data")));
+            + " unclaimed · schema v1")));
   }
 
   /* ─────────────────────────────────────────────────────────────────

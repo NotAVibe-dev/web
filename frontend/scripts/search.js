@@ -815,11 +815,30 @@
         style: { background: "transparent", color: "var(--volt-white)", border: "1px solid var(--volt-border-hover)", borderRadius: "var(--radius-button, 8px)", padding: "11px 20px", fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "14px", cursor: "pointer", flex: "0 0 auto" }
       }, "Nominate"));
 
+    /* Curation-chat entry (ADR 0009 / Q2). §5.5's Refine is "the chat's entry
+       point — a short query filters, a conversation curates." The hero moved that
+       offer here deliberately (see frontdoor.js), so this is where a query becomes
+       a conversation: one entry (the search), a toggle to curate, seeded with the
+       current query. Backer-only; the chat re-parses the seed into §5.4 facets. */
+    var curateStrip = (ctx.signedIn && q.trim())
+      ? h(Container, { style: { padding: "0 32px" } },
+          h("div", { className: "nv-enter", style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-card, 12px)", padding: "16px 24px", background: "var(--volt-canvas)" } },
+            h("div", { style: { display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 } },
+              h("p", { style: { margin: 0, fontWeight: 600, fontSize: "16px", lineHeight: 1.4, color: "var(--volt-white)" } }, "Turn this into a list you can refine by talking"),
+              h("p", { style: Object.assign({}, SMALL, { color: "var(--volt-text-500)" }) }, "A short query filters; keep the conversation going and it curates a draft list — grounded to the catalog, never a ranking input.")),
+            h("button", {
+              type: "button",
+              onClick: function () { ctx.go({ name: "backer.chat", seed: q }); },
+              style: { background: "transparent", color: "var(--volt-white)", border: "1px solid var(--volt-border-hover)", borderRadius: "var(--radius-button, 8px)", padding: "11px 20px", fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "14px", cursor: "pointer", flex: "0 0 auto", whiteSpace: "nowrap" } },
+              "Curate →")))
+      : null;
+
     return h("div", {
       className: "nv-search-scope",
       style: { background: "var(--volt-void)", minHeight: "100vh" }
     },
       searchBand,
+      curateStrip,
       h(Container, {
         className: "nv-search-layout",
         style: {
