@@ -1403,7 +1403,13 @@
        last visit" banner, the interest-register footnote and the referrer split
        all sit in one. Padding is per-use; spread this then override it. */
     var VOIDBOX = { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px" };
-    var wrap = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-3xl)", padding: "var(--space-section) var(--space-2xl)" };
+    /* Inline styles can't carry media queries, so mobile variants ride on
+       ctx.mobile (the prototype's discrete mobile signal). Desktop's section
+       padding + wide gutters leave a large dead gap and a pinched content column
+       at 360px — tighten both, and close the inter-section gap a notch. */
+    var wrap = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column",
+      gap: ctx.mobile ? "var(--space-2xl)" : "var(--space-3xl)",
+      padding: ctx.mobile ? "var(--space-xl) var(--space-lg)" : "var(--space-section) var(--space-2xl)" };
 
     function sparkSvg() {
       var pts = "3,26 20,22 37,24 54,16 71,17 88,10 105,8 128,3";
