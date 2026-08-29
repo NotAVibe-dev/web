@@ -1410,7 +1410,7 @@
        at 360px — tighten both, and close the inter-section gap a notch. */
     var wrap = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column",
       gap: ctx.mobile ? "var(--space-2xl)" : "var(--space-3xl)",
-      padding: ctx.mobile ? "var(--space-xl) var(--space-lg)" : "var(--space-section) var(--space-2xl)" };
+      padding: ctx.mobile ? "var(--space-xl) var(--space-lg)" : "var(--space-3xl) var(--space-2xl)" };
 
     function sparkSvg() {
       var pts = "3,26 20,22 37,24 54,16 71,17 88,10 105,8 128,3";
@@ -1506,12 +1506,9 @@
       })) : null;
     var backdrop = open ? h("div", { "aria-hidden": "true", onClick: function () { setOpen(false); }, style: { position: "fixed", inset: 0, zIndex: 15 } }) : null;
     var switcher = h("h1", { style: { margin: 0, position: "relative", display: "inline-flex" } }, titleBtn, backdrop, menu);
-    var signOut = h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out");
-    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-lg)", flexWrap: "wrap", borderBottom: "1px solid var(--volt-border)", paddingBottom: "var(--space-xl)" } },
-      h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
-        switcher,
-        h("span", { style: chip }, "Illustrative data")),
-      signOut);
+    var header = h("header", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap", borderBottom: "1px solid var(--volt-border)", paddingBottom: "var(--space-xl)" } },
+      switcher,
+      h("span", { style: chip }, "Illustrative data"));
 
     var pending = lapsed
       ? h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-md)")) },
@@ -1925,7 +1922,9 @@
     var foot = h("div", { className: "nv-app-foot", style: { marginTop: "auto", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
       h(Eyebrow, { size: "caption" }, "Role"),
       segment,
-      h(Note, null, "Last-used context on login. Single-role users see no switcher."));
+      h(Note, null, "Last-used context on login. Single-role users see no switcher."),
+      h("div", { style: { marginTop: "var(--space-sm)", paddingTop: "var(--space-md)", borderTop: "1px solid var(--volt-border)" } },
+        h(Button, { variant: "ghost", fullWidth: true, onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")));
 
     return h("aside", { className: "nv-app-nav",
       style: { width: "232px", flex: "0 0 232px", borderRight: "var(--border-level-1)", background: "var(--surface-canvas)",
@@ -2013,10 +2012,8 @@
       body = h("div", { className: "nv-app-shell", style: { display: "flex", minHeight: "100vh", background: "var(--surface-canvas)" } },
         h(AppNavV2, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } },
-          /* The maintainer dashboard carries Sign out inside its own header now,
-             so suppress the shell's floating strip there to avoid a duplicate. */
-          (ctx.signedIn && name !== "maintainer.dashboard") ? h("div", { style: { display: "flex", justifyContent: "flex-end", padding: "var(--space-md) var(--gutter-desktop) 0" } },
-            h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null,
+          /* Sign out lives in the workspace nav (AppNavV2 footer) now — one home,
+             part of the app chrome, no floating strip over the page content. */
           h("div", { style: { flex: 1 } }, h(Screen, { ctx: ctx })),
           NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null));
     } else {
