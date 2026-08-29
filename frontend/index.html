@@ -571,8 +571,8 @@ const PUBLIC_BROWSE = /^(discover|category|search|project|methodology|editorial|
    stays untouched; only its address-bar form is aliased. parseHash maps the
    short form back to the canonical name, so both URLs resolve and the bar
    normalises to the short one. Add a pair here to promote another route. */
-const ROUTE_ALIAS = { "maintainer.dashboard": "maintainer" };
-const ROUTE_ALIAS_REVERSE = { "maintainer": "maintainer.dashboard" };
+const ROUTE_ALIAS = { "maintainer.dashboard": "maintainer", "backer.dashboard": "backer" };
+const ROUTE_ALIAS_REVERSE = { "maintainer": "maintainer.dashboard", "backer": "backer.dashboard" };
 function buildHash(route) {
   if (!route || !route.name) return "#/discover";
   let path = "/" + (ROUTE_ALIAS[route.name] || route.name);
