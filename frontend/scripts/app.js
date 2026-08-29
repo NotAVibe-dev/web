@@ -1399,6 +1399,10 @@
     var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
     var caption = { font: "var(--type-caption)", color: "var(--text-secondary)" };
     var CARD = { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", borderRadius: "12px", padding: "var(--space-2xl)" };
+    /* Recessed hairline box on the void surface — the switcher, the "since your
+       last visit" banner, the interest-register footnote and the referrer split
+       all sit in one. Padding is per-use; spread this then override it. */
+    var VOIDBOX = { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px" };
     var wrap = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-3xl)", padding: "var(--space-section) var(--space-2xl)" };
 
     function sparkSvg() {
@@ -1411,12 +1415,16 @@
        alarm-red — a dip in discovery is information, not an error. Masked tiles
        (raw < 4, the visibility floor) carry no delta: you cannot trend a number
        you are not allowed to see. */
+    /* One place decides up/down/flat; deltaPill (glyph + colour) and moveWord
+       (prose) both read from it, so the three-way branch lives once. */
+    function deltaClass(dv) { return dv > 0 ? "up" : (dv < 0 ? "down" : "flat"); }
     function deltaPill(dv) {
       if (dv == null) return null;
-      var up = dv > 0, flat = dv === 0;
-      var c = up ? "var(--volt-emerald)" : "var(--text-secondary)";
+      var k = deltaClass(dv);
+      var c = k === "up" ? "var(--volt-emerald)" : "var(--text-secondary)";
+      var glyph = k === "up" ? "↑ " : (k === "down" ? "↓ " : "→ ");
       return h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: c, whiteSpace: "nowrap" } },
-        (flat ? "→ " : (up ? "↑ " : "↓ ")) + Math.abs(dv) + "%");
+        glyph + Math.abs(dv) + "%");
     }
     function tile(label, value, cap, spark, delta) {
       return h("div", { style: Object.assign({}, CARD, col("var(--space-xs)")) },
@@ -1458,7 +1466,7 @@
       scored.sort(function (a, b) { return (b.overlap - a.overlap) || ((b.proj.stackCount || 0) - (a.proj.stackCount || 0)); });
       return scored.slice(0, 4).map(function (x) { return x.proj; });
     }
-    function moveWord(d) { return d > 0 ? "up " + d + "%" : (d < 0 ? "down " + Math.abs(d) + "%" : "unchanged"); }
+    function moveWord(dv) { var k = deltaClass(dv); return k === "up" ? "up " + dv + "%" : (k === "down" ? "down " + Math.abs(dv) + "%" : "unchanged"); }
     function bar(label, pct) {
       return h("div", { key: label, style: col("4px") },
         h("div", { style: { display: "flex", justifyContent: "space-between", font: "var(--type-caption)" } },
@@ -1475,7 +1483,7 @@
           h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, p.owner + "/" + p.repo),
           h("span", { style: chip }, "Illustrative data")),
         h("span", { style: caption }, "Aggregate discovery signal — the only data notavibe holds for this project.")),
-      h("label", { style: Object.assign({}, col("6px"), { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-sm) var(--space-md)", minWidth: "220px" }) },
+      h("label", { style: Object.assign({}, col("6px"), VOIDBOX, { padding: "var(--space-sm) var(--space-md)", minWidth: "220px" }) },
         h("span", { style: eyebrow }, "Project · " + CLAIMED.length + " claimed"),
         h("select", { value: slug, onChange: function (e) { setSlug(e.target.value); }, style: { border: "none", background: "transparent", color: "var(--text-primary)", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", cursor: "pointer", outline: "none", width: "100%" } },
           CLAIMED.map(function (s) { var pr = window.findProject(s); return h("option", { key: s, value: s }, pr ? pr.owner + "/" + pr.repo : s); }))));
@@ -1506,7 +1514,7 @@
           h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, r[0]),
           h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, mask(r[1])));
       }),
-      h("div", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-lg)" } },
+      h("div", { style: Object.assign({}, VOIDBOX, { padding: "var(--space-lg)" }) },
         h(Note, null, h("b", { style: { fontWeight: 500, color: "var(--text-primary)" } }, "What this count means."), " “I'd fund this” is not “I will pay $5 a month.” It is an expression of interest in a system that does not exist yet, from people who have committed nothing. It is never a revenue projection, implied or computed.")),
       h(Note, null, "Identities are never shown. No visitor-level data reaches a maintainer."));
 
@@ -1531,7 +1539,7 @@
     var sinceClauses = ["Discovery " + moveWord(m.dVol), "deck placement " + moveWord(m.dDeck)];
     if (p.listCount >= 4) sinceClauses.push("list membership " + moveWord(m.dList));
     if (p.stackCount >= 4) sinceClauses.push("stack membership " + moveWord(m.dStack));
-    var sinceBanner = h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-md)", flexWrap: "wrap", border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-md) var(--space-lg)" } },
+    var sinceBanner = h("div", { style: Object.assign({}, VOIDBOX, { display: "flex", alignItems: "baseline", gap: "var(--space-md)", flexWrap: "wrap", padding: "var(--space-md) var(--space-lg)" }) },
       h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Since your last visit · " + lastVisit + " days ago"),
       h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } },
         sinceClauses.join(", ") + "."));
