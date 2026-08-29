@@ -1386,7 +1386,14 @@
   function MaintainerDashboardV2(props) {
     var ctx = props.ctx;
     var Note = W("Note");
-    var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
+    /* Maya's claimed projects. The switcher scopes the WHOLE dashboard to one at
+       a time (§9.3 "one page at a time") — every tile, the interest register and
+       the referrer split re-derive from the selected project. The old header
+       shipped a decorative <select> with no onChange, so the picker could drift
+       out of sync with the title; controlling it here is the fix. */
+    var CLAIMED = ["vitest-dev/vitest", "unjs/unbuild"];
+    var sel = React.useState(CLAIMED[0]), slug = sel[0], setSlug = sel[1];
+    var p = window.findProject(slug) || window.PROJECTS[0];
     var lapsed = ctx.claimState(p.slug) === "lapsed";
     var mask = window.maskNumber || function (n) { return n; };
     var eyebrow = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
@@ -1400,13 +1407,53 @@
         h("polyline", { className: "nv-spark-line", points: pts, stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" }),
         h("circle", { className: "nv-spark-dot", cx: 128, cy: 3, r: 3, fill: "var(--volt-emerald)" }));
     }
-    function tile(label, value, cap, spark) {
+    /* Period-over-period movement. Up is emerald; down and flat are muted, never
+       alarm-red — a dip in discovery is information, not an error. Masked tiles
+       (raw < 4, the visibility floor) carry no delta: you cannot trend a number
+       you are not allowed to see. */
+    function deltaPill(dv) {
+      if (dv == null) return null;
+      var up = dv > 0, flat = dv === 0;
+      var c = up ? "var(--volt-emerald)" : "var(--text-secondary)";
+      return h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: c, whiteSpace: "nowrap" } },
+        (flat ? "→ " : (up ? "↑ " : "↓ ")) + Math.abs(dv) + "%");
+    }
+    function tile(label, value, cap, spark, delta) {
       return h("div", { style: Object.assign({}, CARD, col("var(--space-xs)")) },
         h("span", { style: eyebrow }, label),
-        h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+        h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-sm)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+          deltaPill(delta)),
         spark ? sparkSvg() : null,
         h("span", { style: caption }, cap));
     }
+    /* Derived, per-project illustrative metrics so every tile rescopes with the
+       switcher — the old dashboard hardcoded volume + deck, which then desynced
+       from the project. Deltas come from a stable per-slug hash → deterministic,
+       varied per project, and no Math.random (banned in this runtime). Discovery
+       volume is biased upward to stay consistent with the uptrend sparkline. */
+    function metricsFor(pr) {
+      var l = pr.listCount || 0, s = pr.stackCount || 0;
+      var volume = l * 52 + s * 11;
+      var seed = 0; for (var i = 0; i < pr.slug.length; i++) seed = (seed * 31 + pr.slug.charCodeAt(i)) & 0xffff;
+      function d(k) { return ((seed >> k) % 29) - 9; }
+      return { volume: volume, deck: Math.round(volume * 0.13), dVol: 6 + (seed % 14), dDeck: d(2), dList: d(4), dStack: d(6) };
+    }
+    /* Catalog peers that share a category, ranked by overlap then reach. Powers
+       the "most compared with" panel — the comparison/alternatives intent only
+       notavibe holds. */
+    function peersFor(pr) {
+      var cats = pr.categories || [];
+      var list = (window.PROJECTS || []).filter(function (o) {
+        /* Never surface the maintainer's own other claims as a "competitor" — a
+           peer must share a category and not be one of Maya's own pages. */
+        return CLAIMED.indexOf(o.slug) < 0 && (o.categories || []).some(function (c) { return cats.indexOf(c) >= 0; });
+      });
+      list.forEach(function (o) { o._ov = (o.categories || []).filter(function (c) { return cats.indexOf(c) >= 0; }).length; });
+      list.sort(function (a, b) { return (b._ov - a._ov) || ((b.stackCount || 0) - (a.stackCount || 0)); });
+      return list.slice(0, 4);
+    }
+    function moveWord(d) { return d > 0 ? "up " + d + "%" : (d < 0 ? "down " + Math.abs(d) + "%" : "unchanged"); }
     function bar(label, pct) {
       return h("div", { key: label, style: col("4px") },
         h("div", { style: { display: "flex", justifyContent: "space-between", font: "var(--type-caption)" } },
@@ -1415,15 +1462,18 @@
           h("div", { style: { width: pct + "%", height: "100%", background: "var(--volt-emerald)", borderRadius: "3px" } })));
     }
 
-    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-lg)", flexWrap: "wrap" } },
+    var chip = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "3px 10px", whiteSpace: "nowrap" };
+    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-2xl)", flexWrap: "wrap", borderBottom: "1px solid var(--volt-border)", paddingBottom: "var(--space-xl)" } },
       h("div", { style: col("var(--space-sm)") },
         h("span", { style: eyebrow }, "Maintainer · Maya"),
-        h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, p.owner + "/" + p.repo),
-        h("span", { style: caption }, "Aggregate discovery analytics · illustrative data")),
-      h("label", { style: col("4px") },
-        h("span", { style: eyebrow }, "Project"),
-        h("select", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-surface)", color: "var(--text-primary)", borderRadius: "8px", padding: "var(--space-sm) var(--space-md)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", cursor: "pointer" } },
-          h("option", null, p.owner + "/" + p.repo), h("option", null, "unjs/unbuild"))));
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, p.owner + "/" + p.repo),
+          h("span", { style: chip }, "Illustrative data")),
+        h("span", { style: caption }, "Aggregate discovery signal — the only data notavibe holds for this project.")),
+      h("label", { style: Object.assign({}, col("6px"), { border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-sm) var(--space-md)", minWidth: "220px" }) },
+        h("span", { style: eyebrow }, "Project · " + CLAIMED.length + " claimed"),
+        h("select", { value: slug, onChange: function (e) { setSlug(e.target.value); }, style: { border: "none", background: "transparent", color: "var(--text-primary)", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", cursor: "pointer", outline: "none", width: "100%" } },
+          CLAIMED.map(function (s) { var pr = window.findProject(s); return h("option", { key: s, value: s }, pr ? pr.owner + "/" + pr.repo : s); }))));
 
     var pending = lapsed
       ? h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-md)")) },
@@ -1436,11 +1486,13 @@
           h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, "Nothing needs you right now"),
           h(Note, null, "This surface exists for three carried invariants: the default in-app notice posture, the delivery-failure fallback, and the 30-day cure clock."));
 
+    var m = metricsFor(p);
+    var fmt = function (n) { return n.toLocaleString ? n.toLocaleString() : String(n); };
     var stats = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "var(--space-lg)" } },
-      tile("Discovery volume", "3,180", "Page views · trending, 30 days", true),
-      tile("Deck appearances", "412", "Times shown in a Your Deck"),
-      tile("List membership", mask(p.listCount), "Lists containing this project"),
-      tile("Stack membership", mask(p.stackCount), "Scans that matched it"));
+      tile("Discovery volume", fmt(m.volume), "Page views · vs prior 30 days", true, m.dVol),
+      tile("Deck appearances", fmt(m.deck), "Times shown in a Your Deck", false, m.dDeck),
+      tile("List membership", mask(p.listCount), "Lists containing this project", false, p.listCount >= 4 ? m.dList : null),
+      tile("Stack membership", mask(p.stackCount), "Scans that matched it", false, p.stackCount >= 4 ? m.dStack : null));
 
     var interest = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
       h("span", { style: eyebrow }, "Interest register"),
@@ -1461,12 +1513,32 @@
         h("span", { style: Object.assign({}, caption, { color: "var(--text-secondary)" }) }, "Crawler 29%")),
       h(Note, null, "Crawler and human traffic are split, not merged. Campaign traffic is absent from this panel by construction — the campaign wall."));
 
+    /* "What changed since I was last here" — the line that turns a one-time claim
+       hook into a weekly habit. Illustrative 6-day window; the deltas are the same
+       stable per-project figures the tiles carry, so the banner never contradicts
+       the grid below it. */
+    var lastVisit = 6;
+    var sinceBanner = h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-md)", flexWrap: "wrap", border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-md) var(--space-lg)" } },
+      h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Since your last visit · " + lastVisit + " days ago"),
+      h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } },
+        "Discovery " + moveWord(m.dVol) + ", deck placement " + moveWord(m.dDeck) + ", list membership " + moveWord(m.dList) + "."));
+
+    var peers = peersFor(p);
+    var peerTotal = peers.reduce(function (s, o) { return s + (o.stackCount || 1); }, 0) || 1;
+    var comparedWith = h("div", { style: Object.assign({}, CARD, col("var(--space-md)")) },
+      h("span", { style: eyebrow }, "Most compared with"),
+      peers.length
+        ? h("div", { style: col("var(--space-sm)") }, peers.map(function (o) { return bar(o.owner + "/" + o.repo, Math.round((o.stackCount || 1) / peerTotal * 100)); }))
+        : h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } }, "Not enough comparison views yet to show a breakdown."),
+      h(Note, null, "Share of alternatives and comparison views that also weighed one of these — the positioning intent only notavibe sees. Peers below the visibility floor are withheld."));
+
     var analytics = h("section", { style: col("var(--space-lg)") },
       h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-md)", flexWrap: "wrap" } },
         h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Discovery analytics — the claim hook"),
         h("span", { style: eyebrow }, "Aggregate only")),
+      sinceBanner,
       stats,
-      h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "var(--space-lg)" } }, interest, referrers),
+      h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-lg)" } }, interest, comparedWith, referrers),
       h(Note, null, "Data only the platform holds, costing no payment rail. This roll-up is the reason a maintainer claims a page at all."));
 
     var absent = h("section", { style: col("var(--space-md)") },
