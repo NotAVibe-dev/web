@@ -6,24 +6,22 @@
 <!-- ── Theme resolution (pre-paint) ─────────────────────────────────────────────
      Sets data-theme on <html> BEFORE any stylesheet or paint, so there is no
      flash of the wrong theme. Resolution order: a remembered manual choice
-     (localStorage "nv-theme") wins; otherwise follow the OS setting; failing
-     both, dark — the canonical default. The <html> element survives the app
+     (localStorage "nv-theme") wins; otherwise light — the canonical default.
+     (OS setting is no longer auto-followed; light is the baseline.) The <html> element survives the app
      mount (the runtime only swaps a node inside <body>), so this attribute set
      once here holds for the whole session and is what every [data-theme] CSS
      rule keys off. The theme name is also mirrored on <meta name=color-scheme>
      so form controls, scrollbars and the like adopt the right native palette. -->
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="light dark">
 <script>
 (function () {
-  var t = "dark";
+  var t = "light";
   try {
     var saved = localStorage.getItem("nv-theme");
     if (saved === "light" || saved === "dark") {
-      t = saved;
-    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
-      t = "light";
+      t = saved;  /* a remembered manual toggle still wins */
     }
-  } catch (e) { /* storage blocked (private mode / sandboxed) → dark */ }
+  } catch (e) { /* storage blocked (private mode / sandboxed) → light */ }
   document.documentElement.setAttribute("data-theme", t);
   document.documentElement.style.colorScheme = t;  /* native scrollbars / form controls */
 })();
