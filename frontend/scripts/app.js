@@ -1393,6 +1393,7 @@
        out of sync with the title; controlling it here is the fix. */
     var CLAIMED = ["vitest-dev/vitest", "unjs/unbuild"];
     var sel = React.useState(CLAIMED[0]), slug = sel[0], setSlug = sel[1];
+    var op = React.useState(false), open = op[0], setOpen = op[1];
     var p = window.findProject(slug) || window.PROJECTS[0];
     var lapsed = ctx.claimState(p.slug) === "lapsed";
     var mask = window.maskNumber || function (n) { return n; };
@@ -1482,17 +1483,35 @@
     }
 
     var chip = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "3px 10px", whiteSpace: "nowrap" };
-    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-2xl)", flexWrap: "wrap", borderBottom: "1px solid var(--volt-border)", paddingBottom: "var(--space-xl)" } },
-      h("div", { style: col("var(--space-sm)") },
-        h("span", { style: eyebrow }, "Maintainer · Maya"),
-        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
-          h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, p.owner + "/" + p.repo),
-          h("span", { style: chip }, "Illustrative data")),
-        h("span", { style: caption }, "Aggregate discovery signal — the only data notavibe holds for this project.")),
-      h("label", { style: Object.assign({}, col("6px"), VOIDBOX, { padding: "var(--space-sm) var(--space-md)", minWidth: "220px" }) },
-        h("span", { style: eyebrow }, "Project · " + CLAIMED.length + " claimed"),
-        h("select", { value: slug, onChange: function (e) { setSlug(e.target.value); }, style: { border: "none", background: "transparent", color: "var(--text-primary)", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)", cursor: "pointer", outline: "none", width: "100%" } },
-          CLAIMED.map(function (s) { var pr = window.findProject(s); return h("option", { key: s, value: s }, pr ? pr.owner + "/" + pr.repo : s); }))));
+    /* Title IS the project switcher. The old header carried a persona eyebrow, a
+       subtitle and a separate <select> on the right; now the project name and its
+       caret open a list of claimed projects. A native <select> can't be triggered
+       by clicking heading text, so this is a small popover — a fixed backdrop
+       closes it, the caret rotates, the current project is ticked. */
+    var caret = h("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true",
+      style: { flex: "0 0 auto", color: "var(--text-secondary)", transition: "transform var(--motion-base) ease", transform: open ? "rotate(180deg)" : "none" } },
+      h("path", { d: "M6 9l6 6 6-6", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }));
+    var titleBtn = h("button", { type: "button", "aria-haspopup": "listbox", "aria-expanded": open ? "true" : "false",
+        onClick: function () { setOpen(!open); },
+        style: { display: "inline-flex", alignItems: "center", gap: "var(--space-sm)", margin: 0, padding: 0, background: "none", border: "none", cursor: "pointer", textAlign: "left", color: "var(--text-primary)", font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } },
+      h("span", null, p.owner + "/" + p.repo), caret);
+    var menu = open ? h("div", { role: "listbox", style: Object.assign({}, VOIDBOX, { position: "absolute", top: "calc(100% + 8px)", left: 0, zIndex: 20, minWidth: "280px", background: "var(--volt-surface)", padding: "var(--space-xs)", display: "flex", flexDirection: "column", gap: "2px" }) },
+      CLAIMED.map(function (s) {
+        var pr = window.findProject(s), on = s === slug;
+        return h("button", { key: s, type: "button", role: "option", "aria-selected": on ? "true" : "false",
+          onClick: function () { setSlug(s); setOpen(false); },
+          style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-md)", width: "100%", textAlign: "left", background: on ? "var(--volt-void)" : "transparent", border: "none", borderRadius: "8px", padding: "var(--space-sm) var(--space-md)", cursor: "pointer", color: "var(--text-primary)", font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } },
+          h("span", null, pr ? pr.owner + "/" + pr.repo : s),
+          on ? h("span", { style: { color: "var(--volt-emerald)" } }, "✓") : null);
+      })) : null;
+    var backdrop = open ? h("div", { "aria-hidden": "true", onClick: function () { setOpen(false); }, style: { position: "fixed", inset: 0, zIndex: 15 } }) : null;
+    var switcher = h("h1", { style: { margin: 0, position: "relative", display: "inline-flex" } }, titleBtn, backdrop, menu);
+    var signOut = h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out");
+    var header = h("header", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-lg)", flexWrap: "wrap", borderBottom: "1px solid var(--volt-border)", paddingBottom: "var(--space-xl)" } },
+      h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+        switcher,
+        h("span", { style: chip }, "Illustrative data")),
+      signOut);
 
     var pending = lapsed
       ? h("div", { className: "nv-claim-spine", style: Object.assign({}, CARD, col("var(--space-md)")) },
@@ -1994,7 +2013,9 @@
       body = h("div", { className: "nv-app-shell", style: { display: "flex", minHeight: "100vh", background: "var(--surface-canvas)" } },
         h(AppNavV2, { ctx: ctx, kind: name.indexOf("maintainer.") === 0 ? "maintainer" : "backer" }),
         h("main", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } },
-          ctx.signedIn ? h("div", { style: { display: "flex", justifyContent: "flex-end", padding: "var(--space-md) var(--gutter-desktop) 0" } },
+          /* The maintainer dashboard carries Sign out inside its own header now,
+             so suppress the shell's floating strip there to avoid a duplicate. */
+          (ctx.signedIn && name !== "maintainer.dashboard") ? h("div", { style: { display: "flex", justifyContent: "flex-end", padding: "var(--space-md) var(--gutter-desktop) 0" } },
             h(Button, { variant: "ghost", onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")) : null,
           h("div", { style: { flex: 1 } }, h(Screen, { ctx: ctx })),
           NV_DEV ? h(PrototypeRail, { ctx: ctx }) : null));
