@@ -566,9 +566,16 @@ const URL_FIELDS = ["id", "q", "system", "type"];
    routes; any workspace/app route (backer.*, maintainer.*, stack.*, the
    dashboard, …) is absent here, so navigating to one naturally exits the mode. */
 const PUBLIC_BROWSE = /^(discover|category|search|project|methodology|editorial|list\.public|stack\.public|alternatives|compare|shipweek)$/;
+/* First-class short URLs. A route's canonical internal name (used everywhere in
+   app.js — screenFor, the app-shell regex, nav active state, the role switch)
+   stays untouched; only its address-bar form is aliased. parseHash maps the
+   short form back to the canonical name, so both URLs resolve and the bar
+   normalises to the short one. Add a pair here to promote another route. */
+const ROUTE_ALIAS = { "maintainer.dashboard": "maintainer" };
+const ROUTE_ALIAS_REVERSE = { "maintainer": "maintainer.dashboard" };
 function buildHash(route) {
   if (!route || !route.name) return "#/discover";
-  let path = "/" + route.name;
+  let path = "/" + (ROUTE_ALIAS[route.name] || route.name);
   if (route.slug) path += "/" + route.slug; /* slug may hold slashes; leave raw */
   const qs = URL_FIELDS
     .filter((k) => route[k] != null && route[k] !== "")
@@ -583,7 +590,7 @@ function parseHash() {
   const query = qi >= 0 ? raw.slice(qi + 1) : "";
   const segs = path.replace(/^\//, "").split("/").filter(Boolean);
   if (!segs.length) return null;
-  const route = { name: segs[0] };
+  const route = { name: ROUTE_ALIAS_REVERSE[segs[0]] || segs[0] };
   if (segs.length > 1) route.slug = decodeURIComponent(segs.slice(1).join("/"));
   if (query) {
     query.split("&").forEach((pair) => {
