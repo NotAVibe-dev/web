@@ -242,6 +242,23 @@
       ".nv-field:focus{outline:none;border-color:var(--volt-emerald)}",
       ".nv-field::placeholder{color:var(--volt-text-500)}",
       "textarea.nv-field{resize:vertical;min-height:64px;font-family:inherit;line-height:1.55}",
+      /* Profile declaration ledger. Amber is a PROVENANCE mark, not a warning —
+         it means "we inferred this", and it is deliberately the same amber in
+         the ledger row and in the rail preview, because that shared vocabulary
+         is what lets the header count mean something without becoming a score. */
+      ".nv-ledger{border:1px solid var(--volt-border);border-radius:12px;overflow:hidden}",
+      ".nv-lrow{display:grid;grid-template-columns:180px minmax(0,1fr) 132px;gap:var(--space-lg);padding:var(--space-md) var(--space-xl);align-items:center;border-top:1px solid var(--volt-border)}",
+      ".nv-lrow:first-child{border-top:0}",
+      ".nv-lrow-head{background:var(--volt-canvas)}",
+      ".nv-lrow-guess{background:rgba(255,207,37,0.04)}",
+      ".nv-field.nv-guess{border-color:rgba(255,207,37,0.28);background:rgba(255,207,37,0.06);color:var(--volt-yellow)}",
+      ".nv-field.nv-guess:focus{border-color:var(--volt-emerald);background:var(--volt-void);color:var(--text-primary)}",
+      ".nv-guessmark{color:var(--volt-yellow);border-bottom:1px dashed rgba(255,207,37,0.42)}",
+      ".nv-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:var(--space-4xl);align-items:start}",
+      ".nv-rail{position:sticky;top:var(--space-2xl);display:flex;flex-direction:column;gap:var(--space-lg)}",
+      ".nv-keeplink{background:none;border:0;padding:0;cursor:pointer;font:var(--type-caption);color:var(--volt-text-600);text-decoration:underline;text-underline-offset:2px}",
+      ".nv-keeplink:hover{color:var(--text-secondary)}",
+      "@media (max-width:1040px){.nv-profile-grid{grid-template-columns:minmax(0,1fr)}.nv-rail{position:static}.nv-lrow{grid-template-columns:1fr;gap:var(--space-xs);justify-items:start;padding:var(--space-lg)}.nv-lrow>*{width:100%}.nv-lrow-head{display:none}}",
       "@media (prefers-reduced-motion: reduce){.nv-arrow,.nv-deck-cta,.nv-draft,.nv-claim-step,.nv-steprail-dot,.nv-steprail-bar,.nv-reveal,.nv-reveal-up{transition:none;animation:none}.nv-spark-line{stroke-dashoffset:0;animation:none}.nv-spark-dot{opacity:1;animation:none}}"
     ].join("");
     document.head.appendChild(s);
@@ -1639,17 +1656,201 @@
       h("span", { style: MCAP }, cap));
   }
 
+  /* ── Profile — the declaration ledger ──────────────────────────────────────
+     Rebuilt from the settings form this surface used to be. One idea, carried
+     in two halves: every line is either something the maintainer SAID or
+     something the pipeline GUESSED, and the guesses are marked amber — in the
+     ledger row AND in the sticky rail that renders what a stranger reads.
+
+     The shared amber is the whole design. It means the header count is not a
+     profile score: it points at specific words in a sentence someone else will
+     read that this maintainer did not write. Provenance, not a rating — which
+     is what keeps the count clear of the no-ranking rule the surface exists to
+     protect (§9.2). Amber is deliberately NOT a warning state; an inferred
+     value is perfectly usable, it is just not yours yet, and the rail says so.
+
+     The MCP payload pane from the wider exploration is deliberately absent —
+     it belongs on the API surface, not here. */
+  var PROFILE_PROV = {
+    "Maturity": "our guess, from a six-year release cadence",
+    "Maintenance model": "our guess, from 4 committers over 90 days",
+    "Interface": "our guess, from the package exports"
+  };
+  var PROFILE_WAS = {
+    "Purpose": "Testing library",
+    "Runtime": "Node",
+    "Integration": "Build tools"
+  };
+  var PROFILE_SUMMARY_WAS = "Blazing fast unit test framework powered by Vite";
+  var MPROV = { display: "block", font: "var(--type-caption)", color: "var(--volt-text-600)", marginTop: "2px" };
+  var MWAS = { font: "var(--type-caption)", color: "var(--volt-text-600)", textDecoration: "line-through", textDecorationColor: "var(--volt-border-hover)" };
+  function mStateBadge(declared) {
+    return h("span", {
+      style: {
+        font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase",
+        border: "1px solid " + (declared ? "var(--volt-emerald-20)" : "rgba(255,207,37,0.22)"),
+        background: declared ? "var(--volt-emerald-08)" : "rgba(255,207,37,0.06)",
+        color: declared ? "var(--volt-emerald)" : "var(--volt-yellow)",
+        borderRadius: "6px", padding: "4px 9px", whiteSpace: "nowrap", justifySelf: "start"
+      }
+    }, declared ? "You" : "Guess");
+  }
+
   function MaintainerProfileV2(props) {
     var Note = W("Note");
     var p = window.findProject("vitest-dev/vitest") || window.PROJECTS[0];
-    return h("div", { style: mWrap(680) },
-      mHeader("Discovery presence — profile", "Keep the page accurate", "This is what visitors and the AEO composition read — make it yours instead of leaving it on inferred data."),
-      h("div", { style: Object.assign({}, MCARD, col("var(--space-lg)")) },
-        mField("Answer-first summary", { multiline: true, rows: 2, value: p.description, hint: "This sentence is what the AEO composition quotes. One sentence." }),
-        h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-lg)" } },
-          (window.VOCAB_DIMENSIONS || []).map(function (d) { return mField(d, { value: p.vocab[d] }); })),
-        h(Note, null, "Your declared vocabulary replaces whatever the pipeline inferred. No maintainer-editable field feeds ranking — that is what keeps this surface from becoming a placement lever."),
-        h("div", null, h(Button, { variant: "primary" }, "Save profile"))),
+    var DIMS = window.VOCAB_DIMENSIONS || [];
+
+    /* Declared/guessed state is real rather than illustrative, so the rail
+       actually loses its amber as fields are declared — the demonstration IS
+       the argument for the layout. */
+    var init = React.useState(function () {
+      var d = {}, v = {};
+      DIMS.forEach(function (dim) { d[dim] = !PROFILE_PROV[dim]; v[dim] = p.vocab[dim] || ""; });
+      return { declared: d, vals: v, kept: {} };
+    });
+    var st = init[0], setSt = init[1];
+
+    function declareAll() {
+      setSt(function (s) {
+        var d = Object.assign({}, s.declared);
+        DIMS.forEach(function (dim) { if (!d[dim] && !s.kept[dim] && (s.vals[dim] || "").trim()) d[dim] = true; });
+        return Object.assign({}, s, { declared: d });
+      });
+    }
+    function keepGuess(dim) {
+      setSt(function (s) {
+        var k = Object.assign({}, s.kept); k[dim] = !k[dim];
+        return Object.assign({}, s, { kept: k });
+      });
+    }
+    function setVal(dim, value) {
+      setSt(function (s) {
+        var v = Object.assign({}, s.vals); v[dim] = value;
+        return Object.assign({}, s, { vals: v });
+      });
+    }
+
+    var guesses = DIMS.filter(function (dim) { return !st.declared[dim]; });
+    var declaredCount = 1 + (DIMS.length - guesses.length);   /* the summary is always declared here */
+    var total = DIMS.length + 1;
+    var WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven"];
+    var Cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+
+    /* ── the ledger ── */
+    function row(name, valueEl, opts) {
+      opts = opts || {};
+      return h("div", { key: name, className: "nv-lrow" + (opts.guess ? " nv-lrow-guess" : "") },
+        h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, name),
+        h("span", null, valueEl, opts.prov ? h("span", { style: MPROV }, opts.prov) : null),
+        mStateBadge(!opts.guess));
+    }
+    function declaredValue(text, was) {
+      return h("span", null,
+        h("span", { style: { color: "var(--volt-white)", font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)" } }, text),
+        was ? h("span", { style: MPROV }, "was ", h("span", { style: MWAS }, was)) : null);
+    }
+
+    var ledger = h("div", { className: "nv-ledger" },
+      h("div", { className: "nv-lrow nv-lrow-head" },
+        h("span", { style: MEB }, "Field"), h("span", { style: MEB }, "Value"), h("span", { style: MEB }, "Source")),
+      row("Answer-first summary", declaredValue(p.description, PROFILE_SUMMARY_WAS)),
+      DIMS.map(function (dim) {
+        if (st.declared[dim]) return row(dim, declaredValue(st.vals[dim], PROFILE_WAS[dim]));
+        var kept = !!st.kept[dim];
+        return row(dim,
+          h("input", {
+            className: "nv-field nv-guess", value: st.vals[dim],
+            onChange: function (e) { setVal(dim, e.target.value); },
+            "aria-label": dim
+          }),
+          {
+            guess: true,
+            prov: h("span", null,
+              PROFILE_PROV[dim] || "our guess",
+              " · ",
+              h("button", { type: "button", className: "nv-keeplink", onClick: function () { keepGuess(dim); } },
+                kept ? "declare it after all" : "keep as our guess"))
+          });
+      }));
+
+    /* ── the rail: the same amber, in the thing a stranger reads ── */
+    function mark(dim) {
+      var text = (st.vals[dim] || "").toLowerCase();
+      return st.declared[dim]
+        ? h("span", { key: dim, style: { color: "var(--volt-white)" } }, text)
+        : h("span", { key: dim, className: "nv-guessmark" }, text);
+    }
+    var chip = function (dim) {
+      var g = !st.declared[dim];
+      return h("span", {
+        key: dim,
+        style: {
+          display: "inline-flex", alignItems: "center", borderRadius: "9999px", padding: "4px 11px",
+          font: "var(--type-caption)",
+          border: "1px solid " + (g ? "rgba(255,207,37,0.28)" : "var(--volt-border)"),
+          background: g ? "rgba(255,207,37,0.06)" : "transparent",
+          color: g ? "var(--volt-yellow)" : "var(--text-secondary)"
+        }
+      }, st.vals[dim]);
+    };
+    var PVCARD = { border: "1px solid var(--volt-border)", borderRadius: "12px", overflow: "hidden", background: "var(--volt-canvas)" };
+    var PVHEAD = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-md)", padding: "var(--space-sm) var(--space-lg)", borderBottom: "1px solid var(--volt-border)" };
+    var PVBODY = Object.assign({ padding: "var(--space-lg)" }, col("var(--space-md)"));
+    var FINE = { font: "var(--type-caption)", color: "var(--volt-text-600)" };
+
+    var rail = h("div", { className: "nv-rail" },
+      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+        h("span", { style: MEB }, "Right now they read"),
+        h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--volt-emerald)" } }, "on save")),
+
+      h("div", { style: PVCARD },
+        h("div", { style: PVHEAD }, h("span", { style: MEB }, "A visitor"), h("span", { style: FINE }, "your page")),
+        h("div", { style: PVBODY },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
+            h("span", { style: { font: "600 19px/1.2 var(--font-sans)", letterSpacing: "-0.02em" } }, p.name),
+            mStateBadge(true)),
+          h("p", { style: Object.assign({}, MBODY, { color: "var(--volt-white)" }) }, p.description),
+          h("div", { style: { display: "flex", flexWrap: "wrap", gap: "6px" } }, DIMS.map(chip)))),
+
+      h("div", { style: PVCARD },
+        h("div", { style: PVHEAD }, h("span", { style: MEB }, "An answer engine"), h("span", { style: FINE }, "composition")),
+        h("div", { style: PVBODY },
+          h("p", { style: Object.assign({}, MBODY, { fontStyle: "italic" }) },
+            "“", h("span", { style: { color: "var(--volt-white)" } }, p.description), "”"),
+          h("p", { style: MBODY },
+            "Described as ", mark("Maturity"), ", ", mark("Maintenance model"), "-maintained, with a ",
+            mark("Interface"), " interface."),
+          h("span", { style: FINE }, guesses.length
+            ? Cap(WORDS[guesses.length]) + " of those descriptors " + (guesses.length === 1 ? "is" : "are") + " ours, not yours."
+            : "Every word above is yours."))),
+
+      h(Note, null, "Amber is the same amber as the ledger: it marks a value we inferred rather than one you declared. It is a provenance mark, not a warning — nothing here is wrong, it is just not yours yet."));
+
+    return h("div", { style: mWrap(1080) },
+      mHeader("Discovery presence — profile",
+        guesses.length
+          ? Cap(WORDS[guesses.length]) + " of " + WORDS[total] + " fields " + (guesses.length === 1 ? "is" : "are") + " still our guess"
+          : "Every field on this page is yours",
+        p.slug + " · claimed " + (p.verifiedAt || "—") + ". Everything below is either something you said or something we inferred — and the page tells visitors which."),
+
+      h("div", { style: col("var(--space-sm)") },
+        h("div", { style: { height: "4px", borderRadius: "9999px", background: "var(--volt-surface)", overflow: "hidden" } },
+          h("i", { style: { display: "block", height: "100%", width: Math.round(declaredCount / total * 100) + "%", background: "var(--volt-emerald)", transition: "width 420ms cubic-bezier(0.16,1,0.3,1)" } })),
+        h("div", { style: { display: "flex", justifyContent: "space-between", gap: "var(--space-lg)", flexWrap: "wrap" } },
+          h("span", { style: FINE }, declaredCount + " declared · " + guesses.length + " still inferred"),
+          h("span", { style: FINE }, "Declaring changes what is shown. It never changes where you rank."))),
+
+      h("div", { className: "nv-profile-grid" },
+        h("div", { style: col("var(--space-2xl)") },
+          ledger,
+          h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)", flexWrap: "wrap", border: "1px solid var(--volt-border)", borderRadius: "12px", padding: "var(--space-lg) var(--space-xl)", background: "var(--volt-canvas)" } },
+            h(Button, { variant: "primary", onClick: declareAll }, "Save declarations"),
+            h("span", { style: Object.assign({}, FINE, { maxWidth: "44ch" }) },
+              "Guesses keep working if you leave them. Declaring is never required — it is only more accurate.")),
+          h(Note, null, "Your declared vocabulary replaces whatever the pipeline inferred. No maintainer-editable field feeds ranking — that is what keeps this surface from becoming a placement lever. The count in the header is completeness, not quality, and no visitor ever sees it.")),
+        rail),
+
       h("section", { style: col("var(--space-md)") },
         h("span", { style: MEB }, "Peer recommendations you have authored"),
         h("div", { style: Object.assign({}, MCARD, col("var(--space-sm)")) },
