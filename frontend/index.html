@@ -48,10 +48,15 @@
     position: fixed; inset: 0; z-index: 2147483000;
     display: flex; align-items: center; justify-content: center;
     padding: 24px; overflow: hidden;
+    /* The gate is always dark glass, independent of the app theme. It must NOT
+       read --volt-void / --volt-indigo, which now flip to light values under the
+       light default (--volt-void becomes #fff) — that turned the whole gate white
+       and left the hardcoded-white input text invisible. Pinned to the dark hex
+       (the same values these tokens carry in dark mode). */
     background:
-      radial-gradient(120% 90% at 12% -20%, color-mix(in srgb, var(--volt-indigo, #101a59) 70%, transparent) 0%, transparent 62%),
-      radial-gradient(80% 70% at 88% -10%, color-mix(in srgb, var(--volt-emerald, #00ca8e) 10%, transparent) 0%, transparent 58%),
-      var(--volt-void, #000000);
+      radial-gradient(120% 90% at 12% -20%, color-mix(in srgb, #101a59 70%, transparent) 0%, transparent 62%),
+      radial-gradient(80% 70% at 88% -10%, color-mix(in srgb, #00ca8e 10%, transparent) 0%, transparent 58%),
+      #050507;
     font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
     -webkit-font-smoothing: antialiased;
     /* Opaque from the first painted frame — deliberately NOT faded in, or the
