@@ -1444,14 +1444,19 @@
        notavibe holds. */
     function peersFor(pr) {
       var cats = pr.categories || [];
-      var list = (window.PROJECTS || []).filter(function (o) {
-        /* Never surface the maintainer's own other claims as a "competitor" — a
-           peer must share a category and not be one of Maya's own pages. */
-        return CLAIMED.indexOf(o.slug) < 0 && (o.categories || []).some(function (c) { return cats.indexOf(c) >= 0; });
-      });
-      list.forEach(function (o) { o._ov = (o.categories || []).filter(function (c) { return cats.indexOf(c) >= 0; }).length; });
-      list.sort(function (a, b) { return (b._ov - a._ov) || ((b.stackCount || 0) - (a.stackCount || 0)); });
-      return list.slice(0, 4);
+      /* Score into local tuples — never stamp a sort key onto the shared
+         window.PROJECTS objects. A peer must (a) share a category, (b) not be one
+         of Maya's own claims, and (c) clear the below-4 visibility floor, so the
+         panel keeps the mask its own Note promises ("peers below the visibility
+         floor are withheld"). */
+      var scored = (window.PROJECTS || []).reduce(function (acc, o) {
+        if (CLAIMED.indexOf(o.slug) >= 0 || (o.stackCount || 0) < 4) return acc;
+        var overlap = (o.categories || []).filter(function (c) { return cats.indexOf(c) >= 0; }).length;
+        if (overlap > 0) acc.push({ proj: o, overlap: overlap });
+        return acc;
+      }, []);
+      scored.sort(function (a, b) { return (b.overlap - a.overlap) || ((b.proj.stackCount || 0) - (a.proj.stackCount || 0)); });
+      return scored.slice(0, 4).map(function (x) { return x.proj; });
     }
     function moveWord(d) { return d > 0 ? "up " + d + "%" : (d < 0 ? "down " + Math.abs(d) + "%" : "unchanged"); }
     function bar(label, pct) {
@@ -1518,10 +1523,18 @@
        stable per-project figures the tiles carry, so the banner never contradicts
        the grid below it. */
     var lastVisit = 6;
+    /* Only trend metrics the maintainer is allowed to see: discovery volume and
+       deck appearances are aggregate roll-ups, but list/stack membership carry the
+       below-4 mask, so their clauses are dropped from the banner when the raw count
+       is masked — same rule the tiles apply, so the banner never states a trend for
+       a number the grid won't show. */
+    var sinceClauses = ["Discovery " + moveWord(m.dVol), "deck placement " + moveWord(m.dDeck)];
+    if (p.listCount >= 4) sinceClauses.push("list membership " + moveWord(m.dList));
+    if (p.stackCount >= 4) sinceClauses.push("stack membership " + moveWord(m.dStack));
     var sinceBanner = h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-md)", flexWrap: "wrap", border: "1px solid var(--volt-border)", background: "var(--volt-void)", borderRadius: "10px", padding: "var(--space-md) var(--space-lg)" } },
       h("span", { style: Object.assign({}, eyebrow, { color: "var(--volt-emerald)" }) }, "Since your last visit · " + lastVisit + " days ago"),
       h("span", { style: { font: "var(--type-body-md)", letterSpacing: "var(--ls-body-md)", color: "var(--text-secondary)" } },
-        "Discovery " + moveWord(m.dVol) + ", deck placement " + moveWord(m.dDeck) + ", list membership " + moveWord(m.dList) + "."));
+        sinceClauses.join(", ") + "."));
 
     var peers = peersFor(p);
     var peerTotal = peers.reduce(function (s, o) { return s + (o.stackCount || 1); }, 0) || 1;
