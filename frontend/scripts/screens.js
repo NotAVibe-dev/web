@@ -4522,7 +4522,31 @@ function SaveToList({
   }, "Cancel"))) : /*#__PURE__*/React.createElement(Button, {
     variant: "outline",
     onClick: () => setCreating(true)
-  }, "New list"), /*#__PURE__*/React.createElement(Note, null, "Lists carry no ratings and no scores \u2014 a curated list is not a review."));
+  }, "New list"), /*#__PURE__*/React.createElement("button", {
+    /* Nested curation-chat entry (ADR 0009 / Q9): "build a list around this
+       project" seeds the draft with p as item #1 and grows it by conversation \u2014
+       distinct from a quick save-to-list and from the read-only alternatives page. */
+    type: "button",
+    onClick: () => ctx.go({
+      name: "backer.chat",
+      seedProject: p.slug
+    }),
+    style: {
+      alignSelf: "flex-start",
+      cursor: "pointer",
+      background: "none",
+      border: "none",
+      padding: "4px 0",
+      textAlign: "left",
+      font: "var(--type-body-md-strong)",
+      letterSpacing: "var(--ls-body-md)",
+      color: "var(--text-secondary)"
+    }
+  }, "\u2026 or build a list around " + p.name + " by talking ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--volt-emerald)"
+    }
+  }, "\u2192")), /*#__PURE__*/React.createElement(Note, null, "Lists carry no ratings and no scores \u2014 a curated list is not a review."));
 }
 function RegisterInterest({
   ctx
