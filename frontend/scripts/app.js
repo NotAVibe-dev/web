@@ -850,13 +850,13 @@
        escape hatch for returning visitors, never the loudest element on a page
        Raj hasn't read yet. */
     var goAccount = function () {
-      if (ctx.signedIn) ctx.go({ name: "backer.dashboard" });
+      if (ctx.signedIn) ctx.go({ name: "discover" });
       else ctx.go({ name: "signin", next: ctx.route });
     };
     var accountLabel = ctx.signedIn ? "My workspace" : "Sign in";
     /* signin carries a transient `next` the router deliberately drops, so its
        href is just the bare route — honest and still right-clickable. */
-    var accountHref = hrefFor(ctx.signedIn ? { name: "backer.dashboard" } : { name: "signin" });
+    var accountHref = hrefFor(ctx.signedIn ? { name: "discover" } : { name: "signin" });
 
     /* On a normal-width pill it stays put in the right zone — desktop has the
        room, and the account action is worth a permanent slot. It folds into the
@@ -1041,7 +1041,7 @@
       { prov: "github", handle: "@maghraby", signin: true, blocked: "Resolve or retire your claimed pages first — claims re-verify against GitHub." },
       { prov: "gitlab", handle: "@maghraby-gl", signin: false, blocked: "" }
     ];
-    return h(StateShell, { ctx: ctx, eyebrow: "Account", title: "Connected accounts", back: { name: "backer.dashboard" } },
+    return h(StateShell, { ctx: ctx, eyebrow: "Account", title: "Connected accounts", back: { name: "discover" } },
       h("p", { style: { margin: 0, font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)" } },
         "Sign in with any of these. Connect more to scan your stack (GitHub or GitLab) or claim a page (GitHub)."),
       h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-md)" } },
@@ -1935,7 +1935,9 @@
        and clobbers window.BackerDashboard back to the compiled dashboard (same
        reason NvPublicHeader is owned here — see the header note above). These are
        hoisted function declarations, so the reference is safe before definition. */
-    if (name === "backer.dashboard") return BackerHome;
+    /* Home dissolved (backer-discovery-direction): backer.dashboard → Discover.
+       BackerHome is retained as dead code in case it's needed for reference. */
+    if (name === "backer.dashboard") return window.NvDiscover || window.Discover;
     if (name === "backer.more") return BackerMore;
     if (name === "backer.lists") return MyListsV2;
     if (name === "backer.list") return ListDetailV2;
@@ -2076,7 +2078,9 @@
       { label: "Discovery presence", items: [["Profile", "maintainer.profile"], ["Reach", "maintainer.reach"]] },
       { label: "Operations", items: [["Claim contest", "maintainer.contest"], ["API & webhooks", "maintainer.api"], ["Project settings", "maintainer.settings"]] }
     ] : [
-      { items: [["Home", "backer.dashboard"], ["Discover", "discover"]] },
+      /* Home dissolved (backer-discovery-direction): sign-in lands on /discover,
+         outcomes live as a strip on Discover, Activity covers the detail. */
+      { items: [["Discover", "discover"]] },
       /* Curation chat is NOT a rail item (ADR 0009 / backer-discovery-direction):
          it is the conversational depth of the Discover search, entered from the
          search results "Curate →" toggle, from My lists, and from a project page. */
@@ -2121,7 +2125,7 @@
         h("span", { "aria-hidden": "true", style: { flex: "0 0 6px", width: "6px", height: "6px", borderRadius: "50%", background: "var(--volt-emerald)", boxShadow: "0 0 0 3px var(--volt-emerald-20)" } }),
         (kind === "maintainer" ? "Maintainer" : "Backer") + " workspace"));
 
-    var roles = [["Backer", "backer.dashboard"], ["Maintainer", "maintainer.dashboard"]];
+    var roles = [["Backer", "discover"], ["Maintainer", "maintainer.dashboard"]];
     var segment = h("div", { className: "nv-appnav-seg", "data-active": kind === "maintainer" ? "maintainer" : "backer" },
       h("span", { className: "nv-appnav-thumb", "aria-hidden": "true" }),
       roles.map(function (r) {

@@ -331,7 +331,7 @@
          category grid keeps its own breakpoint. (More specific .nv-app-shell
          rule keeps the signed-in in-workspace hero unaffected.) */
       + "@media (max-width: 600px){"
-      + ".nv-hero>*:last-child{padding-top:150px!important}}";
+      + ".nv-hero>*:last-child{padding-top:100px!important}}";
     document.head.appendChild(s);
   })();
 
@@ -379,9 +379,6 @@
 
   function Hero(props) {
     var ctx = props.ctx;
-    var total = window.PROJECTS.length;
-    var unclaimed = window.PROJECTS.filter(function (p) { return ctx.claimState(p.slug) === "generated"; }).length;
-
     var st = React.useState(window.NvQuery.get()), q = st[0], setQ = st[1];
     React.useEffect(function () { return window.NvQuery.subscribe(setQ); }, []);
     var fs = React.useState(false), focused = fs[0], setFocused = fs[1];
@@ -467,7 +464,7 @@
            the exposed top edge of the next band is what tells you the page
            continues, so a full-height hero would need a scroll cue that this
            one gets for free. --hero-min resolves to dvh where supported. */
-        minHeight: "var(--hero-min, 90vh)",
+        minHeight: "var(--hero-min, 40vh)",
         display: "flex",
         alignItems: "center",
         background: [
@@ -488,17 +485,17 @@
          container collapses to content width and the centring breaks.
          Asymmetric padding pushes the block below the fixed header's 76px so it
          centres in the *visible* area rather than the geometric one. */
-      h(Container, { style: Object.assign({ position: "relative", zIndex: 2, width: "100%", padding: "76px 32px 24px" }, col("24px", { alignItems: "center", textAlign: "center" })) },
+      h(Container, { style: Object.assign({ position: "relative", zIndex: 2, width: "100%", padding: "76px 32px 24px" }, col("16px", { alignItems: "center", textAlign: "center" })) },
         /* Four elements, down from six. The eyebrow and the mode hint are gone:
            the headline already says what this is, and there is no longer a mode
            to disclose. */
         /* nbsp so "open source" never breaks across lines — a split compound is
            the one wrap this headline cannot afford. */
-        h("h1", { className: "nv-hero-pitch", style: Object.assign({}, HERO, { maxWidth: "18ch" }) },"Like Google, but for open source"),
+        h("h1", { className: "nv-hero-pitch", style: Object.assign({}, HERO, { maxWidth: "18ch", fontSize: "clamp(36px, 5vw, 64px)" }) }, "notavibe"),
         h("p", { className: "nv-hero-pitch", style: Object.assign({}, BODY_LG, { maxWidth: "42ch" }) },
-          "Except ranked on maintenance, not popularity."),
+          "Ranked on maintenance, not popularity."),
 
-        h("form", { onSubmit: submit, "data-hero-search": "1", style: { width: "100%", maxWidth: "680px", paddingTop: "8px" } },
+        h("form", { onSubmit: submit, "data-hero-search": "1", style: { width: "100%", maxWidth: "680px", paddingTop: "4px" } },
           /* Button inside the field. A plain button rather than the DS one so the
              inset sizing is exact — the bundle writes its padding inline. Styled
              from the same tokens, so it stays HashiCorp's white/black 8px CTA. */
@@ -526,9 +523,9 @@
                    puts CTAs on 8px "not a pill", so this is a deliberate
                    departure, taken for internal consistency with the shell */
                 borderRadius: "var(--radius-pill, 9999px)",
-                padding: "20px 136px 20px 26px",
+                padding: "18px 136px 18px 24px",
                 fontFamily: "var(--font-sans)", fontWeight: 500,
-                fontSize: "18px", lineHeight: 1.5, outline: "none",
+                fontSize: "17px", lineHeight: 1.5, outline: "none",
                 /* the one thing that must not inherit the hero's centring */
                 textAlign: "left"
               }
@@ -545,16 +542,30 @@
               }
             }, "Search"))),
 
-        h(SeedChips, { ctx: ctx }),
+        /* Two paths: seed chips for search inspiration + scan CTA */
+        h("div", { style: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", justifyContent: "center", paddingTop: "2px" } },
+          h(SeedChips, { ctx: ctx }),
+          h("button", {
+            type: "button",
+            onClick: function () { ctx.go({ name: "stack.connect" }); },
+            style: {
+              padding: "8px 16px",
+              borderRadius: "var(--radius-pill, 9999px)",
+              background: "transparent",
+              color: "var(--volt-emerald)",
+              border: "1px solid rgba(0,202,142,0.45)",
+              fontFamily: "var(--font-sans)", fontWeight: 600,
+              fontSize: "13px", lineHeight: 1.38, letterSpacing: "0.2px",
+              cursor: "pointer", whiteSpace: "nowrap",
+              transition: "background-color 220ms " + EXPO + ", border-color 220ms " + EXPO
+            },
+            onMouseEnter: function (e) { e.currentTarget.style.background = "rgba(0,202,142,0.08)"; },
+            onMouseLeave: function (e) { e.currentTarget.style.background = "transparent"; }
+          }, "Scan your stack →")),
 
-        /* D5: the unclaimed count stays visible, but it has to be coherent with
-           the catalog figure beside it — "8,412 projects · 8 unclaimed" reads as
-           8-of-8412. Scaled off the seed ratio so it still moves as pages are
-           claimed in the prototype. Both numbers are placeholders until the real
-           catalog is wired. */
-        h("span", { style: MONO },
-          "8,412 projects · " + Math.round(8412 * unclaimed / total).toLocaleString("en-US")
-            + " unclaimed · schema v1")));
+        /* Compressed catalog stat */
+        h("span", { style: Object.assign({}, MONO, { paddingTop: "2px" }) },
+          "8,412 projects · schema v1")));
   }
 
   /* ─────────────────────────────────────────────────────────────────
@@ -718,7 +729,44 @@
               /* one page is not an embarrassment worth hiding — it is a name */
               h("span", { style: Object.assign({}, MONO, on ? { color: "var(--volt-emerald)" } : {}) },
                 x.n === 0 ? "" : x.n === 1 ? x.names[0] : x.n + " pages")));
-        })));
+        }),
+
+      /* Ecosystem grid: 6 compact pills that filter to search */
+      h("div", { style: col("12px", { paddingTop: "8px" }) },
+        h(Eyebrow, null, "Or browse by ecosystem"),
+        h("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px" } },
+          ["React", "Python", "Go", "Node.js", "TypeScript", "Rust"].map(function (eco) {
+            return h("button", {
+              key: eco, type: "button",
+              onClick: function () {
+                window.NvQuery.set(eco.toLowerCase());
+                props.ctx.go({ name: "search", q: eco.toLowerCase() });
+              },
+              style: {
+                padding: "6px 14px",
+                borderRadius: "var(--radius-pill, 9999px)",
+                background: "transparent",
+                color: "var(--volt-text-300)",
+                border: "1px solid var(--volt-border)",
+                fontFamily: "var(--font-sans)", fontWeight: 500,
+                fontSize: "13px", lineHeight: 1.38,
+                cursor: "pointer", whiteSpace: "nowrap",
+                transition: "background-color 220ms " + EXPO_OUT
+                  + ", border-color 220ms " + EXPO_OUT
+                  + ", color 220ms " + EXPO_OUT
+              },
+              onMouseEnter: function (e) {
+                e.currentTarget.style.background = "var(--volt-surface)";
+                e.currentTarget.style.borderColor = "rgba(0,202,142,0.45)";
+                e.currentTarget.style.color = "var(--volt-white)";
+              },
+              onMouseLeave: function (e) {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = "var(--volt-border)";
+                e.currentTarget.style.color = "var(--volt-text-300)";
+              }
+            }, eco);
+          })))));
   }
 
   /* ─────────────────────────────────────────────────────────────────
@@ -773,8 +821,8 @@
       style: {
         background: "none", border: "none", borderTop: "1px solid var(--volt-border)",
         textAlign: "left", font: "inherit", color: "inherit", cursor: "pointer",
-        display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap",
-        padding: "14px 6px", width: "100%", boxSizing: "border-box",
+        display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap",
+        padding: "10px 6px", width: "100%", boxSizing: "border-box",
         transition: "background-color 160ms " + EXPO_OUT, animationDelay: (i * 70) + "ms"
       }
     },
@@ -824,7 +872,7 @@
     };
 
     return h(Band, null,
-      h("div", { style: col("18px") },
+      h("div", { style: col("14px") },
         ctx.signedIn
           ? h(BandHead, {
               eyebrow: "Your deck",
@@ -837,7 +885,7 @@
               lead: "Maintenance rhythm and contribution breadth — never stars, never downloads. Each pick shows the one signal that earned it a spot; open the page for the full five."
             }),
         h("div", null,
-          h("span", { style: Object.assign({}, MONO, { border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "5px 12px", color: "var(--volt-text-400)" }) },
+          h("span", { style: Object.assign({}, MONO, { border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "3px 10px", fontSize: "12px", color: "var(--volt-text-400)" }) },
             "ordered by · maintenance rhythm × contribution breadth")),
         h("div", { ref: wrapRef, className: "nv-deck", style: { marginTop: "2px" } },
           TWS_PICKS.map(function (p, i) { return h(DeckRow, { key: p.slug, p: p, i: i, ctx: ctx }); })),
@@ -897,7 +945,7 @@
     var cat = window.CATEGORIES.find(function (c) { return c.slug === e.category; });
     var open = function () { ctx.go({ name: "editorial", slug: e.slug || e.category }); };
     return h(Band, null,
-      h("div", { style: col("18px") },
+      h("div", { style: col("14px") },
         /* D9: real h2 so the section is reachable by heading navigation. */
         h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "16px", flexWrap: "wrap" } },
           h("h2", { style: EYEBROW }, "notavibe editorial"),
@@ -977,7 +1025,7 @@
      hero chips + search carry "start by intent" at the top, and the full intent
      browse lives on the discovery page. ModCategories stays defined for that.
      An unmapped key renders nothing, so the remaining modules keep their order. */
-  var MOD = { deck: ModDeck, stack: ModStack, editorial: ModEditorial };
+  var MOD = { deck: ModDeck, categories: ModCategories, stack: ModStack, editorial: ModEditorial };
 
   /* ─────────────────────────────────────────────────────────────────
      The Proof — stars vs health. Placed right after the hero so the
@@ -1104,16 +1152,242 @@
         h(ProofCard, { p: alive, alive: true, index: 1 }))));
   }
 
+  /* ── "Since you left" outcomes strip ────────────────────────────────────
+     Replaces BackerHome's outcomes section. Only renders when signed in and
+     when there are outcomes with dates. Compact: a thin card flush under the
+     hero search, showing the 3 most recent outcomes on a mini timeline spine.
+     "See all" → Activity. The strip is the backer's reason to scroll — the
+     Deck is below, and this tells them something happened while they were away.
+     backer-discovery-direction decision #3: Home dissolves → outcomes live here. */
+  function OutcomesStrip(props) {
+    var ctx = props.ctx;
+    if (!ctx.signedIn) return null;
+    var acts = (window.ACTIVITY || []).filter(function (a) { return a.when !== "—"; });
+    if (acts.length === 0) return null;
+    var top = acts.slice(0, 3);
+
+    var eyebrow = { fontWeight: 600, fontSize: "11px", lineHeight: 1, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--volt-text-500)" };
+    var caption = { fontWeight: 500, fontSize: "13px", lineHeight: 1.4, color: "var(--volt-text-300)" };
+
+    var timeline = h("div", { style: { position: "relative", display: "flex", flexDirection: "column" } },
+      h("span", { "aria-hidden": "true", style: { position: "absolute", left: "4px", top: "12px", bottom: "12px", width: "1px", background: "var(--volt-border)" } }),
+      top.map(function (a, i) {
+        var neg = a.valence === "Negative";
+        return h("div", { key: i, style: { position: "relative", display: "flex", gap: "14px", alignItems: "flex-start", padding: "8px 0" } },
+          h("span", { style: { flex: "0 0 9px", height: "9px", marginTop: "4px", borderRadius: "50%", background: neg ? "var(--volt-text-500)" : "var(--volt-emerald)", boxShadow: "0 0 0 3px var(--volt-surface, var(--surface-card))" } }),
+          h("div", { style: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 } },
+            h("span", { style: { fontWeight: 500, fontSize: "14px", lineHeight: 1.45, color: "var(--volt-white)", textWrap: "pretty" } }, a.text),
+            h("span", { style: caption }, a.type + " · " + a.when)));
+      }));
+
+    return h("div", { style: { maxWidth: "680px", width: "100%", margin: "0 auto", padding: "0 var(--space-2xl, 32px)" } },
+      h("div", { style: { border: "1px solid var(--volt-border)", background: "var(--volt-surface, var(--surface-card))", borderRadius: "12px", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "12px" } },
+        h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "16px" } },
+          h("span", { style: eyebrow }, "Since you were here"),
+          h("a", { href: "#", onClick: function (e) { e.preventDefault(); ctx.go({ name: "backer.activity" }); },
+            style: { display: "inline-flex", alignItems: "center", gap: "5px", fontWeight: 600, fontSize: "13px", color: "var(--volt-emerald)", textDecoration: "none" } },
+            "All activity", h("span", null, "→"))),
+        timeline));
+  }
+
+  /* ── Signed-in search bar ──────────────────────────────────────────────
+     A compact, inline search bar for the signed-in backer. No hero, no
+     marketing — just a tool. Sits at the top of the workspace content area
+     with the same NvQuery binding so header search and this stay in sync. */
+  function SignedInSearch(props) {
+    var ctx = props.ctx;
+    var st = React.useState(window.NvQuery.get()), q = st[0], setQ = st[1];
+    React.useEffect(function () { return window.NvQuery.subscribe(setQ); }, []);
+    var fs = React.useState(false), focused = fs[0], setFocused = fs[1];
+    var submit = function (e) {
+      if (e) e.preventDefault();
+      if (!q.trim()) return;
+      ctx.go({ name: "search", q: q });
+    };
+    return h("div", { style: { maxWidth: "680px", width: "100%", margin: "0 auto", padding: "var(--space-2xl, 32px) var(--space-2xl, 32px) 0" } },
+      h("form", { onSubmit: submit, style: { position: "relative" } },
+        h("input", {
+          value: q, onChange: function (e) { window.NvQuery.set(e.target.value); },
+          onFocus: function () { setFocused(true); },
+          onBlur: function () { setFocused(false); },
+          placeholder: "Search projects\u2026",
+          "aria-label": "Search the catalog",
+          style: {
+            width: "100%", boxSizing: "border-box",
+            background: focused ? "var(--volt-canvas, var(--surface-canvas))" : "var(--volt-surface, var(--surface-card))",
+            color: "var(--volt-text-200, var(--text-body))",
+            border: "1px solid " + (focused ? "var(--volt-emerald)" : "var(--volt-border)"),
+            boxShadow: focused ? "0 0 0 3px rgba(0,202,142,0.10)" : "none",
+            transition: "border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease",
+            borderRadius: "var(--radius-pill, 9999px)",
+            padding: "14px 110px 14px 20px",
+            fontFamily: "var(--font-sans)", fontWeight: 500, fontSize: "15px", lineHeight: 1.5, outline: "none"
+          }
+        }),
+        h("button", { type: "submit", style: {
+          position: "absolute", right: "6px", top: "6px", bottom: "6px",
+          padding: "0 20px", background: "var(--primary)", color: "var(--on-primary)",
+          border: "none", borderRadius: "var(--radius-pill, 9999px)",
+          fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "13px", cursor: "pointer"
+        } }, "Search")));
+  }
+
+  /* ── Filter tabs CSS ──────────────────────────────────────────────────── */
+  (function injectFilterTabCSS() {
+    if (document.getElementById("nv-filtertab-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-filtertab-css";
+    var EXPO = "cubic-bezier(0.16, 1, 0.3, 1)";
+    s.textContent = [
+      ".nv-ftab{position:relative;padding:8px 16px;border:none;background:transparent;",
+      "font-family:var(--font-sans);font-weight:500;font-size:13px;letter-spacing:0.2px;",
+      "color:var(--volt-text-500);cursor:pointer;border-radius:var(--radius-pill,9999px);",
+      "white-space:nowrap;transition:color .25s " + EXPO + ",background .25s " + EXPO + ";}",
+      ".nv-ftab:hover{color:var(--volt-white);background:var(--volt-surface,rgba(255,255,255,.06));}",
+      ".nv-ftab--on{color:var(--volt-white);background:var(--volt-surface,rgba(255,255,255,.08));",
+      "box-shadow:0 0 0 1px var(--volt-border);}",
+      ".nv-ftab--on:hover{background:var(--volt-surface,rgba(255,255,255,.10));}",
+      ".nv-ftab:focus-visible{outline:2px solid var(--volt-emerald);outline-offset:2px;}",
+      ".nv-ftab-count{display:inline-flex;align-items:center;justify-content:center;",
+      "min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:600;",
+      "margin-left:6px;background:var(--volt-emerald-08,rgba(0,202,142,.08));color:var(--volt-emerald);}",
+      ".nv-ftab--on .nv-ftab-count{background:var(--volt-emerald-20,rgba(0,202,142,.2));}",
+      "@media (prefers-reduced-motion:reduce){.nv-ftab{transition:none;}}"
+    ].join("");
+    document.head.appendChild(s);
+  })();
+
+  /* ── Signed-in Deck — with filter tabs ─────────────────────────────── */
+  var DECK_FILTERS = [
+    { key: "all", label: "All" },
+    { key: "updated", label: "Updated" },
+    { key: "saved", label: "In your lists" },
+    { key: "rising", label: "Rising" },
+    { key: "new", label: "New" }
+  ];
+
+  /* Tag each pick so filters can slice them. In production these come from
+     the catalog; here the tags are illustrative, like everything else. */
+  var PICK_TAGS = {
+    hono: ["updated", "new", "rising"],
+    vitest: ["updated", "saved", "rising"],
+    "drizzle-orm": ["updated", "rising"],
+    unbuild: ["saved"],
+    valibot: ["new", "rising"]
+  };
+
+  function SignedInDeck(props) {
+    var ctx = props.ctx;
+    var ft = React.useState("all"), filter = ft[0], setFilter = ft[1];
+    var wrapRef = React.useRef(null);
+    React.useEffect(function () {
+      var el = wrapRef.current; if (!el) return;
+      var done = false, io, timer;
+      function reveal() { if (done) return; done = true; el.classList.add("nv-inview"); if (io) io.disconnect(); clearTimeout(timer); }
+      el.classList.add("nv-js");
+      if (!("IntersectionObserver" in window) || !window.innerHeight) { reveal(); return; }
+      io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) reveal(); }); }, { threshold: 0.12 });
+      io.observe(el);
+      timer = setTimeout(reveal, 3000);
+      return function () { if (io) io.disconnect(); clearTimeout(timer); };
+    }, []);
+
+    var filtered = filter === "all" ? TWS_PICKS : TWS_PICKS.filter(function (p) {
+      var tags = PICK_TAGS[p.slug] || [];
+      return tags.indexOf(filter) >= 0;
+    });
+
+    /* Count per filter so the tabs show how many items each holds */
+    var counts = {};
+    DECK_FILTERS.forEach(function (f) {
+      if (f.key === "all") { counts.all = TWS_PICKS.length; return; }
+      counts[f.key] = TWS_PICKS.filter(function (p) { return (PICK_TAGS[p.slug] || []).indexOf(f.key) >= 0; }).length;
+    });
+
+    var tabs = h("div", { role: "tablist", "aria-label": "Filter deck",
+      style: { display: "flex", gap: "4px", flexWrap: "wrap", padding: "2px", background: "var(--volt-void, var(--surface-canvas))", borderRadius: "var(--radius-pill, 9999px)", border: "1px solid var(--volt-border)" } },
+      DECK_FILTERS.map(function (f) {
+        var on = filter === f.key;
+        var count = counts[f.key];
+        return h("button", { key: f.key, type: "button", role: "tab",
+          className: "nv-ftab" + (on ? " nv-ftab--on" : ""),
+          "aria-selected": on ? "true" : "false",
+          onClick: function () { setFilter(f.key); } },
+          f.label,
+          count > 0 && f.key !== "all" ? h("span", { className: "nv-ftab-count" }, count) : null);
+      }));
+
+    var empty = filtered.length === 0
+      ? h("div", { style: { padding: "32px 6px", textAlign: "center" } },
+          h("span", { style: Object.assign({}, BODY, { color: "var(--volt-text-500)" }) },
+            "No projects match this filter in your current deck."))
+      : null;
+
+    return h("div", { style: { maxWidth: "680px", width: "100%", margin: "0 auto", padding: "0 var(--space-2xl, 32px)" } },
+      h("div", { style: col("16px") },
+        h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "16px" } },
+          h("div", { style: col("4px") },
+            h("span", { style: EYEBROW }, "Your deck"),
+            h("span", { style: Object.assign({}, BODY, { color: "var(--volt-text-400)" }) }, "From your profile, refreshed weekly")),
+          h("button", { type: "button", onClick: function () { ctx.go({ name: "search" }); },
+            style: { background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: 500, color: "var(--volt-emerald)", whiteSpace: "nowrap" } }, "See full week \u2192")),
+        tabs,
+        h("div", { ref: wrapRef, className: "nv-deck" },
+          empty || filtered.map(function (p, i) { return h(DeckRow, { key: p.slug, p: p, i: i, ctx: ctx }); }))));
+  }
+
+  /* ── Signed-in quick actions ─────────────────────────────────────────── */
+  function SignedInActions(props) {
+    var ctx = props.ctx;
+    var CARD = {
+      flex: "1 1 200px", minWidth: 0,
+      border: "1px solid var(--volt-border)",
+      background: "var(--volt-surface, var(--surface-card))",
+      borderRadius: "12px", padding: "20px",
+      cursor: "pointer", textDecoration: "none",
+      display: "flex", flexDirection: "column", gap: "10px",
+      transition: "border-color 220ms " + EXPO_OUT
+    };
+    function card(eyebrow, title, sub, route) {
+      return h("a", { href: "#", onClick: function (e) { e.preventDefault(); ctx.go({ name: route }); },
+        onMouseEnter: function (e) { e.currentTarget.style.borderColor = "rgba(0,202,142,0.45)"; },
+        onMouseLeave: function (e) { e.currentTarget.style.borderColor = "var(--volt-border)"; },
+        style: CARD },
+        h("span", { style: EYEBROW }, eyebrow),
+        h("span", { style: { fontWeight: 600, fontSize: "16px", color: "var(--volt-white)" } }, title),
+        h("span", { style: Object.assign({}, SMALL, { color: "var(--volt-text-500)" }) }, sub));
+    }
+    return h("div", { style: { maxWidth: "680px", width: "100%", margin: "0 auto", padding: "0 var(--space-2xl, 32px)" } },
+      h("div", { style: { display: "flex", gap: "12px", flexWrap: "wrap" } },
+        card("My stack", "Scan your dependencies", "Connect or paste a manifest", "stack.connect"),
+        card("My lists", ctx.lists ? ctx.lists.length + " lists" : "Your lists", "Curated project collections", "backer.lists"),
+        card("Browse", "Categories", "9 intents, not a taxonomy", "discover")));
+  }
+
   function NvDiscover(props) {
     var ctx = props.ctx;
+
+    /* ── SIGNED-IN: a product surface, not a marketing page ──────────────
+       No hero, no proof, no marketing pitch. Just a workspace: search, outcomes,
+       deck, quick actions. The sidebar provides navigation; this is the content. */
+    if (ctx.signedIn) {
+      return h("div", { style: { display: "flex", flexDirection: "column", gap: "var(--space-2xl, 32px)", paddingBottom: "var(--space-section, 64px)" } },
+        h(SignedInSearch, { ctx: ctx }),
+        h(OutcomesStrip, { ctx: ctx }),
+        h(SignedInDeck, { ctx: ctx }),
+        h(SignedInActions, { ctx: ctx }),
+        h(ConsentBar, { ctx: ctx }));
+    }
+
+    /* ── ANONYMOUS: acquisition page — compressed hero → real projects ── */
     return h("div", null,
       h(Hero, { ctx: ctx }),
+      h(ModDeck, { ctx: ctx }),
+      h(ModCategories, { ctx: ctx }),
+      h(ModStack, { ctx: ctx }),
       h(ProofSplit, { ctx: ctx }),
+      h(ModEditorial, { ctx: ctx }),
       h(ModShipWeek, { ctx: ctx }),
-      ctx.moduleOrder.map(function (key) {
-        var M = MOD[key];
-        return M ? h(M, { key: key, ctx: ctx }) : null;
-      }),
       h(ConsentBar, { ctx: ctx }));
   }
 
