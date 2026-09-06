@@ -1,232 +1,686 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- ── Theme resolution (pre-paint) ─────────────────────────────────────────────
-     Sets data-theme on <html> BEFORE any stylesheet or paint, so there is no
-     flash of the wrong theme. Resolution order: a remembered manual choice
-     (localStorage "nv-theme") wins; otherwise light — the canonical default.
-     (OS setting is no longer auto-followed; light is the baseline.) The <html> element survives the app
-     mount (the runtime only swaps a node inside <body>), so this attribute set
-     once here holds for the whole session and is what every [data-theme] CSS
-     rule keys off. The theme name is also mirrored on <meta name=color-scheme>
-     so form controls, scrollbars and the like adopt the right native palette. -->
-<meta name="color-scheme" content="light dark">
+<title>notavibe — is anyone home?</title>
+<meta name="description" content="notavibe ranks open-source projects on maintenance, not popularity. Check your dependencies. Discover what's actually maintained.">
+<meta name="color-scheme" content="dark light">
 <script>
 (function () {
-  var t = "light";
+  var t = "dark";
   try {
     var saved = localStorage.getItem("nv-theme");
-    if (saved === "light" || saved === "dark") {
-      t = saved;  /* a remembered manual toggle still wins */
-    }
-  } catch (e) { /* storage blocked (private mode / sandboxed) → light */ }
+    if (saved === "light" || saved === "dark") t = saved;
+  } catch (e) {}
   document.documentElement.setAttribute("data-theme", t);
-  document.documentElement.style.colorScheme = t;  /* native scrollbars / form controls */
+  document.documentElement.style.colorScheme = t;
 })();
 </script>
-<script src="scripts/runtime.js"></script>
+<link rel="stylesheet" href="design-system/voltagent/tokens/fonts.css">
+<link rel="stylesheet" href="design-system/voltagent/tokens/colors.css">
+<link rel="stylesheet" href="styles/hashicorp-tokens.css">
+<style>
+/* ── Light theme overrides ──────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --volt-void:#ffffff;
+  --volt-canvas:#f5f6f7;
+  --volt-surface:#eaecef;
+  --volt-panel:#eceef1;
+  --volt-white:#0b0d10;
+  --volt-text-100:#141719;
+  --volt-text-200:#22262b;
+  --volt-text-300:#3a3f46;
+  --volt-text-400:#565c64;
+  --volt-text-500:#5e646c;
+  --volt-text-600:#787f88;
+  --volt-border:rgba(11,13,16,0.12);
+  --volt-border-faint:rgba(11,13,16,0.08);
+  --volt-border-hover:rgba(11,13,16,0.22);
+  --volt-emerald:#00ca8e;
+  --volt-emerald-soft:#047857;
+  --volt-emerald-deep:#047857;
+  --volt-emerald-08:rgba(0,202,142,0.10);
+  --volt-emerald-10:rgba(0,202,142,0.14);
+  --volt-emerald-20:rgba(0,202,142,0.22);
+  --volt-on-emerald:#04120d;
+  --volt-indigo:#c9d4ff;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--volt-void); }
+body {
+  font-family: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
+  color: var(--volt-text-200);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+a { color: var(--volt-emerald-deep); text-decoration: none; }
+a:hover { color: var(--volt-emerald); }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+.section { padding: 80px 0; }
+.section + .section { border-top: 1px solid var(--volt-border); }
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 12% -20%, color-mix(in srgb, var(--volt-indigo) 70%, transparent) 0%, transparent 62%),
+    radial-gradient(80% 70% at 88% -10%, color-mix(in srgb, var(--volt-emerald) 10%, transparent) 0%, transparent 58%),
+    var(--volt-void);
+}
+.hero-dots { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.hero-content {
+  position: relative; z-index: 2;
+  text-align: center;
+  padding: 80px 32px 60px;
+  display: flex; flex-direction: column; align-items: center; gap: 24px;
+  max-width: 760px;
+}
+.hero h1 {
+  margin: 0; font-weight: 700;
+  font-size: clamp(40px, 5.6vw, 72px);
+  line-height: 1.12; letter-spacing: -0.031em;
+  color: var(--volt-white);
+}
+.hero h1 .accent { color: var(--volt-emerald); }
+.hero .lead {
+  margin: 0; font-weight: 500; font-size: 18px; line-height: 1.69;
+  color: var(--volt-text-500); max-width: 52ch;
+}
+.hero .hero-cta-row {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  padding-top: 8px;
+}
+
+/* ── Logo lockup ─────────────────────────────────────────────────────────── */
+.logo {
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.logo-ring {
+  width: 34px; height: 34px; border-radius: 9999px;
+  border: 2px solid var(--volt-emerald); background: rgba(0,202,142,0.12);
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.logo-ring svg { width: 19px; height: 19px; display: block; }
+.logo-word {
+  font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--volt-emerald);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 28px; border-radius: 8px; border: none;
+  font-family: inherit; font-weight: 600; font-size: 15px;
+  cursor: pointer; transition: filter 150ms ease, transform 50ms ease;
+  text-decoration: none;
+}
+.btn:hover { filter: brightness(1.06); }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--volt-emerald); color: var(--volt-on-emerald); }
+.btn-ghost {
+  background: transparent; color: var(--volt-text-200);
+  border: 1px solid var(--volt-border);
+}
+.btn-ghost:hover { border-color: var(--volt-border-hover); color: var(--volt-white); }
+.btn-sm { padding: 10px 20px; font-size: 14px; }
+
+/* ── Code blocks (install) ───────────────────────────────────────────────── */
+.install-block {
+  background: var(--volt-canvas);
+  border: 1px solid var(--volt-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.install-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--volt-border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.install-header .label {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--volt-text-400);
+}
+.install-body {
+  padding: 16px 20px;
+  font-family: var(--font-mono, monospace);
+  font-size: 14px; line-height: 1.7;
+  color: var(--volt-text-200);
+  overflow-x: auto;
+  white-space: pre;
+}
+.install-body .comment { color: var(--volt-text-600); }
+.install-body .cmd { color: var(--volt-emerald); }
+.copy-btn {
+  background: transparent; border: 1px solid var(--volt-border);
+  border-radius: 6px; padding: 4px 10px;
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  color: var(--volt-text-500); cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.copy-btn:hover { border-color: var(--volt-border-hover); color: var(--volt-white); }
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.card {
+  background: var(--volt-canvas);
+  border: 1px solid var(--volt-border);
+  border-radius: 8px;
+  padding: 28px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.card .card-icon {
+  width: 40px; height: 40px; border-radius: 8px;
+  background: var(--volt-emerald-10);
+  display: flex; align-items: center; justify-content: center;
+}
+.card .card-icon svg { width: 20px; height: 20px; color: var(--volt-emerald); }
+.card h3 {
+  margin: 0; font-weight: 700; font-size: 18px; line-height: 1.4;
+  color: var(--volt-white);
+}
+.card p {
+  margin: 0; font-size: 15px; line-height: 1.6;
+  color: var(--volt-text-500);
+}
+
+/* ── Eyebrow ─────────────────────────────────────────────────────────────── */
+.eyebrow {
+  margin: 0; font-size: 12px; line-height: 1.23; font-weight: 600;
+  letter-spacing: 0.6px; text-transform: uppercase;
+  color: var(--volt-text-400);
+}
+
+/* ── Section headings ────────────────────────────────────────────────────── */
+.section-head { display: flex; flex-direction: column; gap: 16px; max-width: 62ch; }
+.section-head h2 {
+  margin: 0; font-weight: 700;
+  font-size: clamp(28px, 3.2vw, 44px);
+  line-height: 1.18; letter-spacing: -0.025em;
+  color: var(--volt-white);
+}
+.section-head p {
+  margin: 0; font-weight: 500; font-size: 17px; line-height: 1.65;
+  color: var(--volt-text-500); max-width: 56ch;
+}
+
+/* ── Install tabs ────────────────────────────────────────────────────────── */
+.install-tabs {
+  display: flex; gap: 4px;
+  background: var(--volt-void);
+  border: 1px solid var(--volt-border);
+  border-radius: 9999px; padding: 4px;
+}
+.install-tab {
+  padding: 8px 18px; border-radius: 9999px; border: none;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  background: transparent; color: var(--volt-text-500);
+  cursor: pointer; transition: background 150ms ease, color 150ms ease;
+}
+.install-tab[aria-selected="true"] {
+  background: var(--volt-surface); color: var(--volt-white);
+}
+.install-tab:hover:not([aria-selected="true"]) { color: var(--volt-text-200); }
+
+/* ── Signup form ─────────────────────────────────────────────────────────── */
+.signup-form {
+  display: flex; gap: 8px; max-width: 480px; width: 100%;
+}
+.signup-input {
+  flex: 1; padding: 14px 20px;
+  font-family: inherit; font-size: 15px; color: var(--volt-text-200);
+  background: var(--volt-surface);
+  border: 1px solid var(--volt-border); border-radius: 8px;
+  outline: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.signup-input::placeholder { color: var(--volt-text-600); }
+.signup-input:focus {
+  border-color: var(--volt-emerald);
+  box-shadow: 0 0 0 4px rgba(0,202,142,0.13);
+}
+.signup-msg {
+  font-size: 13px; color: var(--volt-emerald); min-height: 20px;
+  margin-top: 4px; opacity: 0; transition: opacity 200ms ease;
+}
+.signup-msg.show { opacity: 1; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 40px 0;
+  border-top: 1px solid var(--volt-border);
+  text-align: center;
+}
+.footer p {
+  margin: 0; font-size: 13px; color: var(--volt-text-600);
+}
+
+/* ── Theme toggle ────────────────────────────────────────────────────────── */
+.theme-toggle {
+  position: fixed; top: 20px; right: 24px; z-index: 100;
+  width: 36px; height: 36px; border-radius: 9999px;
+  border: 1px solid var(--volt-border); background: var(--volt-canvas);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--volt-text-400);
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+.theme-toggle:hover { border-color: var(--volt-border-hover); color: var(--volt-white); }
+
+/* ── Pill tag ────────────────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 9999px;
+  font-size: 13px; font-weight: 600;
+  background: var(--volt-emerald-10);
+  color: var(--volt-emerald);
+}
+.pill-dot {
+  width: 6px; height: 6px; border-radius: 9999px;
+  background: var(--volt-emerald);
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up { animation: fadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fade-up-1 { animation-delay: 0ms; }
+.fade-up-2 { animation-delay: 100ms; }
+.fade-up-3 { animation-delay: 200ms; }
+.fade-up-4 { animation-delay: 300ms; }
+.fade-up-5 { animation-delay: 400ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up { animation: none; opacity: 1; transform: none; }
+  .pill-dot { animation: none; }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .container { padding: 0 20px; }
+  .section { padding: 56px 0; }
+  .hero-content { padding: 100px 20px 48px; }
+  .signup-form { flex-direction: column; }
+  .card-grid { grid-template-columns: 1fr; }
+  .install-tabs { flex-wrap: wrap; justify-content: center; }
+}
+</style>
 </head>
 <body>
-<!-- ── Access gate ─────────────────────────────────────────────────────────────
-     A private-preview password layer. Injected as the first body child so it
-     paints before the app: the runtime only swaps the sibling app-root node
-     (dc.replaceWith), so this overlay survives and covers the app underneath.
 
-     The canvas + gradient are lifted straight from the hero (frontdoor.js): the
-     same indigo→emerald radials over --volt-void, and the same mouse-reactive
-     slate dot field. The card is glass over that gradient. Token values are
-     hardcoded as fallbacks (var(--x, #hex)) because the design-system stylesheets
-     are hoisted from <helmet> and may not have resolved at first paint.
+<!-- ── Theme toggle ──────────────────────────────────────────────────────── -->
+<button class="theme-toggle" id="theme-btn" type="button" aria-label="Toggle theme">
+  <svg id="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path>
+  </svg>
+  <svg id="icon-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 13.4A8.2 8.2 0 1 1 10.6 3.5a6.4 6.4 0 0 0 9.9 9.9z"></path>
+  </svg>
+</button>
 
-     NOTE: this is a soft, client-side gate — it hides the UI, it does not stop a
-     determined visitor from fetching the static assets directly. For real access
-     control the host needs server-side auth (e.g. HTTP Basic). -->
-<style id="nv-gate-style">
-  #nv-gate {
-    position: fixed; inset: 0; z-index: 2147483000;
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px; overflow: hidden;
-    /* The gate is always dark glass, independent of the app theme. It must NOT
-       read --volt-void / --volt-indigo, which now flip to light values under the
-       light default (--volt-void becomes #fff) — that turned the whole gate white
-       and left the hardcoded-white input text invisible. Pinned to the dark hex
-       (the same values these tokens carry in dark mode). */
-    background:
-      radial-gradient(120% 90% at 12% -20%, color-mix(in srgb, #101a59 70%, transparent) 0%, transparent 62%),
-      radial-gradient(80% 70% at 88% -10%, color-mix(in srgb, #00ca8e 10%, transparent) 0%, transparent 58%),
-      #050507;
-    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
-    -webkit-font-smoothing: antialiased;
-    /* Opaque from the first painted frame — deliberately NOT faded in, or the
-       app would show through the transparent overlay before it settles. Only the
-       card animates on entry; the backdrop is solid immediately. */
-  }
-  #nv-gate.nv-gate-out { animation: nv-gate-out .5s ease forwards; pointer-events: none; }
-  @keyframes nv-gate-out { from { opacity: 1 } to { opacity: 0; visibility: hidden } }
-
-  #nv-gate-dots { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-
-  .nv-gate-card {
-    position: relative; z-index: 2; box-sizing: border-box;
-    width: 100%; max-width: 400px;
-    padding: 40px 32px 34px; border-radius: 22px; text-align: center;
-    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.11);
-    -webkit-backdrop-filter: blur(22px) saturate(135%);
-    backdrop-filter: blur(22px) saturate(135%);
-    box-shadow: 0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.10);
-    animation: nv-card-in .55s cubic-bezier(.2,.7,.2,1) both;
-  }
-  @keyframes nv-card-in { from { opacity: 0; transform: translateY(14px) scale(.985) } to { opacity: 1; transform: none } }
-  #nv-gate.nv-shake .nv-gate-card { animation: nv-shake .4s cubic-bezier(.36,.07,.19,.97) both; }
-  @keyframes nv-shake {
-    10%,90% { transform: translateX(-2px) } 20%,80% { transform: translateX(4px) }
-    30%,50%,70% { transform: translateX(-7px) } 40%,60% { transform: translateX(7px) }
-  }
-
-  /* notavibe lockup — the ringed bolt glyph + wordmark, in emerald. */
-  .nv-gate-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-  .nv-gate-ring {
-    width: 34px; height: 34px; border-radius: 9999px;
-    border: 2px solid var(--volt-emerald, #00ca8e); background: rgba(0,202,142,0.12);
-    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .nv-gate-ring svg { width: 19px; height: 19px; display: block; }
-  .nv-gate-word { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--volt-emerald, #00ca8e); }
-
-  .nv-gate-hint { margin: 0 0 22px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.52); }
-
-  #nv-gate-input {
-    width: 100%; box-sizing: border-box; padding: 15px 20px;
-    font-size: 16px; font-family: inherit; color: #fff;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 9999px; outline: none;
-    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
-  }
-  #nv-gate-input::placeholder { color: rgba(255,255,255,0.40); }
-  #nv-gate-input:focus {
-    border-color: var(--volt-emerald, #00ca8e); background: rgba(255,255,255,0.06);
-    box-shadow: 0 0 0 4px rgba(0,202,142,0.13), 0 0 34px rgba(0,202,142,0.10);
-  }
-
-  #nv-gate-form button {
-    margin-top: 14px; width: 100%; padding: 14px 20px;
-    font-size: 15px; font-weight: 600; font-family: inherit; letter-spacing: .01em;
-    color: #04120d; background: var(--volt-emerald, #00ca8e);
-    border: none; border-radius: 9999px; cursor: pointer;
-    transition: filter .15s ease, transform .05s ease;
-  }
-  #nv-gate-form button:hover { filter: brightness(1.06); }
-  #nv-gate-form button:active { transform: translateY(1px); }
-
-  #nv-gate-err {
-    margin: 16px 0 0; min-height: 18px; font-size: 13px;
-    color: #ff6b6b; opacity: 0; transition: opacity .2s ease;
-  }
-  #nv-gate-err.show { opacity: 1; }
-
-  @media (prefers-reduced-motion: reduce) {
-    #nv-gate, .nv-gate-card { animation: none; }
-  }
-</style>
-<div id="nv-gate" role="dialog" aria-modal="true" aria-label="Enter password to continue">
-  <canvas id="nv-gate-dots" aria-hidden="true"></canvas>
-  <div class="nv-gate-card">
-    <span class="nv-gate-logo">
-      <span class="nv-gate-ring">
+<!-- ══════════════════════════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <canvas class="hero-dots" id="hero-dots" aria-hidden="true"></canvas>
+  <div class="hero-content">
+    <span class="logo fade-up fade-up-1">
+      <span class="logo-ring">
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="var(--volt-emerald, #00ca8e)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
+          <path fill="var(--volt-emerald)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
         </svg>
       </span>
-      <span class="nv-gate-word">notavibe</span>
+      <span class="logo-word">notavibe</span>
     </span>
-    <p class="nv-gate-hint">Private preview.<br>Enter the password to continue.</p>
-    <form id="nv-gate-form" autocomplete="off">
-      <input id="nv-gate-input" type="password" name="nv-access"
-             placeholder="Password" aria-label="Password"
-             autocomplete="current-password" autofocus />
-      <button type="submit">Enter</button>
-      <p id="nv-gate-err" role="alert">Incorrect password. Try again.</p>
-    </form>
+
+    <div class="pill fade-up fade-up-2">
+      <span class="pill-dot"></span>
+      Coming soon
+    </div>
+
+    <h1 class="fade-up fade-up-2">Is anyone <span class="accent">home?</span></h1>
+    <p class="lead fade-up fade-up-3">
+      notavibe ranks open-source projects on maintenance, not popularity. Five sourced signals, transparent bands, no composite score. Check if your dependencies are actually maintained &mdash; or find ones that are.
+    </p>
+
+    <div class="hero-cta-row fade-up fade-up-4">
+      <a href="#install" class="btn btn-primary">Get the MCP</a>
+      <a href="#how-it-works" class="btn btn-ghost">How it works</a>
+    </div>
+
+    <p class="fade-up fade-up-5" style="font-size:13px; color:var(--volt-text-600); margin:0">
+      8,400+ npm project pages &middot; schema&nbsp;v1 &middot; free, no&nbsp;auth
+    </p>
   </div>
-</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     HOW IT WORKS
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="how-it-works">
+  <div class="container" style="display:flex; flex-direction:column; gap:40px">
+    <div class="section-head">
+      <p class="eyebrow">How it works</p>
+      <h2>Maintenance you can see, not scores you can't explain</h2>
+      <p>Every project page shows five signals derived from public data &mdash; each with its source, fetch date, and band. No hidden formula. No single number.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        </div>
+        <h3>Maintenance activity</h3>
+        <p>Substantive releases and merged external PRs over the trailing 90 days. Active, steady, quiet, or dormant.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z"/></svg>
+        </div>
+        <h3>Responsiveness</h3>
+        <p>Median time to first substantive maintainer response on issues and PRs. Days, weeks, or insufficient data.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
+        </div>
+        <h3>Contributor breadth</h3>
+        <p>How many distinct authors are merging code. Broad, narrowing, single-author, or insufficient data.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
+        </div>
+        <h3>Security posture</h3>
+        <p>OpenSSF Scorecard-style checks: security policy, CI in place, code review practice. Strong, partial, or none visible.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+        </div>
+        <h3>Adoption</h3>
+        <p>Dependent-project count from the registry &mdash; the hardest signal to fake. Very high, high, moderate, or low.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     INSTALL THE MCP
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="install" style="background: var(--volt-canvas)">
+  <div class="container" style="display:flex; flex-direction:column; gap:40px">
+    <div class="section-head">
+      <p class="eyebrow">Get started</p>
+      <h2>Install the MCP server</h2>
+      <p>Give your AI coding assistant grounded, sourced knowledge about open-source project health. Works with Claude, Cursor, Windsurf, VS Code, and any MCP-compatible client.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div role="tablist" class="install-tabs" id="install-tabs" style="align-self: flex-start">
+      <button role="tab" class="install-tab" aria-selected="true" data-tab="quick">Quick start</button>
+      <button role="tab" class="install-tab" aria-selected="false" data-tab="npm">npm</button>
+      <button role="tab" class="install-tab" aria-selected="false" data-tab="manual">Manual</button>
+    </div>
+
+    <!-- Tab: Quick start -->
+    <div class="install-panel" data-panel="quick">
+      <div class="install-block">
+        <div class="install-header">
+          <span class="label">One command &mdash; works with Claude Desktop, Cursor &amp; more</span>
+          <button class="copy-btn" data-copy="quick">Copy</button>
+        </div>
+        <div class="install-body" id="code-quick"><span class="cmd">npx</span> <span class="comment">@notavibe/mcp</span></div>
+      </div>
+      <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:var(--volt-text-500)">
+        This downloads and runs the notavibe MCP server. Your AI assistant will automatically detect it. No configuration file needed &mdash; just run and go.
+      </p>
+    </div>
+
+    <!-- Tab: npm -->
+    <div class="install-panel" data-panel="npm" style="display:none">
+      <div class="install-block">
+        <div class="install-header">
+          <span class="label">Install globally via npm</span>
+          <button class="copy-btn" data-copy="npm">Copy</button>
+        </div>
+        <div class="install-body" id="code-npm"><span class="comment"># Install globally</span>
+<span class="cmd">npm</span> install -g @notavibe/mcp
+
+<span class="comment"># Run the server</span>
+<span class="cmd">notavibe-mcp</span></div>
+      </div>
+      <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:var(--volt-text-500)">
+        Installing globally makes the <code style="color:var(--volt-emerald); font-family:var(--font-mono)">notavibe-mcp</code> command available system-wide. Point your MCP client's config at it and you're set.
+      </p>
+    </div>
+
+    <!-- Tab: Manual -->
+    <div class="install-panel" data-panel="manual" style="display:none">
+      <div class="install-block">
+        <div class="install-header">
+          <span class="label">Add to your MCP client config (e.g. claude_desktop_config.json)</span>
+          <button class="copy-btn" data-copy="manual">Copy</button>
+        </div>
+        <div class="install-body" id="code-manual">{
+  "mcpServers": {
+    "notavibe": {
+      "command": "<span class="cmd">npx</span>",
+      "args": ["<span class="comment">@notavibe/mcp</span>"]
+    }
+  }
+}</div>
+      </div>
+      <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:var(--volt-text-500)">
+        Drop this into your client's MCP configuration file. For Claude Desktop, that's <code style="color:var(--volt-emerald); font-family:var(--font-mono)">~/Library/Application Support/Claude/claude_desktop_config.json</code> on Mac or <code style="color:var(--volt-emerald); font-family:var(--font-mono)">%APPDATA%\Claude\claude_desktop_config.json</code> on Windows.
+      </p>
+    </div>
+
+    <!-- Tools -->
+    <div style="display:flex; flex-direction:column; gap:16px; padding-top:8px">
+      <p class="eyebrow">Available tools</p>
+      <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+        <div class="card" style="gap:8px; padding:20px">
+          <h3 style="font-size:15px; font-family:var(--font-mono)">check_dependencies</h3>
+          <p style="font-size:13px">"Is anyone home?" &mdash; takes a manifest, returns per-dependency health bands.</p>
+        </div>
+        <div class="card" style="gap:8px; padding:20px">
+          <h3 style="font-size:15px; font-family:var(--font-mono)">search_projects</h3>
+          <p style="font-size:13px">Free-text search across the catalog. Returns sourced signals, not scores.</p>
+        </div>
+        <div class="card" style="gap:8px; padding:20px">
+          <h3 style="font-size:15px; font-family:var(--font-mono)">get_project</h3>
+          <p style="font-size:13px">Full project profile with all five signal bands, sources, and fetch dates.</p>
+        </div>
+        <div class="card" style="gap:8px; padding:20px">
+          <h3 style="font-size:15px; font-family:var(--font-mono)">compare_projects</h3>
+          <p style="font-size:13px">Side-by-side signal comparison between two projects.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+      <a href="#" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="https://www.npmjs.com/package/@notavibe/mcp" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H5.334v-4H3.999v4H1.335V8.667h5.331v5.331zm4 0v1.336H8.001V8.667h5.334v5.331h-2.669zm12.001 0h-1.33v-4h-1.336v4h-1.335v-4h-1.33v4h-2.671V8.667h8.002v5.331zM10.665 10H12v2.667h-1.335V10z"/></svg>
+        npm package
+      </a>
+      <span style="font-size:13px; color:var(--volt-text-600)">Free &middot; no API key &middot; rate-limited by IP</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     WHY NOTAVIBE
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="why">
+  <div class="container" style="display:flex; flex-direction:column; gap:40px">
+    <div class="section-head">
+      <p class="eyebrow">Why notavibe</p>
+      <h2>What makes this different</h2>
+    </div>
+
+    <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+      <div class="card">
+        <h3>Bands, not scores</h3>
+        <p>No hidden composite number. Each signal is a named band ("steady", "days", "broad") with its source and fetch date visible. You see exactly what we see.</p>
+      </div>
+      <div class="card">
+        <h3>Maintenance, not popularity</h3>
+        <p>Stars and downloads are farmable. Dependent-project counts, substantive release cadence, and response times are not. We measure what matters.</p>
+      </div>
+      <div class="card">
+        <h3>"Is anyone home," not "is it safe"</h3>
+        <p>We are not a vulnerability scanner. notavibe tells you if a maintainer is responsive, how code gets merged, and whether releases are substantive. Maintenance, not CVEs.</p>
+      </div>
+      <div class="card">
+        <h3>Agent-native from day one</h3>
+        <p>Built as an MCP server so your coding assistant can ground its dependency recommendations in real, sourced data instead of training-set popularity bias.</p>
+      </div>
+      <div class="card">
+        <h3>Full provenance</h3>
+        <p>Every band ships with its source (npm, GitHub API, OpenSSF Scorecard) and a fetch timestamp. "Insufficient data" is an answer, never a guess.</p>
+      </div>
+      <div class="card">
+        <h3>npm-deep at launch</h3>
+        <p>One ecosystem covered properly beats four covered thinly. Top ~5,000 npm packages by dependents &mdash; enough to hit on most real-world manifests.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     STAY IN THE LOOP
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="signup" style="background: var(--volt-canvas)">
+  <div class="container" style="display:flex; flex-direction:column; align-items:center; gap:24px; text-align:center">
+    <p class="eyebrow">Stay in the loop</p>
+    <h2 style="margin:0; font-weight:700; font-size:clamp(24px, 3vw, 36px); line-height:1.2; letter-spacing:-0.02em; color:var(--volt-white)">
+      The full platform is coming
+    </h2>
+    <p style="margin:0; font-size:16px; line-height:1.65; color:var(--volt-text-500); max-width:50ch">
+      Discovery, funding, and transparent health signals for the open source you depend on. Drop your email and we'll let you know when it's live.
+    </p>
+    <form class="signup-form" id="signup-form" autocomplete="off">
+      <input class="signup-input" type="email" name="email" placeholder="you@company.com" aria-label="Email address" required>
+      <button type="submit" class="btn btn-primary" style="flex-shrink:0">Notify me</button>
+    </form>
+    <p class="signup-msg" id="signup-msg">You're on the list. We'll be in touch.</p>
+  </div>
+</section>
+
+<!-- ── Footer ────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 notavibe. Ranked on maintenance, not popularity.</p>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════════════════════════════ -->
 <script>
 (function () {
-  /* ──────────────────────────────────────────────────────────────────────────
-     CHANGE THE PASSWORD HERE. Soft, client-side gate — good enough to keep the
-     preview out of the wrong hands, not real access control (see note above). */
-  var NV_PASSWORD = "mkr2026";
-  /* ────────────────────────────────────────────────────────────────────────── */
+  /* ── Theme toggle ──────────────────────────────────────────────────── */
+  var btn = document.getElementById("theme-btn");
+  var sunIcon = document.getElementById("icon-sun");
+  var moonIcon = document.getElementById("icon-moon");
 
-  var KEY = "notavibe.gate.v1";
-  var gate = document.getElementById("nv-gate");
-  if (!gate) return;
-
-  /* Local-development bypass. The gate only guards deployed hosts; on localhost
-     (and a bare file:// open) it removes itself so dev never has to type it. */
-  var host = location.hostname;
-  var isLocal = !host || host === "localhost" || host === "127.0.0.1"
-    || host === "::1" || host === "[::1]" || /\.localhost$/.test(host);
-  if (isLocal) {
-    gate.parentNode && gate.parentNode.removeChild(gate);
-    return;
+  function syncIcons() {
+    var t = document.documentElement.getAttribute("data-theme");
+    sunIcon.style.display = t === "light" ? "block" : "none";
+    moonIcon.style.display = t === "light" ? "none" : "block";
   }
+  syncIcons();
 
-  var root = document.documentElement;
-  function lock()   { root.style.overflow = "hidden"; }
-  function unlock() { root.style.overflow = ""; }
+  btn.addEventListener("click", function () {
+    var current = document.documentElement.getAttribute("data-theme") || "dark";
+    var next = current === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.style.colorScheme = next;
+    try { localStorage.setItem("nv-theme", next); } catch (e) {}
+    syncIcons();
+  });
 
-  /* Already unlocked this session → drop the gate before it can be seen. */
-  try {
-    if (window.sessionStorage && sessionStorage.getItem(KEY) === "1") {
-      gate.parentNode && gate.parentNode.removeChild(gate);
-      return;
-    }
-  } catch (e) { /* storage blocked — just show the gate */ }
+  /* ── Install tabs ──────────────────────────────────────────────────── */
+  var tabs = document.querySelectorAll(".install-tab");
+  var panels = document.querySelectorAll(".install-panel");
 
-  lock();
+  tabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var target = tab.getAttribute("data-tab");
+      tabs.forEach(function (t) { t.setAttribute("aria-selected", "false"); });
+      tab.setAttribute("aria-selected", "true");
+      panels.forEach(function (p) {
+        p.style.display = p.getAttribute("data-panel") === target ? "block" : "none";
+      });
+    });
+  });
 
-  var form  = document.getElementById("nv-gate-form");
-  var input = document.getElementById("nv-gate-input");
-  var err   = document.getElementById("nv-gate-err");
+  /* ── Copy buttons ──────────────────────────────────────────────────── */
+  var COPY_TEXT = {
+    quick: "npx @notavibe/mcp",
+    npm: "npm install -g @notavibe/mcp",
+    manual: '{\n  "mcpServers": {\n    "notavibe": {\n      "command": "npx",\n      "args": ["@notavibe/mcp"]\n    }\n  }\n}'
+  };
 
-  function open() {
-    try { if (window.sessionStorage) sessionStorage.setItem(KEY, "1"); } catch (e) {}
-    unlock();
-    gate.classList.add("nv-gate-out");
-    var done = function () { gate.parentNode && gate.parentNode.removeChild(gate); };
-    gate.addEventListener("animationend", done, { once: true });
-    setTimeout(done, 700); /* fallback if animationend never fires */
-  }
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var key = btn.getAttribute("data-copy");
+      var text = COPY_TEXT[key] || "";
+      navigator.clipboard.writeText(text).then(function () {
+        var orig = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(function () { btn.textContent = orig; }, 1500);
+      });
+    });
+  });
 
-  function reject() {
-    err.classList.add("show");
-    gate.classList.remove("nv-shake");
-    /* reflow so the shake animation can restart on repeated wrong tries */
-    void gate.offsetWidth;
-    gate.classList.add("nv-shake");
-    input.select();
-  }
+  /* ── Email signup (client-side placeholder) ────────────────────────── */
+  var form = document.getElementById("signup-form");
+  var msg = document.getElementById("signup-msg");
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    if (input.value === NV_PASSWORD) open();
-    else reject();
+    /* TODO: wire to a real endpoint (e.g. Formspree, Buttondown, or your own API) */
+    msg.classList.add("show");
+    form.querySelector("input").value = "";
+    setTimeout(function () { msg.classList.remove("show"); }, 4000);
   });
-  input.addEventListener("input", function () { err.classList.remove("show"); });
-  setTimeout(function () { try { input.focus(); } catch (e) {} }, 60);
 
-  /* ── Mouse-reactive dot field ───────────────────────────────────────────────
-     Vanilla port of the hero's DotField (frontdoor.js): a slate grid that bulges
-     toward the pointer and blends to emerald, easing back when it leaves. Same
-     constants, so the gate reads as the same surface as the page behind it. */
+  /* ── Mouse-reactive dot field (same as the main site hero) ─────────── */
   (function dotField() {
-    var canvas = document.getElementById("nv-gate-dots");
+    var canvas = document.getElementById("hero-dots");
     var g = canvas && canvas.getContext && canvas.getContext("2d");
     if (!g) return;
-    var host = gate;
+    var host = canvas.parentNode;
 
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -281,593 +735,15 @@
     else window.addEventListener("resize", resize);
     if (!reduce) { host.addEventListener("pointermove", onMove); host.addEventListener("pointerleave", onLeave); }
   })();
+
+  /* ── Smooth scroll for anchor links ────────────────────────────────── */
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var target = document.querySelector(a.getAttribute("href"));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: "smooth" }); }
+    });
+  });
 })();
-</script>
-<x-dc>
-<helmet>
-  <link rel="stylesheet" href="design-system/voltagent/tokens/fonts.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/colors.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/typography.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/spacing.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/radius.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/elevation.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/motion.css">
-  <link rel="stylesheet" href="design-system/voltagent/tokens/semantic.css">
-  <link rel="stylesheet" href="design-system/voltagent/styles.css">
-  <style>
-/* ── VoltAgent token bridge ──────────────────────────────────────────────────
-   The screen library was authored against the previous system's token names.
-   Rather than rewrite 7,000 lines, every old name is re-pointed at a VoltAgent
-   value here — which is also what inverts those screens to the void-black
-   canvas. Only names VoltAgent does not already define are declared. */
-:root {
-  --font-display: var(--font-sans);
-
-  /* Surfaces — two only: void and canvas. */
-  --surface-canvas: var(--volt-void);
-  --surface-soft: var(--volt-canvas);
-  --surface-dark: var(--volt-canvas);
-  --surface-dark-soft: var(--volt-surface);
-  --surface-card: var(--volt-canvas);
-  --surface-card-dark: var(--volt-panel);
-
-  /* Text */
-  --text-secondary: var(--volt-text-500);
-  --text-on-dark: var(--volt-white);
-  --text-on-dark-secondary: var(--volt-text-500);
-  --black: var(--volt-white);
-  --white: var(--volt-white);
-
-  /* Borders are the elevation system. */
-  --border-hairline: var(--volt-border);
-  --border-hairline-dark: var(--volt-border);
-  --border-input: var(--volt-border);
-  --border-level-1: 1px solid var(--volt-border);
-  --border-level-2: 1px solid var(--volt-border-faint);
-  --elevation-0: none;
-  --shadow-float: var(--elev-2);
-
-  /* One accent. The old secondary accents collapse into emerald or grey. */
-  --primary: var(--volt-emerald);
-  --on-primary: var(--volt-on-emerald);
-  --accent-mint: var(--volt-emerald-10);
-  --accent-periwinkle: var(--volt-surface);
-  --accent-orange: var(--volt-emerald);
-  --accent-magenta: var(--volt-text-600);
-  --wordmark-tint: var(--volt-canvas);
-  --brand-gradient: var(--volt-canvas);
-  --brand-gradient-soft: var(--volt-canvas);
-  --link: var(--volt-emerald-deep);
-  --link-hover: var(--volt-emerald);
-  --link-on-dark: var(--volt-emerald-deep);
-  --link-on-dark-hover: var(--volt-emerald);
-
-  /* Type — Inter at regular weight with negative tracking; mono for numbers. */
-  --type-display-xxl: 400 60px/60px var(--font-sans);
-  --type-display-xl: 400 36px/40px var(--font-sans);
-  --type-display-lg: 700 24px/32px var(--font-sans);
-  --type-display-md: 600 20px/28px var(--font-sans);
-  --type-body-lg: 400 18px/28px var(--font-sans);
-  --type-body-lg-strong: 600 18px/28px var(--font-sans);
-  --type-body-md: 400 16px/26px var(--font-sans);
-  --type-body-md-strong: 600 16px/24px var(--font-sans);
-  --type-caption: 400 14px/20px var(--font-sans);
-  --type-caption-strong: 600 14px/20px var(--font-sans);
-  --type-mono-button: 600 14px/20px var(--font-sans);
-  --type-mono-eyebrow: 600 12px/16px var(--font-mono);
-  --type-mono-label: 500 12px/18px var(--font-mono);
-  --type-mono-caption: 400 12px/16px var(--font-mono);
-  --ls-display-xxl: -0.65px;
-  --ls-display-xl: -0.9px;
-  --ls-display-lg: -0.6px;
-  --ls-display-md: 0px;
-  --ls-body-lg: 0px;
-  --ls-body-md: 0px;
-  --ls-caption: 0px;
-  --ls-mono-button: 0px;
-  --ls-mono-eyebrow: 1.4px;
-  --ls-mono-label: 0.4px;
-  --ls-mono-caption: 0.4px;
-  --weight-regular: 400;
-  --weight-medium: 600;
-
-  /* Spacing — VoltAgent's 4px scale; bands are 48px, gutters 32px. */
-  --space-section: 48px;
-  --band-padding-y: 48px;
-  --card-padding: 24px;
-  --card-padding-lg: 32px;
-  --row-padding: 12px 16px;
-  --inline-gap: 16px;
-  --chip-gap: 8px;
-  --nav-link-gap: 24px;
-  --touch-min: 44px;
-
-  /* Radii: 6px controls, 8px cards, pill for status only. */
-  --radius-card: var(--radius-md);
-  --radius-button: var(--radius-sm);
-  --radius-input: var(--radius-sm);
-
-  /* Motion: 200ms small, 300ms default, no springs. */
-  --duration-fast: var(--motion-fast);
-  --duration-base: var(--motion-base);
-  --duration-slow: var(--motion-slow);
-  --ease-standard: var(--ease-in-out);
-  --transition-base: all var(--motion-base) ease;
-  --hover-lighten-on-dark: rgba(255,255,255,0.06);
-  --hover-darken-on-light: rgba(255,255,255,0.06);
-  --press-opacity: 1;
-}
-  </style>
-  <style>
-/* ── Light theme ─────────────────────────────────────────────────────────────
-   Dark is the base :root (see hashicorp-tokens.css, loaded last) and is never
-   touched — this block is a pure OVERRIDE that only applies when the page is in
-   light mode. It wins over the base by SPECIFICITY, not document order:
-   `:root[data-theme="light"]` is (0,2,0) vs a bare `:root` at (0,1,0), so it
-   still overrides the HashiCorp layer even though it is declared before it.
-   Toggle by setting/clearing data-theme="light" on <html> (see the head script
-   and the header control) — no stylesheet swap, the CSS variables just re-resolve.
-
-   Design brief (per the design direction): the HashiCorp IDENTITY is kept in
-   both themes — type scale, 96px rhythm, 8px corners, non-pill CTA all live in
-   the base :root and are theme-independent. Only what carries LIGHTNESS moves
-   here: the surface/text/border ramp inverts, the primary CTA flips to
-   inverse-canvas (near-black fill, white label — the mirror of dark's white-on-
-   black), and hover darkens the fill instead of lightening it. Accent hues stay
-   put; the green deepens only where it becomes text/line work on paper. */
-:root[data-theme="light"] {
-  /* Surfaces — paper, cool-neutral. Sections still separate by surface lift
-     (void → canvas → surface) reinforced by hairlines, exactly as on dark. */
-  --volt-void:#ffffff;        /* page + hero canvas */
-  --volt-ink-black:#fbfbfa;
-  --volt-canvas:#f5f6f7;      /* band fill + default card fill */
-  --volt-surface:#eaecef;     /* hover / selected / input recess */
-  --volt-panel:#eceef1;       /* code-mockup header */
-  --volt-grey-dark:#f5f6f7;
-  --volt-black:#ffffff;       /* "deepest surface" role → paper on light */
-  --volt-node-canvas:#f5f6f7;
-  --volt-node-row:#eceef1;
-  --volt-node-fill:#eceef1;
-
-  /* Text — inverted ramp: near-black ink at the top, mid-grey at the subtle end. */
-  --volt-white:#0b0d10;       /* ink: headlines + emphasised body */
-  --volt-text-100:#141719;
-  --volt-text-200:#22262b;    /* body */
-  --volt-text-300:#3a3f46;
-  --volt-text-400:#565c64;    /* eyebrow labels */
-  --volt-text-500:#5e646c;    /* muted / secondary body */
-  --volt-text-600:#787f88;    /* fine print, timestamps */
-  --volt-zinc-300:#3a3f46;
-  --volt-zinc-400:#565c64;
-  --volt-zinc-700:#eaecef;
-  --volt-zinc-800:#f5f6f7;
-  --volt-gray-400:#565c64;
-  --text-code:#1b1f24;
-
-  /* Borders — hairlines carry the elevation on light too, as translucent ink. */
-  --volt-border:rgba(11,13,16,0.12);
-  --volt-border-faint:rgba(11,13,16,0.08);
-  --volt-border-hover:rgba(11,13,16,0.22);
-  --volt-hairline-soft:rgba(11,13,16,0.08);
-  --volt-border-dashed:rgba(11,13,16,0.18);
-
-  /* Accent — Nomad green. The #00ca8e fill/dot/status colour reads on white and
-     stays; the "soft/deep" roles (used as accent TEXT and lockup) deepen so they
-     clear AA contrast on paper. */
-  --volt-emerald:#00ca8e;
-  --volt-emerald-400:#00b37e;
-  --volt-emerald-soft:#047857;
-  --volt-emerald-deep:#047857;
-  --volt-emerald-08:rgba(0,202,142,0.10);
-  --volt-emerald-10:rgba(0,202,142,0.14);
-  --volt-emerald-20:rgba(0,202,142,0.22);
-  --volt-emerald-30:rgba(0,202,142,0.32);
-  --volt-on-emerald:#04120d;
-
-  /* Vault yellow marks pipeline "guesses" (claim flow). The dark #ffcf25 is
-     ~1.3:1 yellow-on-white — deepen to a dark amber that clears AA on paper.
-     (Was omitted from this block, so it leaked the dark value in light mode.) */
-  --volt-yellow:#8a6d00;
-
-  /* Per-product indigo shows only as the hero gradient wash; lightened so it
-     tints the paper rather than muddying it. Other product hues (Vault yellow,
-     Terraform purple, etc.) stay at their brand values — they read on white. */
-  --volt-indigo:#c9d4ff;
-
-  /* Primary action — HashiCorp points --primary at "inverse-canvas". On light
-     that is the exact mirror of dark: near-black fill, white label. The
-     button[style*=--volt-emerald] escape-hatch in hashicorp-tokens.css reads
-     --primary/--on-primary, so the CTA flips automatically. */
-  --primary:#0b0d10;
-  --on-primary:#ffffff;
-
-  /* Links — HashiCorp's Vagrant blue, darkened for AA on white. (Bare <a> tags
-     use --volt-emerald-deep via the base anchor rule; this is for the components
-     that read --link.) */
-  --link:#1868f2;
-  --link-hover:#0b4fd0;
-  --link-on-dark:#1868f2;
-  --link-on-dark-hover:#0b4fd0;
-
-  /* Secondary accent surfaces */
-  --accent-mint:rgba(0,202,142,0.14);
-  --accent-periwinkle:#eaecef;
-  --wordmark-tint:#f5f6f7;
-  --brand-gradient:#f5f6f7;
-  --brand-gradient-soft:#f5f6f7;
-
-  /* Elevation + hover. Still no drop shadows: a single hairline ring separates
-     cards, and hover DARKENS the fill on light instead of lightening it. */
-  --elev-2:0 0 0 1px var(--volt-border-hover);
-  --hover-lighten-on-dark:rgba(11,13,16,0.05);
-  --hover-darken-on-light:rgba(11,13,16,0.05);
-}
-  </style>
-  <!-- HashiCorp token layer = the DARK base. Its bare `:root` sets the dark
-       colour ramp plus the theme-independent HashiCorp identity (type, spacing,
-       radii, CTA shape). The light block above overrides only the colour half
-       by specificity when data-theme="light". Loaded last so it also wins over
-       the VoltAgent bridge for dark. -->
-  <link rel="stylesheet" href="styles/hashicorp-tokens.css">
-  <script src="design-system/voltagent/ds-bundle.js"></script>
-  <script src="scripts/voltagent-adapter.js"></script>
-  <script src="scripts/screens.js"></script>
-  <script src="scripts/app.js"></script>
-  <script src="scripts/hifi.js"></script>
-  <script src="scripts/frontdoor.js"></script>
-  <script src="scripts/search.js"></script>
-  <style>
-    html, body { margin: 0; padding: 0; background: var(--volt-void); }
-    body { font-family: var(--font-sans); color: var(--volt-text-200); -webkit-font-smoothing: antialiased; }
-    a { color: var(--volt-emerald-deep); text-decoration: none; }
-    a:hover { color: var(--volt-emerald); text-decoration: none; }
-    input::placeholder, textarea::placeholder { color: var(--volt-text-600); }
-    /* The UA gives buttons their own dark colour, which on a void canvas hides any
-       label the screen library left to inherit. */
-    button { color: inherit; font-family: inherit; }
-    * { box-sizing: border-box; }
-  </style>
-</helmet>
-<div style="min-height: 100vh; background: var(--volt-void)">
-  <x-import component-from-global-scope="NotavibeShell" dc-props="{{ shellProps }}" hint-size="100%,100vh"></x-import>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;startRoute&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;discover&quot;,&quot;options&quot;:[&quot;discover&quot;,&quot;project&quot;,&quot;search&quot;,&quot;stack.connect&quot;,&quot;claim.start&quot;,&quot;suppress.start&quot;,&quot;backer.dashboard&quot;,&quot;maintainer.dashboard&quot;,&quot;admin.corrections&quot;,&quot;methodology&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Desktop 1280&quot;,&quot;options&quot;:[&quot;Desktop 1280&quot;,&quot;Mobile 360&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;ghOutage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
-/* Deck before categories — a deliberate deviation from §5.5's "intent
-   categories, always first", recorded here rather than slipped in.
-
-   Rationale: the hero now asserts "ranked on maintenance, not popularity", and
-   the deck's banded project cards are the evidence for that claim where the
-   category grid changes the subject to navigation. The orientation job §5.5's
-   ordering protected has moved above the fold into the hero's seed chips, and
-   at 90dvh categories fall below the fold either way.
-
-   Costs accepted: nine internal links to indexed /discover/{category} surfaces
-   sit lower on the most-linked page, and orderViolated (below) now measures
-   drift from THIS order, not the spec's. */
-const CANON = ["deck", "categories", "stack", "editorial", "refine", "shipweek"];
-/* Fingerprint of the intended order. A saved moduleOrder from before the swap
-   would otherwise be restored from storage and silently reinstate the old
-   sequence — the persisted value outliving the decision that produced it. */
-const CANON_ID = CANON.join(",");
-const KEY = "notavibe.prototype.v1";
-const PERSIST = ["claims", "lists", "interests", "requests", "publishedStack", "orgWaitlisted", "signedIn", "moduleOrder"];
-
-/* ── Deep linking ────────────────────────────────────────────────────────────
-   Navigation is pure in-memory route state (ctx.go → setState({route})), so the
-   URL never moved and no screen was linkable. These two functions are the single
-   bridge between that state and location.hash, giving every screen its own URL.
-
-   Scheme — the route NAME is the first path segment (names use dots, never
-   slashes, so they can't be confused with a slug); a SLUG is the remaining
-   segments, kept raw so an owner/repo slug reads as #/project/honojs/hono; and
-   the other scalar fields ride the query string. `next` (a nested route used for
-   the sign-in redirect) is deliberately not encoded — it is transient in-session
-   state, not something a shared link should carry. */
-const URL_FIELDS = ["id", "q", "system", "type"];
-/* The public "front door" shell (marketing chrome, no workspace sidebar) is a
-   place a signed-in user deliberately enters via the wordmark / "My workspace"
-   link, which sets route.full. Browsing WITHIN it — running a search, opening a
-   category or a project — must keep them in that shell rather than dropping
-   them into the workspace app shell (the `backerDiscovery` rule in app.js keys
-   off !route.full). So go() carries `full` forward across these public browse
-   routes; any workspace/app route (backer.*, maintainer.*, stack.*, the
-   dashboard, …) is absent here, so navigating to one naturally exits the mode. */
-const PUBLIC_BROWSE = /^(discover|category|search|project|methodology|editorial|list\.public|stack\.public|alternatives|compare|shipweek)$/;
-/* First-class short URLs. A route's canonical internal name (used everywhere in
-   app.js — screenFor, the app-shell regex, nav active state, the role switch)
-   stays untouched; only its address-bar form is aliased. parseHash maps the
-   short form back to the canonical name, so both URLs resolve and the bar
-   normalises to the short one. Add a pair here to promote another route. */
-const ROUTE_ALIAS = { "maintainer.dashboard": "maintainer", "backer.dashboard": "backer" };
-const ROUTE_ALIAS_REVERSE = { "maintainer": "maintainer.dashboard", "backer": "backer.dashboard" };
-function buildHash(route) {
-  if (!route || !route.name) return "#/discover";
-  let path = "/" + (ROUTE_ALIAS[route.name] || route.name);
-  if (route.slug) path += "/" + route.slug; /* slug may hold slashes; leave raw */
-  const qs = URL_FIELDS
-    .filter((k) => route[k] != null && route[k] !== "")
-    .map((k) => k + "=" + encodeURIComponent(route[k]));
-  return "#" + path + (qs.length ? "?" + qs.join("&") : "");
-}
-function parseHash() {
-  const raw = (window.location.hash || "").replace(/^#/, "");
-  if (!raw || raw === "/") return null;
-  const qi = raw.indexOf("?");
-  const path = qi >= 0 ? raw.slice(0, qi) : raw;
-  const query = qi >= 0 ? raw.slice(qi + 1) : "";
-  const segs = path.replace(/^\//, "").split("/").filter(Boolean);
-  if (!segs.length) return null;
-  const route = { name: ROUTE_ALIAS_REVERSE[segs[0]] || segs[0] };
-  if (segs.length > 1) route.slug = decodeURIComponent(segs.slice(1).join("/"));
-  if (query) {
-    query.split("&").forEach((pair) => {
-      const eq = pair.indexOf("=");
-      const k = decodeURIComponent(eq >= 0 ? pair.slice(0, eq) : pair);
-      const v = eq >= 0 ? decodeURIComponent(pair.slice(eq + 1)) : "";
-      if (URL_FIELDS.indexOf(k) > -1) route[k] = v;
-    });
-  }
-  return route;
-}
-/* Compares only the serialised fields, so a route carrying an unserialised
-   `next` still counts as "already shown" and no redundant navigation fires. */
-function sameRoute(a, b) {
-  if (!a || !b) return false;
-  if (a.name !== b.name || (a.slug || "") !== (b.slug || "")) return false;
-  return URL_FIELDS.every((k) => (a[k] || "") === (b[k] || ""));
-}
-
-class Component extends DCLogic {
-  state = {
-    /* A hash in the address bar wins over the editor's startRoute prop, so a
-       shared or reloaded link lands on the screen it names. */
-    route: parseHash() || { name: this.props.startRoute || "discover" },
-    focusSlug: "honojs/hono",
-    signedIn: false,
-    mobile: (this.props.viewport || "Desktop 1280") === "Mobile 360",
-    ghDegraded: !!this.props.ghOutage,
-    claims: {},
-    lists: null,
-    interests: [],
-    requests: [],
-    scan: null,
-    publishedStack: null,
-    orgWaitlisted: false,
-    moduleOrder: CANON.slice()
-  };
-
-  componentDidMount() {
-    try {
-      const raw = window.localStorage.getItem(KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        const patch = {};
-        PERSIST.forEach((k) => { if (saved[k] !== undefined && saved[k] !== null) patch[k] = saved[k]; });
-        /* Drop a moduleOrder saved against a different CANON. Everything else
-           in storage survives — only the ordering is re-baselined. */
-        if (saved.canonId !== CANON_ID) delete patch.moduleOrder;
-        if (Object.keys(patch).length) this.setState(patch);
-      }
-    } catch (e) { /* first run, or storage unavailable */ }
-    if (!window.NotavibeShell) {
-      this._poll = setInterval(() => {
-        if (window.NotavibeShell) { clearInterval(this._poll); this.forceUpdate(); }
-      }, 120);
-    }
-
-    /* Reflect the initial route in the address bar (a fresh load with no hash
-       lands on discover but the URL was bare), then keep state in sync with the
-       URL so browser Back/Forward and hand-edited links both work. */
-    this._lastHash = buildHash(this.state.route);
-    if (window.location.hash !== this._lastHash) {
-      window.location.replace(this._lastHash);
-    }
-    if (this.state.route.slug) this.setState({ focusSlug: this.state.route.slug });
-    this._onHashChange = () => {
-      const r = parseHash();
-      if (!r || sameRoute(r, this.state.route)) return;
-      this._lastHash = buildHash(r);
-      this.setState({ route: r, focusSlug: r.slug || this.state.focusSlug });
-      window.scrollTo(0, 0);
-    };
-    window.addEventListener("hashchange", this._onHashChange);
-  }
-
-  /* State is the source of truth; the URL trails it. Every route change — from
-     go(), from runScan(), from anywhere — passes through here and updates the
-     hash. Guarded on _lastHash so the write the hashchange handler already made
-     doesn't bounce back and cause a loop. */
-  componentDidUpdate() {
-    const desired = buildHash(this.state.route);
-    if (desired === this._lastHash) return;
-    this._lastHash = desired;
-    if (window.location.hash !== desired) window.location.hash = desired;
-  }
-
-  componentWillUnmount() {
-    if (this._poll) clearInterval(this._poll);
-    if (this._onHashChange) window.removeEventListener("hashchange", this._onHashChange);
-  }
-
-  save(patch) {
-    this.setState(patch, () => {
-      try {
-        const out = {};
-        PERSIST.forEach((k) => { out[k] = this.state[k]; });
-        out.canonId = CANON_ID;
-        window.localStorage.setItem(KEY, JSON.stringify(out));
-      } catch (e) { /* storage full or blocked — the prototype still works in-session */ }
-    });
-  }
-
-  lists() {
-    if (this.state.lists) return this.state.lists;
-    const seed = window.SEED_LISTS || [];
-    return seed.map((l) => Object.assign({}, l, { items: l.items.slice() }));
-  }
-
-  claimState(slug) {
-    if (this.state.claims[slug]) return this.state.claims[slug];
-    const p = window.findProject ? window.findProject(slug) : null;
-    return p ? p.claim || "generated" : "generated";
-  }
-
-  parseManifest(text) {
-    const names = [];
-    const re = /"([^"]+)"\s*:\s*"[^"]*"/g;
-    let m;
-    while ((m = re.exec(text || "")) !== null) {
-      if (["dependencies", "devDependencies", "peerDependencies"].indexOf(m[1]) === -1) names.push(m[1]);
-    }
-    return names;
-  }
-
-  runScan(source, text) {
-    const names = this.parseManifest(text);
-    const catalog = window.PROJECTS || [];
-    const matched = [];
-    let unmatched = 0;
-    names.forEach((n) => {
-      const hit = catalog.find((p) => p.name === n || p.repo === n || p.slug === n);
-      if (hit && matched.indexOf(hit.slug) === -1) matched.push(hit.slug);
-      else if (!hit) unmatched += 1;
-    });
-    this.setState({
-      scan: { matched, unmatched, total: names.length, source },
-      route: { name: "stack.results" }
-    });
-    window.scrollTo(0, 0);
-  }
-
-  renderVals() {
-    const self = this;
-    const lists = this.lists();
-    const ctx = {
-      route: this.state.route,
-      focusSlug: this.state.focusSlug,
-      signedIn: this.state.signedIn,
-      mobile: this.state.mobile,
-      ghDegraded: this.state.ghDegraded,
-      lists: lists,
-      interests: this.state.interests,
-      requests: this.state.requests,
-      scan: this.state.scan,
-      publishedStack: this.state.publishedStack,
-      orgWaitlisted: this.state.orgWaitlisted,
-      moduleOrder: this.state.moduleOrder,
-      orderViolated: this.state.moduleOrder.join(",") !== CANON.join(","),
-
-      go(route) {
-        const r = Object.assign({}, route || { name: "discover" });
-        /* Keep a signed-in visitor in the public front-door shell while they
-           browse public surfaces (see PUBLIC_BROWSE). Only inherit when the
-           caller didn't decide `full` itself, and never manufacture it for a
-           logged-out visitor (their front door has no `full` to carry). */
-        if (r.full == null && self.state.signedIn
-            && self.state.route && self.state.route.full
-            && PUBLIC_BROWSE.test(r.name || "")) {
-          r.full = true;
-        }
-        self.setState({ route: r, focusSlug: r.slug || self.state.focusSlug });
-        window.scrollTo(0, 0);
-      },
-      signIn() { self.save({ signedIn: true }); },
-      toggleSignedIn() { self.save({ signedIn: !self.state.signedIn }); },
-      toggleMobile() { self.setState({ mobile: !self.state.mobile }); },
-      toggleGh() { self.setState({ ghDegraded: !self.state.ghDegraded }); },
-
-      claimState(slug) { return self.claimState(slug); },
-      setClaimState(slug, next) {
-        const claims = Object.assign({}, self.state.claims);
-        claims[slug] = next;
-        self.save({ claims: claims });
-      },
-
-      isSaved(slug) { return lists.some((l) => l.items.indexOf(slug) > -1); },
-      toggleInList(listId, slug) {
-        self.save({
-          lists: lists.map((l) => {
-            if (l.id !== listId) return l;
-            const on = l.items.indexOf(slug) > -1;
-            return Object.assign({}, l, {
-              items: on ? l.items.filter((s) => s !== slug) : l.items.concat([slug])
-            });
-          })
-        });
-      },
-      createList(title, description, items) {
-        const id = "l" + (lists.length + 1) + "-" + Date.now().toString(36).slice(-4);
-        self.save({
-          lists: lists.concat([{
-            id: id,
-            title: title,
-            handle: "raj",
-            slug: String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-            visibility: "private",
-            description: description || "",
-            items: (items || []).slice(),
-            saves: 0
-          }])
-        });
-        return id;
-      },
-      toggleVisibility(listId) {
-        self.save({
-          lists: lists.map((l) => l.id === listId
-            ? Object.assign({}, l, { visibility: l.visibility === "public" ? "private" : "public" })
-            : l)
-        });
-      },
-      saveListCopy(listId) {
-        const src = lists.find((l) => l.id === listId);
-        if (!src) return;
-        self.save({
-          lists: lists.concat([{
-            id: "copy-" + Date.now().toString(36).slice(-5),
-            title: src.title + " (saved copy)",
-            handle: "raj",
-            slug: src.slug + "-copy",
-            visibility: "private",
-            description: src.description,
-            items: src.items.slice(),
-            saves: 0
-          }])
-        });
-      },
-
-      hasInterest(slug, system) {
-        return self.state.interests.some((i) => i.slug === slug && i.system === (system || "subscriptions"));
-      },
-      toggleInterest(slug, system) {
-        const sys = system || "subscriptions";
-        const on = self.state.interests.some((i) => i.slug === slug && i.system === sys);
-        self.save({
-          interests: on
-            ? self.state.interests.filter((i) => !(i.slug === slug && i.system === sys))
-            : self.state.interests.concat([{ slug: slug, system: sys, at: new Date().toISOString() }])
-        });
-      },
-
-      runScan(source, text) { self.runScan(source, text); },
-      publishStack(slug) { self.save({ publishedStack: slug }); },
-      fileRequest(req) { self.save({ requests: self.state.requests.concat([req]) }); },
-      joinOrgWaitlist() { self.save({ orgWaitlisted: true }); },
-
-      moveModule(i, dir) {
-        const order = self.state.moduleOrder.slice();
-        const j = i + dir;
-        if (j < 0 || j >= order.length) return;
-        const tmp = order[i];
-        order[i] = order[j];
-        order[j] = tmp;
-        self.save({ moduleOrder: order });
-      },
-      resetOrder() { self.save({ moduleOrder: CANON.slice() }); }
-    };
-    return { shellProps: { ctx: ctx } };
-  }
-}
 </script>
 </body>
 </html>

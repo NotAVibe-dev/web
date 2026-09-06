@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ── Theme resolution (pre-paint) ─────────────────────────────────────────────
+     Sets data-theme on <html> BEFORE any stylesheet or paint, so there is no
+     flash of the wrong theme. Resolution order: a remembered manual choice
+     (localStorage "nv-theme") wins; otherwise light — the canonical default.
+     (OS setting is no longer auto-followed; light is the baseline.) The <html> element survives the app
+     mount (the runtime only swaps a node inside <body>), so this attribute set
+     once here holds for the whole session and is what every [data-theme] CSS
+     rule keys off. The theme name is also mirrored on <meta name=color-scheme>
+     so form controls, scrollbars and the like adopt the right native palette. -->
+<meta name="color-scheme" content="light dark">
+<script>
+(function () {
+  var t = "light";
+  try {
+    var saved = localStorage.getItem("nv-theme");
+    if (saved === "light" || saved === "dark") {
+      t = saved;  /* a remembered manual toggle still wins */
+    }
+  } catch (e) { /* storage blocked (private mode / sandboxed) → light */ }
+  document.documentElement.setAttribute("data-theme", t);
+  document.documentElement.style.colorScheme = t;  /* native scrollbars / form controls */
+})();
+</script>
+<script src="scripts/runtime.js"></script>
+</head>
+<body>
+<!-- ── Access gate ─────────────────────────────────────────────────────────────
+     A private-preview password layer. Injected as the first body child so it
+     paints before the app: the runtime only swaps the sibling app-root node
+     (dc.replaceWith), so this overlay survives and covers the app underneath.
+
+     The canvas + gradient are lifted straight from the hero (frontdoor.js): the
+     same indigo→emerald radials over --volt-void, and the same mouse-reactive
+     slate dot field. The card is glass over that gradient. Token values are
+     hardcoded as fallbacks (var(--x, #hex)) because the design-system stylesheets
+     are hoisted from <helmet> and may not have resolved at first paint.
+
+     NOTE: this is a soft, client-side gate — it hides the UI, it does not stop a
+     determined visitor from fetching the static assets directly. For real access
+     control the host needs server-side auth (e.g. HTTP Basic). -->
+<style id="nv-gate-style">
+  #nv-gate {
+    position: fixed; inset: 0; z-index: 2147483000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; overflow: hidden;
+    /* The gate is always dark glass, independent of the app theme. It must NOT
+       read --volt-void / --volt-indigo, which now flip to light values under the
+       light default (--volt-void becomes #fff) — that turned the whole gate white
+       and left the hardcoded-white input text invisible. Pinned to the dark hex
+       (the same values these tokens carry in dark mode). */
+    background:
+      radial-gradient(120% 90% at 12% -20%, color-mix(in srgb, #101a59 70%, transparent) 0%, transparent 62%),
+      radial-gradient(80% 70% at 88% -10%, color-mix(in srgb, #00ca8e 10%, transparent) 0%, transparent 58%),
+      #050507;
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    /* Opaque from the first painted frame — deliberately NOT faded in, or the
+       app would show through the transparent overlay before it settles. Only the
+       card animates on entry; the backdrop is solid immediately. */
+  }
+  #nv-gate.nv-gate-out { animation: nv-gate-out .5s ease forwards; pointer-events: none; }
+  @keyframes nv-gate-out { from { opacity: 1 } to { opacity: 0; visibility: hidden } }
+
+  #nv-gate-dots { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+  .nv-gate-card {
+    position: relative; z-index: 2; box-sizing: border-box;
+    width: 100%; max-width: 400px;
+    padding: 40px 32px 34px; border-radius: 22px; text-align: center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.11);
+    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    backdrop-filter: blur(22px) saturate(135%);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.10);
+    animation: nv-card-in .55s cubic-bezier(.2,.7,.2,1) both;
+  }
+  @keyframes nv-card-in { from { opacity: 0; transform: translateY(14px) scale(.985) } to { opacity: 1; transform: none } }
+  #nv-gate.nv-shake .nv-gate-card { animation: nv-shake .4s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes nv-shake {
+    10%,90% { transform: translateX(-2px) } 20%,80% { transform: translateX(4px) }
+    30%,50%,70% { transform: translateX(-7px) } 40%,60% { transform: translateX(7px) }
+  }
+
+  /* notavibe lockup — the ringed bolt glyph + wordmark, in emerald. */
+  .nv-gate-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .nv-gate-ring {
+    width: 34px; height: 34px; border-radius: 9999px;
+    border: 2px solid var(--volt-emerald, #00ca8e); background: rgba(0,202,142,0.12);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .nv-gate-ring svg { width: 19px; height: 19px; display: block; }
+  .nv-gate-word { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--volt-emerald, #00ca8e); }
+
+  .nv-gate-hint { margin: 0 0 22px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.52); }
+
+  #nv-gate-input {
+    width: 100%; box-sizing: border-box; padding: 15px 20px;
+    font-size: 16px; font-family: inherit; color: #fff;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 9999px; outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+  }
+  #nv-gate-input::placeholder { color: rgba(255,255,255,0.40); }
+  #nv-gate-input:focus {
+    border-color: var(--volt-emerald, #00ca8e); background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 4px rgba(0,202,142,0.13), 0 0 34px rgba(0,202,142,0.10);
+  }
+
+  #nv-gate-form button {
+    margin-top: 14px; width: 100%; padding: 14px 20px;
+    font-size: 15px; font-weight: 600; font-family: inherit; letter-spacing: .01em;
+    color: #04120d; background: var(--volt-emerald, #00ca8e);
+    border: none; border-radius: 9999px; cursor: pointer;
+    transition: filter .15s ease, transform .05s ease;
+  }
+  #nv-gate-form button:hover { filter: brightness(1.06); }
+  #nv-gate-form button:active { transform: translateY(1px); }
+
+  #nv-gate-err {
+    margin: 16px 0 0; min-height: 18px; font-size: 13px;
+    color: #ff6b6b; opacity: 0; transition: opacity .2s ease;
+  }
+  #nv-gate-err.show { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #nv-gate, .nv-gate-card { animation: none; }
+  }
+</style>
+<div id="nv-gate" role="dialog" aria-modal="true" aria-label="Enter password to continue">
+  <canvas id="nv-gate-dots" aria-hidden="true"></canvas>
+  <div class="nv-gate-card">
+    <span class="nv-gate-logo">
+      <span class="nv-gate-ring">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="var(--volt-emerald, #00ca8e)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
+        </svg>
+      </span>
+      <span class="nv-gate-word">notavibe</span>
+    </span>
+    <p class="nv-gate-hint">Private preview.<br>Enter the password to continue.</p>
+    <form id="nv-gate-form" autocomplete="off">
+      <input id="nv-gate-input" type="password" name="nv-access"
+             placeholder="Password" aria-label="Password"
+             autocomplete="current-password" autofocus />
+      <button type="submit">Enter</button>
+      <p id="nv-gate-err" role="alert">Incorrect password. Try again.</p>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  /* ──────────────────────────────────────────────────────────────────────────
+     CHANGE THE PASSWORD HERE. Soft, client-side gate — good enough to keep the
+     preview out of the wrong hands, not real access control (see note above). */
+  var NV_PASSWORD = "mkr2026";
+  /* ────────────────────────────────────────────────────────────────────────── */
+
+  var KEY = "notavibe.gate.v1";
+  var gate = document.getElementById("nv-gate");
+  if (!gate) return;
+
+  /* Local-development bypass. The gate only guards deployed hosts; on localhost
+     (and a bare file:// open) it removes itself so dev never has to type it. */
+  var host = location.hostname;
+  var isLocal = !host || host === "localhost" || host === "127.0.0.1"
+    || host === "::1" || host === "[::1]" || /\.localhost$/.test(host);
+  if (isLocal) {
+    gate.parentNode && gate.parentNode.removeChild(gate);
+    return;
+  }
+
+  var root = document.documentElement;
+  function lock()   { root.style.overflow = "hidden"; }
+  function unlock() { root.style.overflow = ""; }
+
+  /* Already unlocked this session → drop the gate before it can be seen. */
+  try {
+    if (window.sessionStorage && sessionStorage.getItem(KEY) === "1") {
+      gate.parentNode && gate.parentNode.removeChild(gate);
+      return;
+    }
+  } catch (e) { /* storage blocked — just show the gate */ }
+
+  lock();
+
+  var form  = document.getElementById("nv-gate-form");
+  var input = document.getElementById("nv-gate-input");
+  var err   = document.getElementById("nv-gate-err");
+
+  function open() {
+    try { if (window.sessionStorage) sessionStorage.setItem(KEY, "1"); } catch (e) {}
+    unlock();
+    gate.classList.add("nv-gate-out");
+    var done = function () { gate.parentNode && gate.parentNode.removeChild(gate); };
+    gate.addEventListener("animationend", done, { once: true });
+    setTimeout(done, 700); /* fallback if animationend never fires */
+  }
+
+  function reject() {
+    err.classList.add("show");
+    gate.classList.remove("nv-shake");
+    /* reflow so the shake animation can restart on repeated wrong tries */
+    void gate.offsetWidth;
+    gate.classList.add("nv-shake");
+    input.select();
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (input.value === NV_PASSWORD) open();
+    else reject();
+  });
+  input.addEventListener("input", function () { err.classList.remove("show"); });
+  setTimeout(function () { try { input.focus(); } catch (e) {} }, 60);
+
+  /* ── Mouse-reactive dot field ───────────────────────────────────────────────
+     Vanilla port of the hero's DotField (frontdoor.js): a slate grid that bulges
+     toward the pointer and blends to emerald, easing back when it leaves. Same
+     constants, so the gate reads as the same surface as the page behind it. */
+  (function dotField() {
+    var canvas = document.getElementById("nv-gate-dots");
+    var g = canvas && canvas.getContext && canvas.getContext("2d");
+    if (!g) return;
+    var host = gate;
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var SPACING = 28, BASE_R = 1.5, RADIUS = 165, STRENGTH = 0.62, EASE = 0.14;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = 0, H = 0, dots = [];
+    var pxr = -99999, pyr = -99999, active = false, raf = null;
+
+    function build() {
+      dots = [];
+      for (var y = SPACING / 2; y < H + SPACING; y += SPACING)
+        for (var x = SPACING / 2; x < W + SPACING; x += SPACING)
+          dots.push({ ox: x, oy: y, x: x, y: y, k: 0 });
+    }
+    function step() {
+      var moving = false;
+      for (var i = 0; i < dots.length; i++) {
+        var p = dots[i], tx = p.ox, ty = p.oy, k = 0;
+        if (active) {
+          var dx = pxr - p.ox, dy = pyr - p.oy, d = Math.sqrt(dx * dx + dy * dy);
+          if (d < RADIUS) { var f = 1 - d / RADIUS; k = f * f; tx = p.ox + dx * k * STRENGTH; ty = p.oy + dy * k * STRENGTH; }
+        }
+        p.x += (tx - p.x) * EASE; p.y += (ty - p.y) * EASE; p.k += (k - p.k) * EASE;
+        if (Math.abs(tx - p.x) > 0.05 || Math.abs(ty - p.y) > 0.05 || p.k > 0.004) moving = true;
+      }
+      return moving;
+    }
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      for (var i = 0; i < dots.length; i++) {
+        var p = dots[i], k = p.k, mix = k > 0 ? Math.min(1, k * 1.5) : 0;
+        g.fillStyle = "rgba(" + Math.round(148 - 148 * mix) + "," + Math.round(163 + 39 * mix) + "," +
+          Math.round(184 - 42 * mix) + "," + (0.17 + k * 0.55).toFixed(3) + ")";
+        g.beginPath(); g.arc(p.x, p.y, BASE_R + k * 1.1, 0, 6.2832); g.fill();
+      }
+    }
+    function resize() {
+      var rect = host.getBoundingClientRect();
+      W = Math.max(1, rect.width); H = Math.max(1, rect.height);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      build(); draw();
+    }
+    function frame() { var m = step(); draw(); if (!m && !active) { raf = null; return; } raf = requestAnimationFrame(frame); }
+    function kick() { if (raf === null) raf = requestAnimationFrame(frame); }
+    function onMove(e) { var r = host.getBoundingClientRect(); pxr = e.clientX - r.left; pyr = e.clientY - r.top; active = true; kick(); }
+    function onLeave() { active = false; kick(); }
+
+    resize();
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
+    else window.addEventListener("resize", resize);
+    if (!reduce) { host.addEventListener("pointermove", onMove); host.addEventListener("pointerleave", onLeave); }
+  })();
+})();
+</script>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="design-system/voltagent/tokens/fonts.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/colors.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/typography.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/spacing.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/radius.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/elevation.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/motion.css">
+  <link rel="stylesheet" href="design-system/voltagent/tokens/semantic.css">
+  <link rel="stylesheet" href="design-system/voltagent/styles.css">
+  <style>
+/* ── VoltAgent token bridge ──────────────────────────────────────────────────
+   The screen library was authored against the previous system's token names.
+   Rather than rewrite 7,000 lines, every old name is re-pointed at a VoltAgent
+   value here — which is also what inverts those screens to the void-black
+   canvas. Only names VoltAgent does not already define are declared. */
+:root {
+  --font-display: var(--font-sans);
+
+  /* Surfaces — two only: void and canvas. */
+  --surface-canvas: var(--volt-void);
+  --surface-soft: var(--volt-canvas);
+  --surface-dark: var(--volt-canvas);
+  --surface-dark-soft: var(--volt-surface);
+  --surface-card: var(--volt-canvas);
+  --surface-card-dark: var(--volt-panel);
+
+  /* Text */
+  --text-secondary: var(--volt-text-500);
+  --text-on-dark: var(--volt-white);
+  --text-on-dark-secondary: var(--volt-text-500);
+  --black: var(--volt-white);
+  --white: var(--volt-white);
+
+  /* Borders are the elevation system. */
+  --border-hairline: var(--volt-border);
+  --border-hairline-dark: var(--volt-border);
+  --border-input: var(--volt-border);
+  --border-level-1: 1px solid var(--volt-border);
+  --border-level-2: 1px solid var(--volt-border-faint);
+  --elevation-0: none;
+  --shadow-float: var(--elev-2);
+
+  /* One accent. The old secondary accents collapse into emerald or grey. */
+  --primary: var(--volt-emerald);
+  --on-primary: var(--volt-on-emerald);
+  --accent-mint: var(--volt-emerald-10);
+  --accent-periwinkle: var(--volt-surface);
+  --accent-orange: var(--volt-emerald);
+  --accent-magenta: var(--volt-text-600);
+  --wordmark-tint: var(--volt-canvas);
+  --brand-gradient: var(--volt-canvas);
+  --brand-gradient-soft: var(--volt-canvas);
+  --link: var(--volt-emerald-deep);
+  --link-hover: var(--volt-emerald);
+  --link-on-dark: var(--volt-emerald-deep);
+  --link-on-dark-hover: var(--volt-emerald);
+
+  /* Type — Inter at regular weight with negative tracking; mono for numbers. */
+  --type-display-xxl: 400 60px/60px var(--font-sans);
+  --type-display-xl: 400 36px/40px var(--font-sans);
+  --type-display-lg: 700 24px/32px var(--font-sans);
+  --type-display-md: 600 20px/28px var(--font-sans);
+  --type-body-lg: 400 18px/28px var(--font-sans);
+  --type-body-lg-strong: 600 18px/28px var(--font-sans);
+  --type-body-md: 400 16px/26px var(--font-sans);
+  --type-body-md-strong: 600 16px/24px var(--font-sans);
+  --type-caption: 400 14px/20px var(--font-sans);
+  --type-caption-strong: 600 14px/20px var(--font-sans);
+  --type-mono-button: 600 14px/20px var(--font-sans);
+  --type-mono-eyebrow: 600 12px/16px var(--font-mono);
+  --type-mono-label: 500 12px/18px var(--font-mono);
+  --type-mono-caption: 400 12px/16px var(--font-mono);
+  --ls-display-xxl: -0.65px;
+  --ls-display-xl: -0.9px;
+  --ls-display-lg: -0.6px;
+  --ls-display-md: 0px;
+  --ls-body-lg: 0px;
+  --ls-body-md: 0px;
+  --ls-caption: 0px;
+  --ls-mono-button: 0px;
+  --ls-mono-eyebrow: 1.4px;
+  --ls-mono-label: 0.4px;
+  --ls-mono-caption: 0.4px;
+  --weight-regular: 400;
+  --weight-medium: 600;
+
+  /* Spacing — VoltAgent's 4px scale; bands are 48px, gutters 32px. */
+  --space-section: 48px;
+  --band-padding-y: 48px;
+  --card-padding: 24px;
+  --card-padding-lg: 32px;
+  --row-padding: 12px 16px;
+  --inline-gap: 16px;
+  --chip-gap: 8px;
+  --nav-link-gap: 24px;
+  --touch-min: 44px;
+
+  /* Radii: 6px controls, 8px cards, pill for status only. */
+  --radius-card: var(--radius-md);
+  --radius-button: var(--radius-sm);
+  --radius-input: var(--radius-sm);
+
+  /* Motion: 200ms small, 300ms default, no springs. */
+  --duration-fast: var(--motion-fast);
+  --duration-base: var(--motion-base);
+  --duration-slow: var(--motion-slow);
+  --ease-standard: var(--ease-in-out);
+  --transition-base: all var(--motion-base) ease;
+  --hover-lighten-on-dark: rgba(255,255,255,0.06);
+  --hover-darken-on-light: rgba(255,255,255,0.06);
+  --press-opacity: 1;
+}
+  </style>
+  <style>
+/* ── Light theme ─────────────────────────────────────────────────────────────
+   Dark is the base :root (see hashicorp-tokens.css, loaded last) and is never
+   touched — this block is a pure OVERRIDE that only applies when the page is in
+   light mode. It wins over the base by SPECIFICITY, not document order:
+   `:root[data-theme="light"]` is (0,2,0) vs a bare `:root` at (0,1,0), so it
+   still overrides the HashiCorp layer even though it is declared before it.
+   Toggle by setting/clearing data-theme="light" on <html> (see the head script
+   and the header control) — no stylesheet swap, the CSS variables just re-resolve.
+
+   Design brief (per the design direction): the HashiCorp IDENTITY is kept in
+   both themes — type scale, 96px rhythm, 8px corners, non-pill CTA all live in
+   the base :root and are theme-independent. Only what carries LIGHTNESS moves
+   here: the surface/text/border ramp inverts, the primary CTA flips to
+   inverse-canvas (near-black fill, white label — the mirror of dark's white-on-
+   black), and hover darkens the fill instead of lightening it. Accent hues stay
+   put; the green deepens only where it becomes text/line work on paper. */
+:root[data-theme="light"] {
+  /* Surfaces — paper, cool-neutral. Sections still separate by surface lift
+     (void → canvas → surface) reinforced by hairlines, exactly as on dark. */
+  --volt-void:#ffffff;        /* page + hero canvas */
+  --volt-ink-black:#fbfbfa;
+  --volt-canvas:#f5f6f7;      /* band fill + default card fill */
+  --volt-surface:#eaecef;     /* hover / selected / input recess */
+  --volt-panel:#eceef1;       /* code-mockup header */
+  --volt-grey-dark:#f5f6f7;
+  --volt-black:#ffffff;       /* "deepest surface" role → paper on light */
+  --volt-node-canvas:#f5f6f7;
+  --volt-node-row:#eceef1;
+  --volt-node-fill:#eceef1;
+
+  /* Text — inverted ramp: near-black ink at the top, mid-grey at the subtle end. */
+  --volt-white:#0b0d10;       /* ink: headlines + emphasised body */
+  --volt-text-100:#141719;
+  --volt-text-200:#22262b;    /* body */
+  --volt-text-300:#3a3f46;
+  --volt-text-400:#565c64;    /* eyebrow labels */
+  --volt-text-500:#5e646c;    /* muted / secondary body */
+  --volt-text-600:#787f88;    /* fine print, timestamps */
+  --volt-zinc-300:#3a3f46;
+  --volt-zinc-400:#565c64;
+  --volt-zinc-700:#eaecef;
+  --volt-zinc-800:#f5f6f7;
+  --volt-gray-400:#565c64;
+  --text-code:#1b1f24;
+
+  /* Borders — hairlines carry the elevation on light too, as translucent ink. */
+  --volt-border:rgba(11,13,16,0.12);
+  --volt-border-faint:rgba(11,13,16,0.08);
+  --volt-border-hover:rgba(11,13,16,0.22);
+  --volt-hairline-soft:rgba(11,13,16,0.08);
+  --volt-border-dashed:rgba(11,13,16,0.18);
+
+  /* Accent — Nomad green. The #00ca8e fill/dot/status colour reads on white and
+     stays; the "soft/deep" roles (used as accent TEXT and lockup) deepen so they
+     clear AA contrast on paper. */
+  --volt-emerald:#00ca8e;
+  --volt-emerald-400:#00b37e;
+  --volt-emerald-soft:#047857;
+  --volt-emerald-deep:#047857;
+  --volt-emerald-08:rgba(0,202,142,0.10);
+  --volt-emerald-10:rgba(0,202,142,0.14);
+  --volt-emerald-20:rgba(0,202,142,0.22);
+  --volt-emerald-30:rgba(0,202,142,0.32);
+  --volt-on-emerald:#04120d;
+
+  /* Vault yellow marks pipeline "guesses" (claim flow). The dark #ffcf25 is
+     ~1.3:1 yellow-on-white — deepen to a dark amber that clears AA on paper.
+     (Was omitted from this block, so it leaked the dark value in light mode.) */
+  --volt-yellow:#8a6d00;
+
+  /* Per-product indigo shows only as the hero gradient wash; lightened so it
+     tints the paper rather than muddying it. Other product hues (Vault yellow,
+     Terraform purple, etc.) stay at their brand values — they read on white. */
+  --volt-indigo:#c9d4ff;
+
+  /* Primary action — HashiCorp points --primary at "inverse-canvas". On light
+     that is the exact mirror of dark: near-black fill, white label. The
+     button[style*=--volt-emerald] escape-hatch in hashicorp-tokens.css reads
+     --primary/--on-primary, so the CTA flips automatically. */
+  --primary:#0b0d10;
+  --on-primary:#ffffff;
+
+  /* Links — HashiCorp's Vagrant blue, darkened for AA on white. (Bare <a> tags
+     use --volt-emerald-deep via the base anchor rule; this is for the components
+     that read --link.) */
+  --link:#1868f2;
+  --link-hover:#0b4fd0;
+  --link-on-dark:#1868f2;
+  --link-on-dark-hover:#0b4fd0;
+
+  /* Secondary accent surfaces */
+  --accent-mint:rgba(0,202,142,0.14);
+  --accent-periwinkle:#eaecef;
+  --wordmark-tint:#f5f6f7;
+  --brand-gradient:#f5f6f7;
+  --brand-gradient-soft:#f5f6f7;
+
+  /* Elevation + hover. Still no drop shadows: a single hairline ring separates
+     cards, and hover DARKENS the fill on light instead of lightening it. */
+  --elev-2:0 0 0 1px var(--volt-border-hover);
+  --hover-lighten-on-dark:rgba(11,13,16,0.05);
+  --hover-darken-on-light:rgba(11,13,16,0.05);
+}
+  </style>
+  <!-- HashiCorp token layer = the DARK base. Its bare `:root` sets the dark
+       colour ramp plus the theme-independent HashiCorp identity (type, spacing,
+       radii, CTA shape). The light block above overrides only the colour half
+       by specificity when data-theme="light". Loaded last so it also wins over
+       the VoltAgent bridge for dark. -->
+  <link rel="stylesheet" href="styles/hashicorp-tokens.css">
+  <script src="design-system/voltagent/ds-bundle.js"></script>
+  <script src="scripts/voltagent-adapter.js"></script>
+  <script src="scripts/screens.js"></script>
+  <script src="scripts/app.js"></script>
+  <script src="scripts/hifi.js"></script>
+  <script src="scripts/frontdoor.js"></script>
+  <script src="scripts/search.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--volt-void); }
+    body { font-family: var(--font-sans); color: var(--volt-text-200); -webkit-font-smoothing: antialiased; }
+    a { color: var(--volt-emerald-deep); text-decoration: none; }
+    a:hover { color: var(--volt-emerald); text-decoration: none; }
+    input::placeholder, textarea::placeholder { color: var(--volt-text-600); }
+    /* The UA gives buttons their own dark colour, which on a void canvas hides any
+       label the screen library left to inherit. */
+    button { color: inherit; font-family: inherit; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: var(--volt-void)">
+  <x-import component-from-global-scope="NotavibeShell" dc-props="{{ shellProps }}" hint-size="100%,100vh"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startRoute&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;discover&quot;,&quot;options&quot;:[&quot;discover&quot;,&quot;project&quot;,&quot;search&quot;,&quot;stack.connect&quot;,&quot;claim.start&quot;,&quot;suppress.start&quot;,&quot;backer.dashboard&quot;,&quot;maintainer.dashboard&quot;,&quot;admin.corrections&quot;,&quot;methodology&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Desktop 1280&quot;,&quot;options&quot;:[&quot;Desktop 1280&quot;,&quot;Mobile 360&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;ghOutage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+/* Deck before categories — a deliberate deviation from §5.5's "intent
+   categories, always first", recorded here rather than slipped in.
+
+   Rationale: the hero now asserts "ranked on maintenance, not popularity", and
+   the deck's banded project cards are the evidence for that claim where the
+   category grid changes the subject to navigation. The orientation job §5.5's
+   ordering protected has moved above the fold into the hero's seed chips, and
+   at 90dvh categories fall below the fold either way.
+
+   Costs accepted: nine internal links to indexed /discover/{category} surfaces
+   sit lower on the most-linked page, and orderViolated (below) now measures
+   drift from THIS order, not the spec's. */
+const CANON = ["deck", "categories", "stack", "editorial", "refine", "shipweek"];
+/* Fingerprint of the intended order. A saved moduleOrder from before the swap
+   would otherwise be restored from storage and silently reinstate the old
+   sequence — the persisted value outliving the decision that produced it. */
+const CANON_ID = CANON.join(",");
+const KEY = "notavibe.prototype.v1";
+const PERSIST = ["claims", "lists", "interests", "requests", "publishedStack", "orgWaitlisted", "signedIn", "moduleOrder"];
+
+/* ── Deep linking ────────────────────────────────────────────────────────────
+   Navigation is pure in-memory route state (ctx.go → setState({route})), so the
+   URL never moved and no screen was linkable. These two functions are the single
+   bridge between that state and location.hash, giving every screen its own URL.
+
+   Scheme — the route NAME is the first path segment (names use dots, never
+   slashes, so they can't be confused with a slug); a SLUG is the remaining
+   segments, kept raw so an owner/repo slug reads as #/project/honojs/hono; and
+   the other scalar fields ride the query string. `next` (a nested route used for
+   the sign-in redirect) is deliberately not encoded — it is transient in-session
+   state, not something a shared link should carry. */
+const URL_FIELDS = ["id", "q", "system", "type"];
+/* The public "front door" shell (marketing chrome, no workspace sidebar) is a
+   place a signed-in user deliberately enters via the wordmark / "My workspace"
+   link, which sets route.full. Browsing WITHIN it — running a search, opening a
+   category or a project — must keep them in that shell rather than dropping
+   them into the workspace app shell (the `backerDiscovery` rule in app.js keys
+   off !route.full). So go() carries `full` forward across these public browse
+   routes; any workspace/app route (backer.*, maintainer.*, stack.*, the
+   dashboard, …) is absent here, so navigating to one naturally exits the mode. */
+const PUBLIC_BROWSE = /^(discover|category|search|project|methodology|editorial|list\.public|stack\.public|alternatives|compare|shipweek)$/;
+/* First-class short URLs. A route's canonical internal name (used everywhere in
+   app.js — screenFor, the app-shell regex, nav active state, the role switch)
+   stays untouched; only its address-bar form is aliased. parseHash maps the
+   short form back to the canonical name, so both URLs resolve and the bar
+   normalises to the short one. Add a pair here to promote another route. */
+const ROUTE_ALIAS = { "maintainer.dashboard": "maintainer", "backer.dashboard": "backer" };
+const ROUTE_ALIAS_REVERSE = { "maintainer": "maintainer.dashboard", "backer": "backer.dashboard" };
+function buildHash(route) {
+  if (!route || !route.name) return "#/discover";
+  let path = "/" + (ROUTE_ALIAS[route.name] || route.name);
+  if (route.slug) path += "/" + route.slug; /* slug may hold slashes; leave raw */
+  const qs = URL_FIELDS
+    .filter((k) => route[k] != null && route[k] !== "")
+    .map((k) => k + "=" + encodeURIComponent(route[k]));
+  return "#" + path + (qs.length ? "?" + qs.join("&") : "");
+}
+function parseHash() {
+  const raw = (window.location.hash || "").replace(/^#/, "");
+  if (!raw || raw === "/") return null;
+  const qi = raw.indexOf("?");
+  const path = qi >= 0 ? raw.slice(0, qi) : raw;
+  const query = qi >= 0 ? raw.slice(qi + 1) : "";
+  const segs = path.replace(/^\//, "").split("/").filter(Boolean);
+  if (!segs.length) return null;
+  const route = { name: ROUTE_ALIAS_REVERSE[segs[0]] || segs[0] };
+  if (segs.length > 1) route.slug = decodeURIComponent(segs.slice(1).join("/"));
+  if (query) {
+    query.split("&").forEach((pair) => {
+      const eq = pair.indexOf("=");
+      const k = decodeURIComponent(eq >= 0 ? pair.slice(0, eq) : pair);
+      const v = eq >= 0 ? decodeURIComponent(pair.slice(eq + 1)) : "";
+      if (URL_FIELDS.indexOf(k) > -1) route[k] = v;
+    });
+  }
+  return route;
+}
+/* Compares only the serialised fields, so a route carrying an unserialised
+   `next` still counts as "already shown" and no redundant navigation fires. */
+function sameRoute(a, b) {
+  if (!a || !b) return false;
+  if (a.name !== b.name || (a.slug || "") !== (b.slug || "")) return false;
+  return URL_FIELDS.every((k) => (a[k] || "") === (b[k] || ""));
+}
+
+class Component extends DCLogic {
+  state = {
+    /* A hash in the address bar wins over the editor's startRoute prop, so a
+       shared or reloaded link lands on the screen it names. */
+    route: parseHash() || { name: this.props.startRoute || "discover" },
+    focusSlug: "honojs/hono",
+    signedIn: false,
+    mobile: (this.props.viewport || "Desktop 1280") === "Mobile 360",
+    ghDegraded: !!this.props.ghOutage,
+    claims: {},
+    lists: null,
+    interests: [],
+    requests: [],
+    scan: null,
+    publishedStack: null,
+    orgWaitlisted: false,
+    moduleOrder: CANON.slice()
+  };
+
+  componentDidMount() {
+    try {
+      const raw = window.localStorage.getItem(KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        const patch = {};
+        PERSIST.forEach((k) => { if (saved[k] !== undefined && saved[k] !== null) patch[k] = saved[k]; });
+        /* Drop a moduleOrder saved against a different CANON. Everything else
+           in storage survives — only the ordering is re-baselined. */
+        if (saved.canonId !== CANON_ID) delete patch.moduleOrder;
+        if (Object.keys(patch).length) this.setState(patch);
+      }
+    } catch (e) { /* first run, or storage unavailable */ }
+    if (!window.NotavibeShell) {
+      this._poll = setInterval(() => {
+        if (window.NotavibeShell) { clearInterval(this._poll); this.forceUpdate(); }
+      }, 120);
+    }
+
+    /* Reflect the initial route in the address bar (a fresh load with no hash
+       lands on discover but the URL was bare), then keep state in sync with the
+       URL so browser Back/Forward and hand-edited links both work. */
+    this._lastHash = buildHash(this.state.route);
+    if (window.location.hash !== this._lastHash) {
+      window.location.replace(this._lastHash);
+    }
+    if (this.state.route.slug) this.setState({ focusSlug: this.state.route.slug });
+    this._onHashChange = () => {
+      const r = parseHash();
+      if (!r || sameRoute(r, this.state.route)) return;
+      this._lastHash = buildHash(r);
+      this.setState({ route: r, focusSlug: r.slug || this.state.focusSlug });
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", this._onHashChange);
+  }
+
+  /* State is the source of truth; the URL trails it. Every route change — from
+     go(), from runScan(), from anywhere — passes through here and updates the
+     hash. Guarded on _lastHash so the write the hashchange handler already made
+     doesn't bounce back and cause a loop. */
+  componentDidUpdate() {
+    const desired = buildHash(this.state.route);
+    if (desired === this._lastHash) return;
+    this._lastHash = desired;
+    if (window.location.hash !== desired) window.location.hash = desired;
+  }
+
+  componentWillUnmount() {
+    if (this._poll) clearInterval(this._poll);
+    if (this._onHashChange) window.removeEventListener("hashchange", this._onHashChange);
+  }
+
+  save(patch) {
+    this.setState(patch, () => {
+      try {
+        const out = {};
+        PERSIST.forEach((k) => { out[k] = this.state[k]; });
+        out.canonId = CANON_ID;
+        window.localStorage.setItem(KEY, JSON.stringify(out));
+      } catch (e) { /* storage full or blocked — the prototype still works in-session */ }
+    });
+  }
+
+  lists() {
+    if (this.state.lists) return this.state.lists;
+    const seed = window.SEED_LISTS || [];
+    return seed.map((l) => Object.assign({}, l, { items: l.items.slice() }));
+  }
+
+  claimState(slug) {
+    if (this.state.claims[slug]) return this.state.claims[slug];
+    const p = window.findProject ? window.findProject(slug) : null;
+    return p ? p.claim || "generated" : "generated";
+  }
+
+  parseManifest(text) {
+    const names = [];
+    const re = /"([^"]+)"\s*:\s*"[^"]*"/g;
+    let m;
+    while ((m = re.exec(text || "")) !== null) {
+      if (["dependencies", "devDependencies", "peerDependencies"].indexOf(m[1]) === -1) names.push(m[1]);
+    }
+    return names;
+  }
+
+  runScan(source, text) {
+    const names = this.parseManifest(text);
+    const catalog = window.PROJECTS || [];
+    const matched = [];
+    let unmatched = 0;
+    names.forEach((n) => {
+      const hit = catalog.find((p) => p.name === n || p.repo === n || p.slug === n);
+      if (hit && matched.indexOf(hit.slug) === -1) matched.push(hit.slug);
+      else if (!hit) unmatched += 1;
+    });
+    this.setState({
+      scan: { matched, unmatched, total: names.length, source },
+      route: { name: "stack.results" }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  renderVals() {
+    const self = this;
+    const lists = this.lists();
+    const ctx = {
+      route: this.state.route,
+      focusSlug: this.state.focusSlug,
+      signedIn: this.state.signedIn,
+      mobile: this.state.mobile,
+      ghDegraded: this.state.ghDegraded,
+      lists: lists,
+      interests: this.state.interests,
+      requests: this.state.requests,
+      scan: this.state.scan,
+      publishedStack: this.state.publishedStack,
+      orgWaitlisted: this.state.orgWaitlisted,
+      moduleOrder: this.state.moduleOrder,
+      orderViolated: this.state.moduleOrder.join(",") !== CANON.join(","),
+
+      go(route) {
+        const r = Object.assign({}, route || { name: "discover" });
+        /* Keep a signed-in visitor in the public front-door shell while they
+           browse public surfaces (see PUBLIC_BROWSE). Only inherit when the
+           caller didn't decide `full` itself, and never manufacture it for a
+           logged-out visitor (their front door has no `full` to carry). */
+        if (r.full == null && self.state.signedIn
+            && self.state.route && self.state.route.full
+            && PUBLIC_BROWSE.test(r.name || "")) {
+          r.full = true;
+        }
+        self.setState({ route: r, focusSlug: r.slug || self.state.focusSlug });
+        window.scrollTo(0, 0);
+      },
+      signIn() { self.save({ signedIn: true }); },
+      toggleSignedIn() { self.save({ signedIn: !self.state.signedIn }); },
+      toggleMobile() { self.setState({ mobile: !self.state.mobile }); },
+      toggleGh() { self.setState({ ghDegraded: !self.state.ghDegraded }); },
+
+      claimState(slug) { return self.claimState(slug); },
+      setClaimState(slug, next) {
+        const claims = Object.assign({}, self.state.claims);
+        claims[slug] = next;
+        self.save({ claims: claims });
+      },
+
+      isSaved(slug) { return lists.some((l) => l.items.indexOf(slug) > -1); },
+      toggleInList(listId, slug) {
+        self.save({
+          lists: lists.map((l) => {
+            if (l.id !== listId) return l;
+            const on = l.items.indexOf(slug) > -1;
+            return Object.assign({}, l, {
+              items: on ? l.items.filter((s) => s !== slug) : l.items.concat([slug])
+            });
+          })
+        });
+      },
+      createList(title, description, items) {
+        const id = "l" + (lists.length + 1) + "-" + Date.now().toString(36).slice(-4);
+        self.save({
+          lists: lists.concat([{
+            id: id,
+            title: title,
+            handle: "raj",
+            slug: String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+            visibility: "private",
+            description: description || "",
+            items: (items || []).slice(),
+            saves: 0
+          }])
+        });
+        return id;
+      },
+      toggleVisibility(listId) {
+        self.save({
+          lists: lists.map((l) => l.id === listId
+            ? Object.assign({}, l, { visibility: l.visibility === "public" ? "private" : "public" })
+            : l)
+        });
+      },
+      saveListCopy(listId) {
+        const src = lists.find((l) => l.id === listId);
+        if (!src) return;
+        self.save({
+          lists: lists.concat([{
+            id: "copy-" + Date.now().toString(36).slice(-5),
+            title: src.title + " (saved copy)",
+            handle: "raj",
+            slug: src.slug + "-copy",
+            visibility: "private",
+            description: src.description,
+            items: src.items.slice(),
+            saves: 0
+          }])
+        });
+      },
+
+      hasInterest(slug, system) {
+        return self.state.interests.some((i) => i.slug === slug && i.system === (system || "subscriptions"));
+      },
+      toggleInterest(slug, system) {
+        const sys = system || "subscriptions";
+        const on = self.state.interests.some((i) => i.slug === slug && i.system === sys);
+        self.save({
+          interests: on
+            ? self.state.interests.filter((i) => !(i.slug === slug && i.system === sys))
+            : self.state.interests.concat([{ slug: slug, system: sys, at: new Date().toISOString() }])
+        });
+      },
+
+      runScan(source, text) { self.runScan(source, text); },
+      publishStack(slug) { self.save({ publishedStack: slug }); },
+      fileRequest(req) { self.save({ requests: self.state.requests.concat([req]) }); },
+      joinOrgWaitlist() { self.save({ orgWaitlisted: true }); },
+
+      moveModule(i, dir) {
+        const order = self.state.moduleOrder.slice();
+        const j = i + dir;
+        if (j < 0 || j >= order.length) return;
+        const tmp = order[i];
+        order[i] = order[j];
+        order[j] = tmp;
+        self.save({ moduleOrder: order });
+      },
+      resetOrder() { self.save({ moduleOrder: CANON.slice() }); }
+    };
+    return { shellProps: { ctx: ctx } };
+  }
+}
+</script>
+</body>
+</html>
