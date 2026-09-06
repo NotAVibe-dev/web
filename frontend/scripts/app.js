@@ -1963,6 +1963,9 @@
     if (name === "admin.features") return SuperadminFeatures;
     if (name === "admin.overrides") return SuperadminOverrides;
     if (name === "admin.health") return SuperadminHealth;
+    if (name === "admin.contests") return SuperadminContests;
+    if (name === "admin.nominations") return SuperadminNominations;
+    if (name === "admin.audit") return SuperadminAuditLog;
     var T = {
       discover: "Discover", category: "CategoryView", search: "SearchResults", project: "ProjectPage",
       methodology: "MethodologyPage", "list.public": "PublicListPage", "stack.public": "PublicStackPage",
@@ -3068,6 +3071,54 @@
     return h("span", { className: "nv-sa-dot nv-sa-dot--" + status, "aria-label": status });
   }
 
+  /* ── Superadmin confirm modal ──────────────────────────────────────────── */
+  var _saModalRoot = null;
+  function saConfirmModal(opts) {
+    /* opts: { title, body, confirmLabel, destructive, onConfirm, onCancel } */
+    if (!_saModalRoot) {
+      _saModalRoot = document.createElement("div");
+      document.body.appendChild(_saModalRoot);
+    }
+    function close() { ReactDOM.render(null, _saModalRoot); }
+    function confirm() { close(); if (opts.onConfirm) opts.onConfirm(); }
+    function cancel() { close(); if (opts.onCancel) opts.onCancel(); }
+    var accent = opts.destructive ? "var(--volt-red,#ef4444)" : "var(--volt-emerald)";
+    var modal = h("div", { style: { position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)" },
+      onClick: function (e) { if (e.target === e.currentTarget) cancel(); } },
+      h("div", { style: { background: "var(--volt-surface)", border: "1px solid var(--volt-border)", borderRadius: "16px", padding: "var(--space-2xl)", maxWidth: "420px", width: "90%", display: "flex", flexDirection: "column", gap: "var(--space-lg)" } },
+        h("h2", { style: { margin: 0, font: "var(--type-display-sm)", letterSpacing: "var(--ls-display-sm,0)" } }, opts.title),
+        h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } }, opts.body),
+        opts.input ? opts.input : null,
+        h("div", { style: { display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end" } },
+          h(Button, { variant: "ghost", onClick: cancel }, "Cancel"),
+          h(Button, { variant: "outline", onClick: confirm, style: { borderColor: accent, color: accent } }, opts.confirmLabel || "Confirm"))));
+    ReactDOM.render(modal, _saModalRoot);
+  }
+
+  /* ── Superadmin toast notifications ────────────────────────────────────── */
+  var _saToastRoot = null;
+  function saToast(message, variant) {
+    /* variant: "ok" | "err" — defaults to "ok" */
+    if (!_saToastRoot) {
+      _saToastRoot = document.createElement("div");
+      _saToastRoot.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none;";
+      document.body.appendChild(_saToastRoot);
+    }
+    var isErr = variant === "err";
+    var pill = document.createElement("div");
+    pill.style.cssText = "pointer-events:auto;font:var(--type-body-md);color:var(--text-body);background:var(--volt-surface);border:1px solid " + (isErr ? "var(--volt-red,#ef4444)" : "var(--volt-emerald)") + ";border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;";
+    var dot = document.createElement("span");
+    dot.className = "nv-sa-dot nv-sa-dot--" + (isErr ? "err" : "ok");
+    pill.appendChild(dot);
+    pill.appendChild(document.createTextNode(message));
+    _saToastRoot.appendChild(pill);
+    requestAnimationFrame(function () { pill.style.opacity = "1"; pill.style.transform = "translateY(0)"; });
+    setTimeout(function () {
+      pill.style.opacity = "0"; pill.style.transform = "translateY(8px)";
+      setTimeout(function () { if (pill.parentNode) pill.parentNode.removeChild(pill); }, 350);
+    }, 3000);
+  }
+
   /* ── 1. Platform pulse ─────────────────────────────────────────────────── */
   function SuperadminPulse(props) {
     var Note = W("Note");
@@ -3135,6 +3186,7 @@
   function SuperadminUsers(props) {
     var ctx = props.ctx, Note = W("Note");
     var ss = React.useState(""), search = ss[0], setSearch = ss[1];
+    var vs = React.useState(null), viewing = vs[0], setViewing = vs[1];
     var USERS = [
       { handle: "rajpatel", email: "raj@example.com", provider: "GitHub", status: "active", grants: 0, lists: 3, interests: 12, joined: "2026-07-14" },
       { handle: "maya-chen", email: "maya@example.com", provider: "GitHub", status: "active", grants: 2, lists: 5, interests: 24, joined: "2026-07-02" },
@@ -3150,10 +3202,74 @@
     });
 
     var ds = React.useState({}), disabled = ds[0], setDisabled = ds[1];
+    var del = React.useState({}), deleted = del[0], setDeleted = del[1];
     function toggleUser(handle) {
-      var next = Object.assign({}, disabled);
-      next[handle] = !next[handle];
-      setDisabled(next);
+      var isOff = disabled[handle] || USERS.find(function (u) { return u.handle === handle; }).status === "disabled";
+      saConfirmModal({
+        title: isOff ? "Enable " + handle + "?" : "Disable " + handle + "?",
+        body: isOff
+          ? "This account will regain access to all platform features."
+          : "This account will lose access to all platform features. Their claimed projects remain but become inactive.",
+        confirmLabel: isOff ? "Enable" : "Disable",
+        destructive: !isOff,
+        onConfirm: function () {
+          var next = Object.assign({}, disabled);
+          next[handle] = !next[handle];
+          setDisabled(next);
+          saToast((isOff ? "Enabled" : "Disabled") + " " + handle, "ok");
+        }
+      });
+    }
+    function deleteUser(handle) {
+      var typedRef = { value: "" };
+      saConfirmModal({
+        title: "Delete " + handle + "?",
+        body: "This permanently removes the account, revokes all grants, and clears their data. Type the handle to confirm.",
+        confirmLabel: "Delete permanently",
+        destructive: true,
+        input: h("input", { className: "nv-field", placeholder: "Type \"" + handle + "\" to confirm\u2026",
+          onChange: function (e) { typedRef.value = e.target.value; },
+          style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        onConfirm: function () {
+          if (typedRef.value !== handle) { saToast("Handle didn't match — delete cancelled", "err"); return; }
+          var next = Object.assign({}, deleted); next[handle] = true; setDeleted(next);
+          setViewing(null);
+          saToast("Deleted " + handle, "ok");
+        }
+      });
+    }
+
+    /* ── User detail panel ────────────────────────── */
+    var detailPanel = null;
+    if (viewing) {
+      var u = viewing;
+      var isOff = disabled[u.handle] || u.status === "disabled";
+      var field = function (label, val) {
+        return h("div", { style: col("2px") },
+          h("span", { style: SA_EYE }, label),
+          h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, val));
+      };
+      detailPanel = h("div", { style: { position: "fixed", inset: 0, zIndex: 9998, display: "flex", justifyContent: "flex-end", background: "rgba(0,0,0,.4)", backdropFilter: "blur(2px)" },
+        onClick: function (e) { if (e.target === e.currentTarget) setViewing(null); } },
+        h("div", { style: { width: "400px", maxWidth: "90vw", background: "var(--volt-surface)", borderLeft: "1px solid var(--volt-border)", padding: "var(--space-2xl)", display: "flex", flexDirection: "column", gap: "var(--space-xl)", overflowY: "auto" } },
+          h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+            h("h2", { style: { margin: 0, font: "var(--type-display-sm)" } }, u.handle),
+            h("button", { type: "button", onClick: function () { setViewing(null); },
+              style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", font: "var(--type-display-sm)", padding: 0 } }, "\u00d7")),
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)" } },
+            saStatusDot(isOff ? "err" : "ok"),
+            h("span", { style: SA_CAP }, isOff ? "Disabled" : "Active")),
+          field("Email", u.email),
+          field("Auth provider", u.provider),
+          field("Joined", u.joined),
+          h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-md)" } },
+            saTile("Grants", String(u.grants), "active"),
+            saTile("Lists", String(u.lists), "created"),
+            saTile("Interests", String(u.interests), "registered")),
+          h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" } },
+            h("span", { style: SA_EYE }, "Actions"),
+            h(Button, { variant: "outline", onClick: function () { toggleUser(u.handle); } }, isOff ? "Enable account" : "Disable account"),
+            h(Button, { variant: "outline", onClick: function () { deleteUser(u.handle); }, style: { borderColor: "var(--volt-red,#ef4444)", color: "var(--volt-red,#ef4444)" } }, "Delete account"))));
     }
 
     var searchBar = h("div", { style: { display: "flex", gap: "var(--space-md)", alignItems: "center" } },
@@ -3162,12 +3278,13 @@
         style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
       h("span", { style: SA_CAP }, filtered.length + " of " + USERS.length));
 
+    var visibleUsers = filtered.filter(function (u) { return !deleted[u.handle]; });
     var table = h("div", { className: "nv-sa-card", style: col("0") },
       h("div", { style: Object.assign({}, { display: "grid", gridTemplateColumns: "1fr 1fr 80px 50px 50px 56px 100px", gap: "var(--space-md)", padding: "var(--space-md) var(--space-lg)", borderBottom: "1px solid var(--volt-border)" }) },
         ["Handle", "Email", "Provider", "Grants", "Lists", "Status", "Actions"].map(function (l) {
           return h("span", { key: l, style: SA_EYE }, l);
         })),
-      filtered.map(function (u) {
+      visibleUsers.map(function (u) {
         var isOff = disabled[u.handle] || u.status === "disabled";
         return h("div", { key: u.handle, className: "nv-sa-row",
           style: { display: "grid", gridTemplateColumns: "1fr 1fr 80px 50px 50px 56px 100px", gap: "var(--space-md)", padding: "var(--space-md) var(--space-lg)", opacity: isOff ? 0.5 : 1 } },
@@ -3179,13 +3296,14 @@
           h("span", null, saStatusDot(isOff ? "err" : "ok")),
           h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
             h(Button, { variant: "ghost", size: "sm", onClick: function () { toggleUser(u.handle); } }, isOff ? "Enable" : "Disable"),
-            h(Button, { variant: "ghost", size: "sm", onClick: function () {} }, "View")));
+            h(Button, { variant: "ghost", size: "sm", onClick: function () { setViewing(u); } }, "View")));
       }));
 
     return h("div", { style: SA_WRAP },
       saHeader("Superadmin", "User management", "Browse, search, and manage all accounts."),
       searchBar, table,
-      h(Note, null, "Actions write to the audit log with actor and reason. Impersonate opens a view-as-user session for debugging — no writes. · illustrative data"));
+      h(Note, null, "Actions write to the audit log with actor and reason. Impersonate opens a view-as-user session for debugging — no writes. · illustrative data"),
+      detailPanel);
   }
 
   /* ── 3. Invite & access management ─────────────────────────────────────── */
@@ -3194,7 +3312,9 @@
     var gs = React.useState(false), gateOn = gs[0], setGateOn = gs[1];
     React.useEffect(function () { setGateOn(true); }, []);
 
-    var CODES = [
+    var ps = React.useState("mkr2026"), password = ps[0], setPassword = ps[1];
+
+    var INIT_CODES = [
       { code: "NV-ALPHA-001", used: true, usedBy: "rajpatel", usedAt: "2026-07-14" },
       { code: "NV-ALPHA-002", used: true, usedBy: "maya-chen", usedAt: "2026-07-02" },
       { code: "NV-ALPHA-003", used: false, usedBy: null, usedAt: null },
@@ -3204,25 +3324,105 @@
       { code: "NV-ALPHA-007", used: false, usedBy: null, usedAt: null },
       { code: "NV-ALPHA-008", used: true, usedBy: "nina.io", usedAt: "2026-07-30" }
     ];
-    var usedCount = CODES.filter(function (c) { return c.used; }).length;
+    var cs = React.useState(INIT_CODES), codes = cs[0], setCodes = cs[1];
+    var usedCount = codes.filter(function (c) { return c.used; }).length;
+
+    var INIT_ALLOWLIST = ["@notavibe.dev", "raj@example.com", "maya@example.com", "ramy@example.com"];
+    var als = React.useState(INIT_ALLOWLIST), allowlist = als[0], setAllowlist = als[1];
+    var ais = React.useState(""), alInput = ais[0], setAlInput = ais[1];
+
+    var transitioned = React.useState(false), isPublic = transitioned[0], setIsPublic = transitioned[1];
+
+    function copyCode(code) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(function () { saToast("Copied " + code, "ok"); });
+      } else {
+        /* fallback */
+        var ta = document.createElement("textarea"); ta.value = code; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+        saToast("Copied " + code, "ok");
+      }
+    }
+    function revokeCode(code) {
+      saConfirmModal({
+        title: "Revoke " + code + "?",
+        body: "This code will no longer be usable. Anyone who hasn't redeemed it yet will need a new code.",
+        confirmLabel: "Revoke",
+        destructive: true,
+        onConfirm: function () {
+          setCodes(codes.filter(function (c) { return c.code !== code; }));
+          saToast("Revoked " + code, "ok");
+        }
+      });
+    }
+    function generateCodes() {
+      var next = codes.slice();
+      var n = codes.length;
+      for (var i = 1; i <= 5; i++) {
+        var num = String(n + i); while (num.length < 3) num = "0" + num;
+        next.push({ code: "NV-ALPHA-" + num, used: false, usedBy: null, usedAt: null });
+      }
+      setCodes(next);
+      saToast("Generated 5 new codes", "ok");
+    }
+    function regeneratePassword() {
+      saConfirmModal({
+        title: "Regenerate password?",
+        body: "The current password will stop working immediately. Anyone with the old password will need the new one.",
+        confirmLabel: "Regenerate",
+        destructive: false,
+        onConfirm: function () {
+          var chars = "abcdefghjkmnpqrstuvwxyz23456789";
+          var pw = ""; for (var i = 0; i < 8; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+          setPassword(pw);
+          saToast("Password regenerated", "ok");
+        }
+      });
+    }
+    function addAllowlistEntry() {
+      var entry = alInput.trim();
+      if (!entry) return;
+      if (allowlist.indexOf(entry) >= 0) { saToast("Already in allowlist", "err"); return; }
+      setAllowlist(allowlist.concat([entry]));
+      setAlInput("");
+      saToast("Added " + entry, "ok");
+    }
+    function removeAllowlistEntry(entry) {
+      setAllowlist(allowlist.filter(function (e) { return e !== entry; }));
+      saToast("Removed " + entry, "ok");
+    }
+    function transitionPublic() {
+      saConfirmModal({
+        title: "Transition to public beta?",
+        body: "This is a one-way action. The password gate will be permanently disabled, invite codes archived, and the site will become publicly accessible. This cannot be undone.",
+        confirmLabel: "Yes, go public",
+        destructive: true,
+        onConfirm: function () {
+          setGateOn(false);
+          setIsPublic(true);
+          saToast("Transitioned to public beta", "ok");
+        }
+      });
+    }
 
     var gateCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } },
         h("div", { style: col("2px") },
           h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, "Password gate"),
-          h("span", { style: SA_CAP }, "Private preview password required to access the prototype")),
-        saToggle(gateOn, function () { setGateOn(!gateOn); })),
-      h("div", { style: Object.assign({}, col("var(--space-sm)"), { padding: "var(--space-lg)", background: "var(--volt-void)", borderRadius: "10px" }) },
+          h("span", { style: SA_CAP }, isPublic ? "Disabled — site is public" : "Private preview password required to access the prototype")),
+        saToggle(gateOn && !isPublic, function () { if (!isPublic) setGateOn(!gateOn); })),
+      !isPublic ? h("div", { style: Object.assign({}, col("var(--space-sm)"), { padding: "var(--space-lg)", background: "var(--volt-void)", borderRadius: "10px" }) },
         h("span", { style: SA_EYE }, "Current password"),
         h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
-          h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "2px", color: "var(--text-body)", padding: "6px 12px", background: "var(--volt-surface)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-sm)" } }, "mkr2026"),
-          h(Button, { variant: "ghost", size: "sm" }, "Regenerate"))));
+          h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "2px", color: "var(--text-body)", padding: "6px 12px", background: "var(--volt-surface)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-sm)" } }, password),
+          h(Button, { variant: "ghost", size: "sm", onClick: function () { copyCode(password); } }, "Copy"),
+          h(Button, { variant: "ghost", size: "sm", onClick: regeneratePassword }, "Regenerate"))) : null);
 
     var codesCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between" } },
         h("span", { style: SA_EYE }, "Invite codes"),
-        h("span", { style: SA_CAP }, usedCount + " of " + CODES.length + " used")),
-      CODES.map(function (c) {
+        h("span", { style: SA_CAP }, usedCount + " of " + codes.length + " used")),
+      codes.map(function (c) {
         return h("div", { key: c.code, className: "nv-sa-row" },
           h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flex: 1 } },
             saStatusDot(c.used ? "ok" : "warn"),
@@ -3230,34 +3430,40 @@
           c.used
             ? h("span", { style: SA_CAP }, c.usedBy + " · " + c.usedAt)
             : h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
-                h(Button, { variant: "ghost", size: "sm" }, "Copy"),
-                h(Button, { variant: "ghost", size: "sm" }, "Revoke")));
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { copyCode(c.code); } }, "Copy"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { revokeCode(c.code); } }, "Revoke")));
       }),
       h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
-        h(Button, { variant: "outline" }, "Generate 5 more codes")));
+        h(Button, { variant: "outline", onClick: generateCodes }, "Generate 5 more codes")));
 
     var allowlistCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Email allowlist"),
       h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
-        ["@notavibe.dev", "raj@example.com", "maya@example.com", "ramy@example.com"].map(function (e) {
+        allowlist.map(function (e) {
           return h("span", { key: e, style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-body)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "4px 12px", display: "inline-flex", alignItems: "center", gap: "8px" } },
-            e, h("button", { type: "button", style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", font: "var(--type-caption)", padding: 0 } }, "×"));
+            e, h("button", { type: "button", onClick: function () { removeAllowlistEntry(e); },
+              style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", font: "var(--type-caption)", padding: 0 } }, "\u00d7"));
         })),
       h("div", { style: { display: "flex", gap: "var(--space-sm)" } },
-        h("input", { className: "nv-field", placeholder: "Add email or domain\u2026",
+        h("input", { className: "nv-field", placeholder: "Add email or domain\u2026", value: alInput,
+          onChange: function (e) { setAlInput(e.target.value); },
+          onKeyDown: function (e) { if (e.key === "Enter") addAllowlistEntry(); },
           style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
-        h(Button, { variant: "outline" }, "Add")));
+        h(Button, { variant: "outline", onClick: addAllowlistEntry }, "Add")));
 
-    var transition = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+    var transitionCard = !isPublic ? h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Launch transition"),
       h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
-        "When you're ready, disable the password gate and invite codes. The site becomes publicly accessible. This is a one-way transition — codes and allowlists are archived, not deleted."),
-      h("div", null, h(Button, { variant: "outline" }, "Transition to public beta")));
+        "When you\u2019re ready, disable the password gate and invite codes. The site becomes publicly accessible. This is a one-way transition \u2014 codes and allowlists are archived, not deleted."),
+      h("div", null, h(Button, { variant: "outline", onClick: transitionPublic }, "Transition to public beta")))
+      : h("div", { className: "nv-sa-card", style: col("var(--space-sm)") },
+          h("span", { style: SA_EYE }, "Launch transition"),
+          h("span", { style: { font: "var(--type-body-md)", color: "var(--volt-emerald)" } }, "\u2713 Transitioned to public beta"));
 
     return h("div", { style: SA_WRAP },
       saHeader("Superadmin", "Invites & access", "Manage the private preview gate, invite codes, and the email allowlist."),
-      gateCard, codesCard, allowlistCard, transition,
-      h(Note, null, "illustrative data · gate changes take effect immediately"));
+      gateCard, codesCard, allowlistCard, transitionCard,
+      h(Note, null, "illustrative data \u00b7 gate changes take effect immediately"));
   }
 
   /* ── 4. Feature control ────────────────────────────────────────────────── */
@@ -3328,68 +3534,158 @@
   /* ── 5. Manual overrides ───────────────────────────────────────────────── */
   function SuperadminOverrides(props) {
     var Note = W("Note");
+    var INPUT_STYLE = { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" };
+
+    /* Form state */
+    var g1 = React.useState(""), grantSlug = g1[0], setGrantSlug = g1[1];
+    var g2 = React.useState(""), grantHandle = g2[0], setGrantHandle = g2[1];
+    var c1 = React.useState(""), claimSlug = c1[0], setClaimSlug = c1[1];
+    var c2 = React.useState("Active"), claimState = c2[0], setClaimState = c2[1];
     var rs = React.useState(""), reason = rs[0], setReason = rs[1];
+    var f1 = React.useState(""), contestId = f1[0], setContestId = f1[1];
+    var f2 = React.useState(""), winnerHandle = f2[0], setWinnerHandle = f2[1];
+    var s1 = React.useState(""), suppressSlug = s1[0], setSuppressSlug = s1[1];
+
+    /* Audit log (live — new actions prepend) */
+    var INIT_LOG = [
+      { action: "Grant revoked", target: "sara_dev \u2192 unjs/unbuild", by: "maghraby", when: "2026-08-04 14:22", reason: "Account disabled \u2014 spam activity" },
+      { action: "Claim state \u2192 Retired", target: "example/old-lib", by: "ramy", when: "2026-08-01 09:15", reason: "Maintainer requested retirement via support" },
+      { action: "Emergency unsuppress", target: "nodejs/undici", by: "maghraby", when: "2026-07-28 16:40", reason: "Suppression was filed by non-owner \u2014 reversed" }
+    ];
+    var ls = React.useState(INIT_LOG), auditLog = ls[0], setAuditLog = ls[1];
+
+    function addAuditEntry(action, target, reasonText) {
+      var now = new Date();
+      var ts = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0") + " " + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+      setAuditLog([{ action: action, target: target, by: "you", when: ts, reason: reasonText }].concat(auditLog));
+    }
+
+    function submitGrant(action) {
+      if (!grantSlug || !grantHandle) { saToast("Fill in both slug and handle", "err"); return; }
+      var label = action === "grant" ? "Grant maintainer status" : "Revoke maintainer status";
+      saConfirmModal({
+        title: label + "?",
+        body: action === "grant"
+          ? "This grants " + grantHandle + " maintainer access to " + grantSlug + ". They will receive full dashboard access."
+          : "This revokes " + grantHandle + "\u2019s maintainer access to " + grantSlug + ". Their claimed project page remains but becomes unowned.",
+        confirmLabel: action === "grant" ? "Grant" : "Revoke",
+        destructive: action === "revoke",
+        onConfirm: function () {
+          addAuditEntry(action === "grant" ? "Grant issued" : "Grant revoked", grantHandle + " \u2192 " + grantSlug, "Manual " + action + " via superadmin");
+          saToast((action === "grant" ? "Granted to " : "Revoked from ") + grantHandle, "ok");
+          setGrantSlug(""); setGrantHandle("");
+        }
+      });
+    }
+
+    function submitClaimOverride() {
+      if (!claimSlug) { saToast("Enter a project slug", "err"); return; }
+      if (!reason) { saToast("Reason is required", "err"); return; }
+      saConfirmModal({
+        title: "Override claim state to " + claimState + "?",
+        body: "This changes " + claimSlug + " to \"" + claimState + "\". The change is immediate and writes to the audit log.",
+        confirmLabel: "Apply override",
+        destructive: claimState === "Suppressed",
+        onConfirm: function () {
+          addAuditEntry("Claim state \u2192 " + claimState, claimSlug, reason);
+          saToast("Claim state overridden to " + claimState, "ok");
+          setClaimSlug(""); setClaimState("Active"); setReason("");
+        }
+      });
+    }
+
+    function submitForceResolve() {
+      if (!contestId || !winnerHandle) { saToast("Fill in contest ID and winner handle", "err"); return; }
+      saConfirmModal({
+        title: "Force-resolve contest?",
+        body: "This bypasses the 72h SLA window. " + winnerHandle + " receives the grant for contest " + contestId + ". The loser\u2019s pending claim is cleared. Both are notified.",
+        confirmLabel: "Force resolve",
+        destructive: true,
+        onConfirm: function () {
+          addAuditEntry("Contest force-resolved", contestId + " \u2192 winner: " + winnerHandle, "Manual force-resolve via superadmin");
+          saToast("Contest " + contestId + " resolved", "ok");
+          setContestId(""); setWinnerHandle("");
+        }
+      });
+    }
+
+    function submitUnsuppress() {
+      if (!suppressSlug) { saToast("Enter a project slug", "err"); return; }
+      saConfirmModal({
+        title: "Unsuppress " + suppressSlug + "?",
+        body: "The page returns to its pre-suppression state (Active or Retired). Use only when a suppression was applied in error.",
+        confirmLabel: "Unsuppress",
+        destructive: false,
+        onConfirm: function () {
+          addAuditEntry("Emergency unsuppress", suppressSlug, "Manual unsuppress via superadmin");
+          saToast("Unsuppressed " + suppressSlug, "ok");
+          setSuppressSlug("");
+        }
+      });
+    }
 
     var grantCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Grant / revoke maintainer status"),
       h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
-        h("input", { className: "nv-field", placeholder: "owner/repo slug\u2026",
-          style: { flex: "1 1 200px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
-        h("input", { className: "nv-field", placeholder: "user handle\u2026",
-          style: { flex: "1 1 160px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } })),
+        h("input", { className: "nv-field", placeholder: "owner/repo slug\u2026", value: grantSlug,
+          onChange: function (e) { setGrantSlug(e.target.value); },
+          style: Object.assign({}, INPUT_STYLE, { flex: "1 1 200px" }) }),
+        h("input", { className: "nv-field", placeholder: "user handle\u2026", value: grantHandle,
+          onChange: function (e) { setGrantHandle(e.target.value); },
+          style: Object.assign({}, INPUT_STYLE, { flex: "1 1 160px" }) })),
       h("div", { style: { display: "flex", gap: "var(--space-sm)" } },
-        h(Button, { variant: "outline" }, "Grant"),
-        h(Button, { variant: "ghost" }, "Revoke")));
+        h(Button, { variant: "outline", disabled: !grantSlug || !grantHandle, onClick: function () { submitGrant("grant"); } }, "Grant"),
+        h(Button, { variant: "ghost", disabled: !grantSlug || !grantHandle, onClick: function () { submitGrant("revoke"); } }, "Revoke")));
 
     var claimCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Override claim state"),
       h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap", alignItems: "flex-end" } },
         h("div", { style: col("4px", { flex: "1 1 200px" }) },
           h("label", { style: SA_CAP }, "Project slug"),
-          h("input", { className: "nv-field", placeholder: "owner/repo\u2026",
-            style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } })),
+          h("input", { className: "nv-field", placeholder: "owner/repo\u2026", value: claimSlug,
+            onChange: function (e) { setClaimSlug(e.target.value); },
+            style: Object.assign({}, INPUT_STYLE, { width: "100%" }) })),
         h("div", { style: col("4px", { flex: "1 1 160px" }) },
           h("label", { style: SA_CAP }, "New state"),
-          h("select", { style: { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)", cursor: "pointer" } },
+          h("select", { value: claimState, onChange: function (e) { setClaimState(e.target.value); },
+            style: Object.assign({}, INPUT_STYLE, { cursor: "pointer" }) },
             ["Active", "Lapsed", "Retired", "Suppressed"].map(function (s) { return h("option", { key: s }, s); })))),
       h("div", { style: col("4px") },
-        h("label", { style: SA_CAP }, "Reason (required — writes to audit log)"),
+        h("label", { style: SA_CAP }, "Reason (required \u2014 writes to audit log)"),
         h("textarea", { value: reason, onChange: function (e) { setReason(e.target.value); }, placeholder: "Why is this override necessary?\u2026",
-          rows: 3, style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)", resize: "vertical" } })),
-      h("div", null, h(Button, { variant: "outline", disabled: !reason }, "Apply override")));
+          rows: 3, style: Object.assign({}, INPUT_STYLE, { width: "100%", resize: "vertical" }) })),
+      h("div", null, h(Button, { variant: "outline", disabled: !reason || !claimSlug, onClick: submitClaimOverride }, "Apply override")));
 
     var contestCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Force-resolve claim contest"),
       h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
-        "Bypasses the 72h SLA window. The winner receives the grant; the loser's pending claim is cleared. Both are notified."),
+        "Bypasses the 72h SLA window. The winner receives the grant; the loser\u2019s pending claim is cleared. Both are notified."),
       h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
-        h("input", { className: "nv-field", placeholder: "Contest ID or slug\u2026",
-          style: { flex: "1 1 200px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
-        h("input", { className: "nv-field", placeholder: "Winner handle\u2026",
-          style: { flex: "1 1 160px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } })),
-      h("div", null, h(Button, { variant: "outline" }, "Force resolve")));
+        h("input", { className: "nv-field", placeholder: "Contest ID or slug\u2026", value: contestId,
+          onChange: function (e) { setContestId(e.target.value); },
+          style: Object.assign({}, INPUT_STYLE, { flex: "1 1 200px" }) }),
+        h("input", { className: "nv-field", placeholder: "Winner handle\u2026", value: winnerHandle,
+          onChange: function (e) { setWinnerHandle(e.target.value); },
+          style: Object.assign({}, INPUT_STYLE, { flex: "1 1 160px" }) })),
+      h("div", null, h(Button, { variant: "outline", disabled: !contestId || !winnerHandle, onClick: submitForceResolve }, "Force resolve")));
 
     var suppressCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Emergency unsuppress"),
       h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
         "Reverses a suppression. The page returns to its pre-suppression state (Active or Retired). Use only when a suppression was applied in error."),
       h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
-        h("input", { className: "nv-field", placeholder: "Suppressed slug\u2026",
-          style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
-        h(Button, { variant: "outline" }, "Unsuppress")));
+        h("input", { className: "nv-field", placeholder: "Suppressed slug\u2026", value: suppressSlug,
+          onChange: function (e) { setSuppressSlug(e.target.value); },
+          style: Object.assign({}, INPUT_STYLE, { flex: 1 }) }),
+        h(Button, { variant: "outline", disabled: !suppressSlug, onClick: submitUnsuppress }, "Unsuppress")));
 
-    var recent = [
-      { action: "Grant revoked", target: "sara_dev → unjs/unbuild", by: "maghraby", when: "2026-08-04 14:22", reason: "Account disabled — spam activity" },
-      { action: "Claim state → Retired", target: "example/old-lib", by: "ramy", when: "2026-08-01 09:15", reason: "Maintainer requested retirement via support" },
-      { action: "Emergency unsuppress", target: "nodejs/undici", by: "maghraby", when: "2026-07-28 16:40", reason: "Suppression was filed by non-owner — reversed" }
-    ];
     var auditCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
       h("span", { style: SA_EYE }, "Recent override actions"),
-      recent.map(function (r) {
-        return h("div", { key: r.when, className: "nv-sa-row", style: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "4px", padding: "var(--space-md) 0" } },
+      auditLog.map(function (r, i) {
+        return h("div", { key: r.when + "-" + i, className: "nv-sa-row", style: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "4px", padding: "var(--space-md) 0" } },
           h("div", { style: { display: "flex", justifyContent: "space-between", gap: "var(--space-md)" } },
-            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r.action + " — " + r.target),
-            h("span", { style: SA_CAP }, r.by + " · " + r.when)),
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r.action + " \u2014 " + r.target),
+            h("span", { style: SA_CAP }, r.by + " \u00b7 " + r.when)),
           h("span", { style: SA_CAP }, "Reason: " + r.reason));
       }),
       h("span", { style: SA_CAP }, "illustrative data"));
@@ -3397,7 +3693,7 @@
     return h("div", { style: SA_WRAP },
       saHeader("Superadmin", "Manual overrides", "Direct actions on grants, claims, contests, and suppressions. Every action requires a reason and writes to the audit log."),
       grantCard, claimCard, contestCard, suppressCard, auditCard,
-      h(Note, null, "All overrides are logged with actor, timestamp, and reason. They are visible in the audit log and cannot be hidden. · illustrative data"));
+      h(Note, null, "All overrides are logged with actor, timestamp, and reason. They are visible in the audit log and cannot be hidden. \u00b7 illustrative data"));
   }
 
   /* ── 6. System health ──────────────────────────────────────────────────── */
@@ -3506,6 +3802,372 @@
       saHeader("Superadmin", "System health", "External API status, ingestion pipeline, error rates, and alert thresholds."),
       apiCard, ingestionCard, errCard, threshCard,
       h(Note, null, "All figures illustrative. In production, reads from the ops metrics pipeline. Alert notifications go to the founders Slack channel."));
+  }
+
+  /* ── 7. Claim contest queue ────────────────────────────────────────────── */
+  function SuperadminContests(props) {
+    var Note = W("Note");
+    var INPUT_STYLE = { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" };
+
+    var INIT_CONTESTS = [
+      { id: "CTX-001", slug: "vercel/next.js", claimant_a: "guillermo", claimant_b: "leerob", filed: "2026-09-04T10:30:00Z", sla_hours: 72, status: "open", evidence_a: "GitHub org admin, 2,400+ commits", evidence_b: "Primary docs maintainer, 800+ commits" },
+      { id: "CTX-002", slug: "unjs/nitro", claimant_a: "pi0", claimant_b: "danielroe", filed: "2026-09-05T14:00:00Z", sla_hours: 72, status: "open", evidence_a: "Original author, all major releases", evidence_b: "Top contributor, 340 commits" },
+      { id: "CTX-003", slug: "tailwindlabs/tailwindcss", claimant_a: "adamwathan", claimant_b: "reinink", filed: "2026-09-02T08:00:00Z", sla_hours: 72, status: "open", evidence_a: "Creator & maintainer, full repo ownership", evidence_b: "Core team member, plugin author" },
+      { id: "CTX-004", slug: "withastro/astro", claimant_a: "natemoo-re", claimant_b: "matthewp", filed: "2026-08-30T16:00:00Z", sla_hours: 72, status: "expired", evidence_a: "Core team, compiler lead", evidence_b: "Original co-creator, 1,200 commits" },
+      { id: "CTX-005", slug: "drizzle-team/drizzle-orm", claimant_a: "alexblokh", claimant_b: "AndriiSherman", filed: "2026-09-06T02:00:00Z", sla_hours: 72, status: "open", evidence_a: "Co-founder, org owner", evidence_b: "Lead maintainer, 900+ commits" }
+    ];
+
+    var cs = React.useState(INIT_CONTESTS), contests = cs[0], setContests = cs[1];
+    var fs = React.useState("all"), filter = fs[0], setFilter = fs[1];
+
+    function hoursRemaining(filed) {
+      var deadline = new Date(filed).getTime() + 72 * 60 * 60 * 1000;
+      var now = Date.now();
+      var rem = Math.max(0, Math.round((deadline - now) / (60 * 60 * 1000)));
+      return rem;
+    }
+    function formatCountdown(hours) {
+      if (hours <= 0) return "Expired";
+      if (hours < 1) return "<1h left";
+      return hours + "h left";
+    }
+
+    function resolveContest(contest, winner) {
+      var loser = winner === contest.claimant_a ? contest.claimant_b : contest.claimant_a;
+      saConfirmModal({
+        title: "Resolve contest " + contest.id + "?",
+        body: "Grant goes to " + winner + ". " + loser + "\u2019s pending claim is cleared. Both are notified.",
+        confirmLabel: "Resolve \u2192 " + winner,
+        destructive: false,
+        onConfirm: function () {
+          setContests(contests.map(function (c) {
+            return c.id === contest.id ? Object.assign({}, c, { status: "resolved", winner: winner }) : c;
+          }));
+          saToast("Resolved " + contest.id + " \u2192 " + winner, "ok");
+        }
+      });
+    }
+    function dismissContest(contest) {
+      saConfirmModal({
+        title: "Dismiss contest " + contest.id + "?",
+        body: "Both claims for " + contest.slug + " are cleared. Neither party receives a grant. Both are notified.",
+        confirmLabel: "Dismiss",
+        destructive: true,
+        onConfirm: function () {
+          setContests(contests.map(function (c) {
+            return c.id === contest.id ? Object.assign({}, c, { status: "dismissed" }) : c;
+          }));
+          saToast("Dismissed " + contest.id, "ok");
+        }
+      });
+    }
+
+    var filtered = contests.filter(function (c) {
+      if (filter === "all") return true;
+      return c.status === filter;
+    });
+    var openCount = contests.filter(function (c) { return c.status === "open"; }).length;
+    var expiredCount = contests.filter(function (c) { return c.status === "expired"; }).length;
+
+    /* Filter bar */
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", alignItems: "center" } },
+      ["all", "open", "expired", "resolved", "dismissed"].map(function (f) {
+        var label = f === "all" ? "All (" + contests.length + ")" : f === "open" ? "Open (" + openCount + ")" : f === "expired" ? "Expired (" + expiredCount + ")" : f.charAt(0).toUpperCase() + f.slice(1);
+        return h("button", { key: f, type: "button", onClick: function () { setFilter(f); },
+          style: { background: filter === f ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === f ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === f ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, label);
+      }));
+
+    /* Contest cards */
+    var contestCards = filtered.map(function (c) {
+      var hours = hoursRemaining(c.filed);
+      var isOpen = c.status === "open";
+      var isExpired = c.status === "expired";
+      var isResolved = c.status === "resolved";
+      var isDismissed = c.status === "dismissed";
+      var slaColor = hours <= 6 ? "var(--volt-red,#ef4444)" : hours <= 24 ? "var(--volt-amber,#f59e0b)" : "var(--volt-emerald)";
+
+      return h("div", { key: c.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-lg)"), { opacity: (isResolved || isDismissed) ? 0.6 : 1 }) },
+        /* Header row: ID + slug + SLA countdown */
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "var(--space-sm)" } },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
+            saStatusDot(isResolved ? "ok" : isDismissed ? "err" : isExpired ? "warn" : "ok"),
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, c.id),
+            h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "1px", color: "var(--text-body)", padding: "3px 8px", background: "var(--volt-void)", borderRadius: "var(--radius-sm)" } }, c.slug)),
+          isOpen
+            ? h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: slaColor, padding: "4px 12px", border: "1px solid " + slaColor, borderRadius: "999px" } }, formatCountdown(hours))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)", textTransform: "uppercase" } },
+                isResolved ? "\u2713 Resolved \u2192 " + c.winner : isDismissed ? "Dismissed" : "SLA expired")),
+
+        /* Two-column claimant comparison */
+        h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-lg)" } },
+          /* Claimant A */
+          h("div", { style: Object.assign({}, col("var(--space-sm)"), { padding: "var(--space-lg)", background: "var(--volt-void)", borderRadius: "10px" }) },
+            h("span", { style: SA_EYE }, "Claimant A"),
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, c.claimant_a),
+            h("span", { style: SA_CAP }, c.evidence_a),
+            (isOpen || isExpired) ? h(Button, { variant: "outline", size: "sm", onClick: function () { resolveContest(c, c.claimant_a); } }, "Award grant") : null),
+          /* Claimant B */
+          h("div", { style: Object.assign({}, col("var(--space-sm)"), { padding: "var(--space-lg)", background: "var(--volt-void)", borderRadius: "10px" }) },
+            h("span", { style: SA_EYE }, "Claimant B"),
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, c.claimant_b),
+            h("span", { style: SA_CAP }, c.evidence_b),
+            (isOpen || isExpired) ? h(Button, { variant: "outline", size: "sm", onClick: function () { resolveContest(c, c.claimant_b); } }, "Award grant") : null)),
+
+        /* Footer: filed date + dismiss */
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+          h("span", { style: SA_CAP }, "Filed " + new Date(c.filed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })),
+          (isOpen || isExpired) ? h(Button, { variant: "ghost", size: "sm", onClick: function () { dismissContest(c); } }, "Dismiss both") : null));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Adjudication", "Claim contest queue", "When two users claim the same project, contests land here. Resolve within the 72-hour SLA or they expire for manual review."),
+      filterBar,
+      contestCards.length > 0
+        ? h("div", { style: col("var(--space-lg)") }, contestCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } },
+            h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No contests match this filter.")),
+      h(Note, null, "All resolutions write to the audit log. SLA countdown is computed from filing time. \u00b7 illustrative data"));
+  }
+
+  /* ── 8. Nomination inbox ───────────────────────────────────────────────── */
+  function SuperadminNominations(props) {
+    var Note = W("Note");
+
+    var INIT_NOMS = [
+      { id: "NOM-041", slug: "shadcn/ui", nominated_by: "alexr", nominated_at: "2026-09-05T18:30:00Z", reason: "Most-used React component library in 2026, not yet in catalog", stars: "72.4k", weekly_downloads: "1.2M", status: "pending" },
+      { id: "NOM-042", slug: "biomejs/biome", nominated_by: "maya-chen", nominated_at: "2026-09-05T12:00:00Z", reason: "Fast JS toolchain replacing ESLint+Prettier, growing adoption", stars: "16.8k", weekly_downloads: "890k", status: "pending" },
+      { id: "NOM-043", slug: "lucia-auth/lucia", nominated_by: "tomasz.k", nominated_at: "2026-09-04T09:15:00Z", reason: "Auth library for modern frameworks, highly recommended in communities", stars: "9.2k", weekly_downloads: "210k", status: "pending" },
+      { id: "NOM-044", slug: "electric-sql/pglite", nominated_by: "nina.io", nominated_at: "2026-09-03T20:00:00Z", reason: "Postgres in WASM — novel approach, rapidly growing", stars: "11.1k", weekly_downloads: "340k", status: "pending" },
+      { id: "NOM-045", slug: "unjs/ofetch", nominated_by: "rajpatel", nominated_at: "2026-09-02T14:30:00Z", reason: "Universal fetch replacement used across Nuxt ecosystem", stars: "4.1k", weekly_downloads: "2.8M", status: "pending" },
+      { id: "NOM-046", slug: "pmndrs/zustand", nominated_by: "sara_dev", nominated_at: "2026-09-01T08:00:00Z", reason: "Already widely used, surprised it's not in catalog", stars: "48.2k", weekly_downloads: "4.1M", status: "approved" },
+      { id: "NOM-047", slug: "fake-org/seo-blaster-9000", nominated_by: "spambot42", nominated_at: "2026-08-31T03:00:00Z", reason: "Best SEO tool!!!", stars: "12", weekly_downloads: "3", status: "rejected" }
+    ];
+
+    var ns = React.useState(INIT_NOMS), nominations = ns[0], setNominations = ns[1];
+    var fs = React.useState("pending"), filter = fs[0], setFilter = fs[1];
+    var sel = React.useState({}), selected = sel[0], setSelected = sel[1];
+
+    function approve(nom) {
+      saConfirmModal({
+        title: "Approve " + nom.slug + "?",
+        body: "This adds " + nom.slug + " to the ingestion pipeline. A catalog page will be created and signals collected within the next refresh cycle.",
+        confirmLabel: "Approve \u2192 ingest",
+        destructive: false,
+        onConfirm: function () {
+          setNominations(nominations.map(function (n) {
+            return n.id === nom.id ? Object.assign({}, n, { status: "approved" }) : n;
+          }));
+          saToast("Approved " + nom.slug + " \u2192 ingestion queue", "ok");
+        }
+      });
+    }
+    function reject(nom) {
+      var reasonRef = { value: "" };
+      saConfirmModal({
+        title: "Reject " + nom.slug + "?",
+        body: "The nominator (" + nom.nominated_by + ") will not be notified. This nomination moves to the rejected pile.",
+        confirmLabel: "Reject",
+        destructive: true,
+        input: h("input", { className: "nv-field", placeholder: "Reason (optional)\u2026",
+          onChange: function (e) { reasonRef.value = e.target.value; },
+          style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        onConfirm: function () {
+          setNominations(nominations.map(function (n) {
+            return n.id === nom.id ? Object.assign({}, n, { status: "rejected", rejectReason: reasonRef.value || "No reason given" }) : n;
+          }));
+          saToast("Rejected " + nom.slug, "ok");
+        }
+      });
+    }
+    function toggleSelect(id) {
+      var next = Object.assign({}, selected);
+      if (next[id]) delete next[id]; else next[id] = true;
+      setSelected(next);
+    }
+    function bulkApprove() {
+      var ids = Object.keys(selected);
+      if (ids.length === 0) { saToast("Select nominations first", "err"); return; }
+      var slugs = nominations.filter(function (n) { return selected[n.id] && n.status === "pending"; }).map(function (n) { return n.slug; });
+      saConfirmModal({
+        title: "Approve " + slugs.length + " nominations?",
+        body: "These projects will be added to the ingestion pipeline: " + slugs.join(", "),
+        confirmLabel: "Approve all " + slugs.length,
+        destructive: false,
+        onConfirm: function () {
+          setNominations(nominations.map(function (n) {
+            return selected[n.id] && n.status === "pending" ? Object.assign({}, n, { status: "approved" }) : n;
+          }));
+          setSelected({});
+          saToast("Approved " + slugs.length + " nominations", "ok");
+        }
+      });
+    }
+
+    var filtered = nominations.filter(function (n) {
+      if (filter === "all") return true;
+      return n.status === filter;
+    });
+    var pendingCount = nominations.filter(function (n) { return n.status === "pending"; }).length;
+    var approvedCount = nominations.filter(function (n) { return n.status === "approved"; }).length;
+    var rejectedCount = nominations.filter(function (n) { return n.status === "rejected"; }).length;
+    var selectedPendingCount = Object.keys(selected).filter(function (id) {
+      return nominations.some(function (n) { return n.id === id && n.status === "pending"; });
+    }).length;
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", alignItems: "center", flexWrap: "wrap" } },
+      [["pending", "Pending (" + pendingCount + ")"], ["approved", "Approved (" + approvedCount + ")"], ["rejected", "Rejected (" + rejectedCount + ")"], ["all", "All (" + nominations.length + ")"]].map(function (pair) {
+        var f = pair[0], label = pair[1];
+        return h("button", { key: f, type: "button", onClick: function () { setFilter(f); },
+          style: { background: filter === f ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === f ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === f ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, label);
+      }),
+      selectedPendingCount > 0
+        ? h(Button, { variant: "outline", size: "sm", onClick: bulkApprove, style: { marginLeft: "auto" } }, "Approve selected (" + selectedPendingCount + ")")
+        : null);
+
+    var nomRows = filtered.map(function (n) {
+      var isPending = n.status === "pending";
+      var isApproved = n.status === "approved";
+      var isRejected = n.status === "rejected";
+      return h("div", { key: n.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-md)"), { opacity: isRejected ? 0.5 : 1 }) },
+        /* Top row: checkbox + slug + stats + status */
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
+          isPending ? h("input", { type: "checkbox", checked: !!selected[n.id], onChange: function () { toggleSelect(n.id); },
+            style: { width: "18px", height: "18px", accentColor: "var(--volt-emerald)", cursor: "pointer" } }) : null,
+          saStatusDot(isApproved ? "ok" : isRejected ? "err" : "warn"),
+          h("div", { style: Object.assign({}, col("2px"), { flex: 1 }) },
+            h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-sm)", flexWrap: "wrap" } },
+              h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, n.slug),
+              h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)" } }, n.id)),
+            h("span", { style: SA_CAP }, n.reason)),
+          /* Stats pills */
+          h("div", { style: { display: "flex", gap: "var(--space-md)", alignItems: "center", flexShrink: 0 } },
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Stars"),
+              h("span", { style: { font: "var(--type-body-md)" } }, n.stars)),
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Weekly"),
+              h("span", { style: { font: "var(--type-body-md)" } }, n.weekly_downloads)))),
+        /* Footer: nominator + date + actions */
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, "Nominated by " + n.nominated_by + " \u00b7 " + new Date(n.nominated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })),
+          isPending
+            ? h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "outline", size: "sm", onClick: function () { approve(n); } }, "Approve"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { reject(n); } }, "Reject"))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: isApproved ? "var(--volt-emerald)" : "var(--text-secondary)", textTransform: "uppercase" } },
+                isApproved ? "\u2713 Approved" : "\u2717 Rejected" + (n.rejectReason ? " \u2014 " + n.rejectReason : ""))));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Adjudication", "Nomination inbox", "Users nominate projects they want in the catalog. Review signal strength and approve to trigger ingestion."),
+      filterBar,
+      nomRows.length > 0
+        ? h("div", { style: col("var(--space-lg)") }, nomRows)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } },
+            h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No nominations match this filter.")),
+      h(Note, null, "Approval triggers the ingestion pipeline. Rejection is silent \u2014 nominators are not notified. \u00b7 illustrative data"));
+  }
+
+  /* ── 9. Full audit log ─────────────────────────────────────────────────── */
+  function SuperadminAuditLog(props) {
+    var Note = W("Note");
+    var INPUT_STYLE = { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" };
+
+    var FULL_LOG = [
+      { id: 1, action: "User disabled", target: "sara_dev", by: "maghraby", when: "2026-09-06 09:14", category: "users", reason: "Multiple spam reports from other users" },
+      { id: 2, action: "Feature flag toggled", target: "Peer recommendations \u2192 ON", by: "maghraby", when: "2026-09-06 08:50", category: "features", reason: "Ready for private preview testing" },
+      { id: 3, action: "Nomination approved", target: "shadcn/ui", by: "maghraby", when: "2026-09-05 18:45", category: "nominations", reason: "High signal: 72k stars, 1.2M weekly downloads" },
+      { id: 4, action: "Invite code revoked", target: "NV-ALPHA-007", by: "ramy", when: "2026-09-05 16:20", category: "invites", reason: "Code leaked to public Slack channel" },
+      { id: 5, action: "API kill switch", target: "OpenSSF Scorecard \u2192 KILLED", by: "ramy", when: "2026-09-05 14:10", category: "features", reason: "Latency spiked to 3s, degrading page loads" },
+      { id: 6, action: "Grant revoked", target: "sara_dev \u2192 unjs/unbuild", by: "maghraby", when: "2026-09-04 14:22", category: "overrides", reason: "Account disabled \u2014 spam activity" },
+      { id: 7, action: "Contest resolved", target: "CTX-003 \u2192 adamwathan", by: "maghraby", when: "2026-09-04 11:00", category: "contests", reason: "Clear creator ownership, no dispute from other party" },
+      { id: 8, action: "Nomination rejected", target: "fake-org/seo-blaster-9000", by: "ramy", when: "2026-09-03 10:30", category: "nominations", reason: "Spam nomination \u2014 12 stars, 3 weekly downloads" },
+      { id: 9, action: "Password regenerated", target: "Preview gate password", by: "maghraby", when: "2026-09-03 09:00", category: "invites", reason: "Routine rotation" },
+      { id: 10, action: "Claim state \u2192 Retired", target: "example/old-lib", by: "ramy", when: "2026-09-01 09:15", category: "overrides", reason: "Maintainer requested retirement via support" },
+      { id: 11, action: "User enabled", target: "tomasz.k", by: "maghraby", when: "2026-08-31 14:00", category: "users", reason: "Account review complete, no violations found" },
+      { id: 12, action: "Feature flag toggled", target: "Curation chat \u2192 ON", by: "ramy", when: "2026-08-30 20:00", category: "features", reason: "Chat schema validated, ready for backers" },
+      { id: 13, action: "Emergency unsuppress", target: "nodejs/undici", by: "maghraby", when: "2026-08-28 16:40", category: "overrides", reason: "Suppression was filed by non-owner \u2014 reversed" },
+      { id: 14, action: "Grant issued", target: "maya-chen \u2192 vuejs/pinia", by: "maghraby", when: "2026-08-27 10:15", category: "overrides", reason: "Manual grant after admin check confirmed authorship" },
+      { id: 15, action: "Nomination approved", target: "drizzle-team/drizzle-orm", by: "ramy", when: "2026-08-26 08:00", category: "nominations", reason: "Top ORM in ecosystem, 22k stars" },
+      { id: 16, action: "Alert threshold toggled", target: "GitHub rate limit < 500 \u2192 ON", by: "ramy", when: "2026-08-25 11:30", category: "features", reason: "Need early warning on rate-limit pressure" },
+      { id: 17, action: "Invite codes generated", target: "5 new codes (NV-ALPHA-009\u2013013)", by: "maghraby", when: "2026-08-24 09:00", category: "invites", reason: "New batch for design partners" },
+      { id: 18, action: "Contest dismissed", target: "CTX-000 \u2192 both claims cleared", by: "ramy", when: "2026-08-22 15:45", category: "contests", reason: "Neither claimant met the admin-check bar" },
+      { id: 19, action: "User deleted", target: "spambot42", by: "maghraby", when: "2026-08-20 08:00", category: "users", reason: "Automated registration, no real activity, spam profile" },
+      { id: 20, action: "API kill switch", target: "Libraries.io \u2192 RESTORED", by: "ramy", when: "2026-08-18 17:30", category: "features", reason: "Upstream incident resolved, latency back to normal" }
+    ];
+
+    var ss = React.useState(""), search = ss[0], setSearch = ss[1];
+    var cf = React.useState("all"), catFilter = cf[0], setCatFilter = cf[1];
+    var af = React.useState("all"), actorFilter = af[0], setActorFilter = af[1];
+
+    var categories = ["all", "users", "features", "overrides", "invites", "contests", "nominations"];
+    var actors = ["all"];
+    FULL_LOG.forEach(function (e) { if (actors.indexOf(e.by) < 0) actors.push(e.by); });
+
+    var filtered = FULL_LOG.filter(function (e) {
+      if (catFilter !== "all" && e.category !== catFilter) return false;
+      if (actorFilter !== "all" && e.by !== actorFilter) return false;
+      if (search) {
+        var q = search.toLowerCase();
+        return e.action.toLowerCase().indexOf(q) >= 0 || e.target.toLowerCase().indexOf(q) >= 0 || e.reason.toLowerCase().indexOf(q) >= 0;
+      }
+      return true;
+    });
+
+    /* Category color mapping */
+    var catColors = { users: "#8b5cf6", features: "var(--volt-emerald)", overrides: "var(--volt-amber,#f59e0b)", invites: "#3b82f6", contests: "#ec4899", nominations: "#06b6d4" };
+
+    var searchAndFilters = h("div", { style: col("var(--space-md)") },
+      h("input", { className: "nv-field", value: search, onChange: function (e) { setSearch(e.target.value); },
+        placeholder: "Search actions, targets, or reasons\u2026",
+        style: Object.assign({}, INPUT_STYLE, { width: "100%" }) }),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap", alignItems: "center" } },
+        h("span", { style: SA_EYE }, "Category"),
+        categories.map(function (c) {
+          return h("button", { key: c, type: "button", onClick: function () { setCatFilter(c); },
+            style: { background: catFilter === c ? (c === "all" ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : (catColors[c] || "var(--volt-emerald)") + "22") : "transparent",
+              border: "1px solid " + (catFilter === c ? (c === "all" ? "var(--volt-emerald)" : catColors[c] || "var(--volt-emerald)") : "var(--volt-border)"),
+              borderRadius: "999px", padding: "4px 12px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase",
+              color: catFilter === c ? (c === "all" ? "var(--volt-emerald)" : catColors[c] || "var(--volt-emerald)") : "var(--text-secondary)", cursor: "pointer" } },
+            c);
+        })),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", alignItems: "center" } },
+        h("span", { style: SA_EYE }, "Actor"),
+        actors.map(function (a) {
+          return h("button", { key: a, type: "button", onClick: function () { setActorFilter(a); },
+            style: { background: actorFilter === a ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent",
+              border: "1px solid " + (actorFilter === a ? "var(--volt-emerald)" : "var(--volt-border)"),
+              borderRadius: "999px", padding: "4px 12px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase",
+              color: actorFilter === a ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } },
+            a);
+        })));
+
+    var countBadge = h("span", { style: SA_CAP }, filtered.length + " of " + FULL_LOG.length + " entries");
+
+    var logTable = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+        h("span", { style: SA_EYE }, "Audit trail"),
+        countBadge),
+      filtered.length === 0
+        ? h("div", { style: { padding: "var(--space-2xl)", textAlign: "center" } },
+            h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No entries match your filters."))
+        : filtered.map(function (e) {
+            var catColor = catColors[e.category] || "var(--text-secondary)";
+            return h("div", { key: e.id, className: "nv-sa-row", style: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "4px", padding: "var(--space-md) 0" } },
+              h("div", { style: { display: "flex", justifyContent: "space-between", gap: "var(--space-md)", alignItems: "center", flexWrap: "wrap" } },
+                h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)" } },
+                  h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: catColor, padding: "2px 8px", border: "1px solid " + catColor, borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, e.category),
+                  h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, e.action)),
+                h("span", { style: SA_CAP }, e.by + " \u00b7 " + e.when)),
+              h("div", { style: { display: "flex", justifyContent: "space-between", gap: "var(--space-md)" } },
+                h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, e.target),
+                h("span", { style: Object.assign({}, SA_CAP, { textAlign: "right", maxWidth: "50%" }) }, e.reason)));
+          }));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Integrity", "Audit log", "Every administrative action across the platform. Immutable, searchable, and timestamped."),
+      searchAndFilters, logTable,
+      h(Note, null, "Entries cannot be edited or deleted. This is the canonical record of all superadmin actions. \u00b7 illustrative data"));
   }
 
   Object.assign(window, {
