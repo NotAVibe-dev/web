@@ -595,7 +595,7 @@
         borderBottom: "1px solid var(--volt-border)"
       }
     },
-      h(Container, { style: { padding: "40px 32px 30px", display: "flex", flexDirection: "column", gap: "22px" } },
+      h(Container, { style: { padding: "56px 32px 30px", display: "flex", flexDirection: "column", gap: "22px" } },
         /* Count as display type. It is the one number that answers "did that do
            anything?", and at 12px next to twenty other 12px labels it never did.
            The scale jump is the hierarchy — nothing else on this band competes.
@@ -821,7 +821,7 @@
        a conversation: one entry (the search), a toggle to curate, seeded with the
        current query. Backer-only; the chat re-parses the seed into §5.4 facets. */
     var curateStrip = (ctx.signedIn && q.trim())
-      ? h(Container, { style: { padding: "0 32px" } },
+      ? h(Container, { style: { padding: "16px 32px 0" } },
           h("div", { className: "nv-enter", style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-card, 12px)", padding: "16px 24px", background: "var(--volt-canvas)" } },
             h("div", { style: { display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 } },
               h("p", { style: { margin: 0, fontWeight: 600, fontSize: "16px", lineHeight: 1.4, color: "var(--volt-white)" } }, "Turn this into a list you can refine by talking"),
@@ -832,6 +832,35 @@
               style: { background: "transparent", color: "var(--volt-white)", border: "1px solid var(--volt-border-hover)", borderRadius: "var(--radius-button, 8px)", padding: "11px 20px", fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "14px", cursor: "pointer", flex: "0 0 auto", whiteSpace: "nowrap" } },
               "Curate →")))
       : null;
+
+    /* ── Vocabulary suggestion chips ──────────────────────────────────────
+       Sprint 3 decision #4: when the query matches a known vocabulary term
+       (ecosystem, language, facet value), surface a chip "Filter by X?"
+       above results. Bridges the gap between free-text search (name +
+       description only) and structured filters without muddying semantics. */
+    var VOCAB_HINTS = [
+      { terms: ["python", "py"], dim: "Purpose", value: null, label: "Python ecosystem" },
+      { terms: ["react", "jsx"], dim: "Purpose", value: null, label: "React ecosystem" },
+      { terms: ["go", "golang"], dim: "Purpose", value: null, label: "Go ecosystem" },
+      { terms: ["node", "nodejs", "node.js"], dim: "Purpose", value: null, label: "Node.js ecosystem" },
+      { terms: ["typescript", "ts"], dim: "Purpose", value: null, label: "TypeScript ecosystem" },
+      { terms: ["rust", "cargo"], dim: "Purpose", value: null, label: "Rust ecosystem" },
+      { terms: ["test", "testing", "test runner"], dim: "Purpose", value: "Test runner", label: "Test runner" },
+      { terms: ["lint", "linter", "linting"], dim: "Purpose", value: "Linter", label: "Linter" },
+      { terms: ["bundle", "bundler", "build"], dim: "Purpose", value: "Library bundler", label: "Library bundler" },
+      { terms: ["sql", "database", "db", "postgres", "query"], dim: "Purpose", value: "SQL toolkit", label: "SQL toolkit" },
+      { terms: ["http", "server", "web", "framework", "api"], dim: "Purpose", value: "HTTP framework", label: "HTTP framework" },
+      { terms: ["schema", "validate", "validation", "validator"], dim: "Purpose", value: "Schema validation", label: "Schema validation" },
+      { terms: ["mature", "established", "stable"], dim: "Maturity", value: "Mature", label: "Mature projects" },
+      { terms: ["new", "emerging", "young"], dim: "Maturity", value: "Emerging", label: "Emerging projects" },
+      { terms: ["maintained", "active", "steady"], dim: "updates", value: "Steady", label: "Steady maintenance" },
+      { terms: ["quiet", "unmaintained", "stale"], dim: "updates", value: "Quiet", label: "Quiet maintenance" }
+    ];
+    var hints = needle ? VOCAB_HINTS.filter(function (v) {
+      return v.terms.some(function (t) { return needle.indexOf(t) >= 0; });
+    }).slice(0, 3) : [];
+    var hintsDismissed = React.useState({}), dismissed = hintsDismissed[0], setDismissed = hintsDismissed[1];
+    var visibleHints = hints.filter(function (v) { return !dismissed[v.label]; });
 
     return h("div", {
       className: "nv-search-scope",
@@ -854,6 +883,33 @@
              repaints is silent to a screen reader. */
           h("p", { "aria-live": "polite", style: { position: "absolute", width: "1px", height: "1px", overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" } },
             sorted.length + (sorted.length === 1 ? " result" : " results") + ", sorted by " + sort.toLowerCase()),
+
+          /* Vocabulary suggestion chips — inline above results, not a separate band */
+          visibleHints.length > 0
+            ? h("div", { style: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", padding: "0 0 16px" } },
+                h("span", { style: { fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: 500, color: "var(--volt-text-500)" } }, "Filter by"),
+                visibleHints.map(function (v) {
+                  return h("button", { key: v.label, type: "button",
+                    onClick: function () {
+                      if (v.value) {
+                        if (v.dim === "updates" || v.dim === "breadth") {
+                          toggle(setBands, bands, v.dim, v.value);
+                        } else {
+                          toggle(setFacets, facets, v.dim, v.value);
+                        }
+                      }
+                      var nd = {}; Object.keys(dismissed).forEach(function (k) { nd[k] = true; }); nd[v.label] = true; setDismissed(nd);
+                    },
+                    style: {
+                      display: "inline-flex", alignItems: "center", gap: "6px",
+                      padding: "6px 14px", borderRadius: "var(--radius-pill, 9999px)",
+                      background: "transparent", border: "1px solid var(--volt-emerald)",
+                      color: "var(--volt-emerald)", fontFamily: "var(--font-sans)",
+                      fontWeight: 600, fontSize: "13px", cursor: "pointer",
+                      transition: "background-color 200ms ease"
+                    } }, v.label + "?");
+                }))
+            : null,
 
           sorted.length === 0
             ? empty
