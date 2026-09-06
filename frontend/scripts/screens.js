@@ -6385,7 +6385,7 @@ function MobileHeader({
     strokeColor: "var(--text-secondary)"
   })));
 }
-const TABS = [["Home", "backer.dashboard", "home"], ["Discover", "discover", "search"], ["My lists", "backer.lists", "bookmark"], ["My stack", "stack.connect", "layers"], ["More", "backer.more", "menu"]];
+const TABS = [["Discover", "discover", "search"], ["My lists", "backer.lists", "bookmark"], ["My stack", "stack.connect", "layers"], ["More", "backer.more", "menu"]];
 function MobileTabBar({
   ctx
 }) {
