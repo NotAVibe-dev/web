@@ -1,9 +1,9 @@
 # Superadmin / Founder Portal — Backend Handoff
 
-**Status:** Frontend DONE (prototype, `frontend/scripts/app.js`). Backend needed.
+**Status:** Frontend COMPLETE — all 20 screens built (prototype, `frontend/scripts/app.js`). Backend needed.
 **Owner:** Ramy
 **Sprint:** 4
-**Date:** 2026-09-06 (updated)
+**Date:** 2026-09-06 (final)
 
 ---
 
@@ -14,7 +14,7 @@ cd frontend && python3 -m http.server 4321
 # open http://localhost:4321/#/admin.pulse
 ```
 
-All 9 screens live at `admin.*` routes. The admin sidebar has 3 groups with working links: **Superadmin** (6 screens), **Adjudication** (2 screens), **Integrity** (1 screen). Every screen uses illustrative data — your job is to replace it with real API responses.
+All 20 screens live at `admin.*` routes. The admin sidebar has 5 groups — all fully built: **Superadmin** (6), **Adjudication** (2), **Catalog** (5), **Integrity** (3), **Platform** (4). Every screen uses illustrative data — your job is to replace it with real API responses.
 
 ---
 
@@ -22,7 +22,7 @@ All 9 screens live at `admin.*` routes. The admin sidebar has 3 groups with work
 
 - **All screens** are in `frontend/scripts/app.js` as hand-authored `h()` functions (React.createElement, no JSX).
 - **Routing:** `screenFor()` maps `admin.pulse` → `SuperadminPulse`, `admin.contests` → `SuperadminContests`, etc.
-- **Navigation:** `AdminNavV2` has 5 groups (Superadmin, Adjudication, Catalog, Integrity, Platform). 9 of 20 items are now built.
+- **Navigation:** `AdminNavV2` has 5 groups (Superadmin, Adjudication, Catalog, Integrity, Platform). All 20 items are built.
 - **Shell:** `NotavibeShell` detects `admin.*` routes and renders the admin chrome (dark sidebar + main content).
 - **CSS:** Injected once by `injectSuperadminCSS()` — classes `.nv-sa-toggle`, `.nv-sa-dot--{ok,warn,err}`, `.nv-sa-row`, `.nv-sa-bar`, `.nv-sa-card`.
 - **Shared UI:** `saConfirmModal()` for destructive action confirmations, `saToast()` for feedback notifications. Both are vanilla DOM — no library dependency.
@@ -511,10 +511,452 @@ The admin routes should be behind middleware that checks for the superadmin role
 
 ---
 
+## Screen-by-screen contract (continued)
+
+### 10. `admin.ingestion` — SuperadminIngestion
+
+**Route:** `#/admin.ingestion`
+**Function:** `SuperadminIngestion` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — retry failed, cancel running, filter by status
+
+**API contract:**
+
+```
+GET /api/admin/ingestion/batches?status={all|running|queued|complete|failed|cancelled}
+→ {
+    batches: [{
+      id: string,              // "BATCH-014"
+      source: string,          // "npm top-5k seed"
+      status: "running" | "queued" | "complete" | "failed" | "cancelled",
+      pages: number,
+      succeeded: number,
+      failed: number,
+      started: string|null,    // ISO datetime
+      finished: string|null
+    }]
+  }
+
+POST /api/admin/ingestion/{id}/retry
+→ { ok: true }
+
+POST /api/admin/ingestion/{id}/cancel
+→ { ok: true }
+```
+
+**UI mapping:**
+- Filter pills: All, Running, Queued, Complete, Failed, Cancelled (with counts).
+- Batch cards: status dot + ID + source + status label. Progress bar (succeeded/pages). Failed count in red. Started/finished timestamps.
+- **Retry failed** — re-queues only failed pages. Available on failed batches or complete-with-failures.
+- **Cancel** — stops running batch, preserves processed pages. Confirmation modal.
+
+---
+
+### 11. `admin.corrections` — SuperadminCorrections
+
+**Route:** `#/admin.corrections`
+**Function:** `SuperadminCorrections` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — approve/reject with confirmation
+
+**API contract:**
+
+```
+GET /api/admin/corrections?status={pending|approved|rejected|all}
+→ {
+    tickets: [{
+      id: string,
+      slug: string,
+      type: "correction" | "takedown",
+      field: string|null,       // "description", "category", etc.
+      submitted_by: string,
+      submitted_at: string,
+      current: string|null,     // current field value (corrections)
+      proposed: string|null,    // proposed value (corrections)
+      reason: string|null,      // takedown reason
+      status: "pending" | "approved" | "rejected",
+      reject_reason: string|null
+    }]
+  }
+
+POST /api/admin/corrections/{id}/approve
+→ { ok: true }
+
+POST /api/admin/corrections/{id}/reject
+  body: { reason: string }  // optional
+→ { ok: true }
+```
+
+**UI mapping:**
+- Type pills: blue = correction, red = takedown.
+- Corrections show current vs proposed in two-column comparison.
+- Takedowns show the takedown reason.
+- Approve = "Apply" (correction) or "Execute" (takedown, destructive).
+- Reject = confirmation with optional reason input.
+
+---
+
+### 12. `admin.taxonomy` — SuperadminTaxonomy
+
+**Route:** `#/admin.taxonomy`
+**Function:** `SuperadminTaxonomy` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — rename inline, reorder, delete, add new
+
+**API contract:**
+
+```
+GET /api/admin/taxonomy
+→ {
+    categories: [{
+      id: number,
+      type: "ecosystem" | "intent",
+      name: string,
+      slug: string,
+      projects: number,       // count of tagged projects
+      order: number
+    }]
+  }
+
+PUT /api/admin/taxonomy/{id}
+  body: { name: string, order: number }
+
+DELETE /api/admin/taxonomy/{id}
+→ { ok: true }
+
+POST /api/admin/taxonomy
+  body: { type: "ecosystem"|"intent", name: string }
+→ { id: number }
+```
+
+**UI mapping:**
+- Two card groups: Ecosystems and Intent categories, sorted by order.
+- Each row: ↑ reorder arrow + name (inline-editable on Rename) + project count + Rename/× buttons.
+- Add card at bottom: type select + name input + Add button.
+- Delete confirmation warns about uncategorized projects.
+
+---
+
+### 13. `admin.vocab` — SuperadminVocab
+
+**Route:** `#/admin.vocab`
+**Function:** `SuperadminVocab` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — resolve contests (accept change or keep current)
+
+**API contract:**
+
+```
+GET /api/admin/vocab?status={open|resolved|all}
+→ {
+    terms: [{
+      id: string,
+      current: string,
+      proposed: string,
+      proposed_by: string,
+      proposed_at: string,
+      votes_for: number,
+      votes_against: number,
+      reason: string,
+      status: "open" | "resolved",
+      winner: string|null,
+      resolve_reason: string|null
+    }]
+  }
+
+POST /api/admin/vocab/{id}/resolve
+  body: { winner: string, reason: string }
+→ { ok: true }
+```
+
+**UI mapping:**
+- Current → Proposed shown as code pills with arrow. Losing term gets strikethrough when resolved.
+- Vote bar: green (for change) vs red (keep current), percentage labels.
+- Resolve: "Accept change" or "Keep current" buttons. Confirmation with reason input.
+- Resolved contests show winner + reason at 70% opacity.
+
+---
+
+### 14. `admin.anomaly` — SuperadminAnomaly
+
+**Route:** `#/admin.anomaly`
+**Function:** `SuperadminAnomaly` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — release or suppress quarantined pages
+
+**API contract:**
+
+```
+GET /api/admin/anomalies?status={quarantined|released|suppressed|all}
+→ {
+    anomalies: [{
+      id: string,
+      slug: string,
+      type: "score_anomaly" | "duplicate" | "star_inflation" | "scope_mismatch",
+      severity: "high" | "medium" | "low",
+      detected: string,
+      detail: string,
+      status: "quarantined" | "released" | "suppressed"
+    }]
+  }
+
+POST /api/admin/anomalies/{id}/release
+→ { ok: true }
+
+POST /api/admin/anomalies/{id}/suppress
+→ { ok: true }
+```
+
+**UI mapping:**
+- Severity pills: high = red, medium = amber, low = grey. Type pills with human-readable label.
+- Detail paragraph explains the anomaly.
+- Release = returns to catalog. Suppress = replaces page with notice.
+- Suppressed cards at 50% opacity.
+
+---
+
+### 15. `admin.sybil` — SuperadminSybil
+
+**Route:** `#/admin.sybil`
+**Function:** `SuperadminSybil` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — ban clusters or dismiss as false positive
+
+**API contract:**
+
+```
+GET /api/admin/sybil?status={flagged|banned|dismissed|all}
+→ {
+    clusters: [{
+      id: string,
+      accounts: [string],      // array of handles
+      pattern: "bulk_registration" | "coordinated_interest" | "velocity_anomaly" | "nomination_spam",
+      confidence: number,      // 0-100
+      detected: string,
+      detail: string,
+      status: "flagged" | "banned" | "dismissed"
+    }]
+  }
+
+POST /api/admin/sybil/{id}/ban
+→ { ok: true }  // disables all accounts, purges their activity
+
+POST /api/admin/sybil/{id}/dismiss
+→ { ok: true }
+```
+
+**UI mapping:**
+- Confidence pill: ≥90% red, ≥70% amber, <70% grey. Pattern type pill.
+- Account handles shown as code pills.
+- Ban = destructive confirmation listing all accounts. Purges interests/nominations/lists.
+- Dismiss = instant, marks as false positive. Toast feedback.
+
+---
+
+### 16. `admin.moderation` — SuperadminModeration
+
+**Route:** `#/admin.moderation`
+**Function:** `SuperadminModeration` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — take action or dismiss reports
+
+**API contract:**
+
+```
+GET /api/admin/moderation?status={pending|actioned|dismissed|all}
+→ {
+    reports: [{
+      id: string,
+      slug: string,
+      reported_by: string,
+      reported_at: string,
+      reason: string,
+      category: "malware" | "impersonation" | "not_oss" | "privacy" | "abandoned",
+      status: "pending" | "actioned" | "dismissed",
+      action_taken: string|null,
+      dismiss_reason: string|null
+    }]
+  }
+
+POST /api/admin/moderation/{id}/action
+  body: { action: string }  // free-text action description
+→ { ok: true }
+
+POST /api/admin/moderation/{id}/dismiss
+  body: { reason: string }
+→ { ok: true }
+```
+
+**UI mapping:**
+- Category pills color-coded: malware=red, impersonation=pink, not_oss=grey, privacy=amber, abandoned=purple.
+- Take action = destructive confirmation with action description input.
+- Dismiss = confirmation with reason input.
+- Actioned/dismissed cards show the resolution inline.
+
+---
+
+### 17. `admin.users` — SuperadminUserLookup
+
+**Route:** `#/admin.users`
+**Function:** `SuperadminUserLookup` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — deep lookup by handle/email, renders full user profile
+
+**API contract:**
+
+```
+GET /api/admin/users/lookup?q={handle_or_email}
+→ {
+    handle: string,
+    email: string,
+    provider: string,
+    provider_id: string,
+    status: "active" | "disabled",
+    joined: string,
+    last_active: string,
+    grants: [{ slug: string, granted: string, method: string, revoked: string|null }],
+    lists: [string],
+    interests: number,
+    scans: number,
+    nominations: number,
+    claims: [{ slug: string, status: string, filed: string }],
+    ip_last: string,
+    ua_last: string
+  }
+```
+
+**UI mapping:**
+- Search card with handle/email input + Look up button. Enter key supported.
+- Result renders: status dot + handle + status label, 3-column identity grid (email, provider, joined), 3-column session grid (last active, last IP, user agent).
+- 4-tile activity summary: interests, scans, nominations, lists.
+- Grants card: slug + granted date + method + revoked date if applicable.
+- Claims card: slug + status dot + status + filed date.
+- Lists card: pill tags.
+- Not-found state: centered card message.
+- **IP/UA data is for debugging only — never expose to other users.**
+
+---
+
+### 18. `admin.editorial` — SuperadminEditorial
+
+**Route:** `#/admin.editorial`
+**Function:** `SuperadminEditorial` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — claim queued verdicts, publish reviewed verdicts
+
+**API contract:**
+
+```
+GET /api/admin/editorial?status={all|queued|draft|review|published}
+→ {
+    verdicts: [{
+      id: string,
+      slug: string,
+      status: "queued" | "draft" | "review" | "published",
+      author: string|null,
+      updated: string|null,
+      headline: string|null,
+      signals: number,
+      sources: number,
+      word_count: number,
+      published_at: string|null
+    }]
+  }
+
+POST /api/admin/editorial/{id}/claim
+→ { ok: true }
+
+POST /api/admin/editorial/{id}/publish
+→ { ok: true }
+```
+
+**UI mapping:**
+- Status pills color-coded: queued=grey, draft=amber, review=blue, published=emerald.
+- Headline in italic quotes when present.
+- Stats row: signals count, sources count, word count, author.
+- Queued → "Claim" button (assigns to you, moves to draft). Review → "Publish" button (confirmation modal).
+- Published shows date. Verdicts are sourced-signal summaries, not scores.
+
+---
+
+### 19. `admin.demand` — SuperadminDemand
+
+**Route:** `#/admin.demand`
+**Function:** `SuperadminDemand` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — filter unmet/catalog/all, sort by any signal dimension
+
+**API contract:**
+
+```
+GET /api/admin/demand?filter={unmet|catalog|all}&sort={interests|nominations|scans_matched|searches}
+→ {
+    signals: [{
+      slug: string,
+      interests: number,
+      nominations: number,
+      scans_matched: number,
+      searches: number,
+      in_catalog: boolean
+    }]
+  }
+```
+
+**UI mapping:**
+- Filter pills: Unmet demand (not in catalog), In catalog, All.
+- Sort pills: interests, nominations, scans matched, searches. Active = emerald border.
+- Table: slug + "Missing" badge (amber, for unmet) + 4 numeric columns + signal bar (proportional to max in sorted column). Bar color: emerald (catalog) or amber (missing).
+- Unmet demand = high-signal projects not yet ingested → priority for ingestion pipeline.
+
+---
+
+### 20. `admin.config` — SuperadminConfig
+
+**Route:** `#/admin.config`
+**Function:** `SuperadminConfig` (app.js)
+**Width:** 1000px max
+**Interactivity:** Full — inline edit any config value with confirmation
+
+**API contract:**
+
+```
+GET /api/admin/config
+→ {
+    config: [{
+      key: string,             // "claim.sla_hours"
+      value: string,
+      type: "number" | "string" | "boolean",
+      description: string,
+      group: string            // "Claims", "Ingestion", "Access", "Limits", "UI"
+    }]
+  }
+
+PUT /api/admin/config/{key}
+  body: { value: string }
+→ { ok: true }
+```
+
+**UI mapping:**
+- Search bar filters by key or description.
+- Cards grouped by group name (Claims, Ingestion, Access, Limits, UI).
+- Each row: key (mono) + description (caption) + value (emerald mono on void bg) + Edit button.
+- Edit mode: inline input replaces value display. Enter saves (confirmation modal), Escape cancels.
+- All changes logged in audit trail.
+
+**Current config keys:**
+- `claim.sla_hours` (72), `claim.cooldown_days` (30), `claim.max_pending` (3)
+- `ingestion.batch_size` (500), `ingestion.refresh_interval_hours` (24), `ingestion.error_threshold` (10)
+- `gate.password` (mkr2026), `gate.enabled` (true)
+- `rate_limit.api_rpm` (60), `rate_limit.scan_daily` (5), `rate_limit.nomination_daily` (3)
+- `ui.deck_size` (20), `ui.search_results_limit` (50), `ui.curation_chat_entries` (3)
+
+---
+
 ## Verification checklist
 
-- [ ] All 9 screens render at the correct routes
-- [ ] Sidebar groups (Superadmin, Adjudication, Integrity) navigate correctly
+### Superadmin group
+- [ ] All 20 screens render at the correct routes
+- [ ] All 5 sidebar groups navigate correctly
 - [ ] Pulse tiles show real metrics with correct deltas
 - [ ] User search filters correctly
 - [ ] User detail panel shows correct data for selected user
@@ -531,32 +973,49 @@ The admin routes should be behind middleware that checks for the superadmin role
 - [ ] Kill switches degrade to "Insufficient data" on affected signals
 - [ ] Status dots reflect real API health
 - [ ] Alert threshold toggles persist
+
+### Adjudication group
 - [ ] Contest SLA countdown computes correctly from filing time
 - [ ] Contest resolve awards grant to selected claimant
 - [ ] Contest dismiss clears both claims
 - [ ] Nomination approve triggers ingestion
 - [ ] Nomination reject records reason
 - [ ] Bulk approve works with checkbox selection
+
+### Catalog group
+- [ ] Ingestion batches show correct progress bars
+- [ ] Retry re-queues only failed pages
+- [ ] Cancel preserves already-processed pages
+- [ ] Corrections show current vs proposed comparison
+- [ ] Takedowns show takedown notice on approval
+- [ ] Taxonomy rename updates slug
+- [ ] Taxonomy reorder persists
+- [ ] Taxonomy delete warns about uncategorized projects
+- [ ] Vocabulary resolve sets canonical term
+- [ ] Anomaly release returns page to catalog
+- [ ] Anomaly suppress replaces page with notice
+
+### Integrity group
 - [ ] Audit log search filters across action/target/reason
 - [ ] Audit log category + actor filters work in combination
 - [ ] Audit log entries are immutable (no edit/delete)
+- [ ] Sybil ban disables all accounts in cluster and purges activity
+- [ ] Sybil dismiss marks as false positive
+- [ ] Moderation action records action description
+- [ ] Moderation dismiss records reason
+
+### Platform group
+- [ ] User lookup returns full profile with grants/claims/lists
+- [ ] User lookup IP/UA never exposed to non-admin
+- [ ] Editorial claim assigns verdict to author
+- [ ] Editorial publish makes verdict visible on project page
+- [ ] Demand signals sort by any dimension
+- [ ] Demand "Missing" badge shows for unmet demand
+- [ ] Config edit confirmation required before save
+- [ ] Config changes logged in audit trail
+
+### Cross-cutting
 - [ ] No visitor-level data exposed (aggregate only)
 - [ ] Admin routes are access-controlled (founders only)
-
----
-
-## Screens still in nav but NOT yet built (11 remaining)
-
-| Group | Screen | Route |
-|-------|--------|-------|
-| Catalog | Catalog ingestion | `admin.ingestion` |
-| Catalog | Page corrections & takedowns | `admin.corrections` |
-| Catalog | Taxonomy & categories | `admin.taxonomy` |
-| Catalog | Vocabulary contests | `admin.vocab` |
-| Catalog | Anomaly quarantine | `admin.anomaly` |
-| Integrity | Sybil detection | `admin.sybil` |
-| Integrity | Project moderation | `admin.moderation` |
-| Platform | User lookup | `admin.users` |
-| Platform | Editorial tools | `admin.editorial` |
-| Platform | Demand signals | `admin.demand` |
-| Platform | Config | `admin.config` |
+- [ ] All destructive actions go through confirmation modal
+- [ ] All actions produce toast feedback

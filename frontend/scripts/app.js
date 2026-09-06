@@ -1966,6 +1966,17 @@
     if (name === "admin.contests") return SuperadminContests;
     if (name === "admin.nominations") return SuperadminNominations;
     if (name === "admin.audit") return SuperadminAuditLog;
+    if (name === "admin.ingestion") return SuperadminIngestion;
+    if (name === "admin.corrections") return SuperadminCorrections;
+    if (name === "admin.taxonomy") return SuperadminTaxonomy;
+    if (name === "admin.vocab") return SuperadminVocab;
+    if (name === "admin.anomaly") return SuperadminAnomaly;
+    if (name === "admin.sybil") return SuperadminSybil;
+    if (name === "admin.moderation") return SuperadminModeration;
+    if (name === "admin.users") return SuperadminUserLookup;
+    if (name === "admin.editorial") return SuperadminEditorial;
+    if (name === "admin.demand") return SuperadminDemand;
+    if (name === "admin.config") return SuperadminConfig;
     var T = {
       discover: "Discover", category: "CategoryView", search: "SearchResults", project: "ProjectPage",
       methodology: "MethodologyPage", "list.public": "PublicListPage", "stack.public": "PublicStackPage",
@@ -4168,6 +4179,936 @@
       saHeader("Integrity", "Audit log", "Every administrative action across the platform. Immutable, searchable, and timestamped."),
       searchAndFilters, logTable,
       h(Note, null, "Entries cannot be edited or deleted. This is the canonical record of all superadmin actions. \u00b7 illustrative data"));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     CATALOG GROUP
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── 10. Catalog ingestion ─────────────────────────────────────────────── */
+  function SuperadminIngestion(props) {
+    var Note = W("Note");
+
+    var BATCHES = [
+      { id: "BATCH-014", source: "npm top-5k seed", status: "complete", pages: 4847, succeeded: 4812, failed: 35, started: "2026-09-05T02:00:00Z", finished: "2026-09-05T06:14:00Z" },
+      { id: "BATCH-015", source: "GitHub signals refresh", status: "running", pages: 4847, succeeded: 3201, failed: 8, started: "2026-09-06T02:00:00Z", finished: null },
+      { id: "BATCH-016", source: "OpenSSF Scorecard refresh", status: "running", pages: 3210, succeeded: 1844, failed: 18, started: "2026-09-06T03:30:00Z", finished: null },
+      { id: "BATCH-017", source: "Nomination pipeline", status: "queued", pages: 7, succeeded: 0, failed: 0, started: null, finished: null },
+      { id: "BATCH-013", source: "npm top-5k seed", status: "complete", pages: 4847, succeeded: 4839, failed: 8, started: "2026-09-04T02:00:00Z", finished: "2026-09-04T05:48:00Z" },
+      { id: "BATCH-012", source: "GitHub signals refresh", status: "failed", pages: 4847, succeeded: 2100, failed: 2747, started: "2026-09-03T02:00:00Z", finished: "2026-09-03T02:42:00Z" }
+    ];
+
+    var bs = React.useState(BATCHES), batches = bs[0], setBatches = bs[1];
+    var fs = React.useState("all"), filter = fs[0], setFilter = fs[1];
+
+    function retryBatch(batch) {
+      saConfirmModal({
+        title: "Retry " + batch.id + "?",
+        body: "Re-runs the " + batch.failed + " failed pages from " + batch.source + ". Already-succeeded pages are skipped.",
+        confirmLabel: "Retry failed",
+        destructive: false,
+        onConfirm: function () {
+          setBatches(batches.map(function (b) {
+            return b.id === batch.id ? Object.assign({}, b, { status: "running", failed: 0 }) : b;
+          }));
+          saToast("Retrying " + batch.id + " (" + batch.failed + " pages)", "ok");
+        }
+      });
+    }
+    function cancelBatch(batch) {
+      saConfirmModal({
+        title: "Cancel " + batch.id + "?",
+        body: "Stops ingestion for this batch. Pages already processed are kept. Remaining pages return to the queue.",
+        confirmLabel: "Cancel batch",
+        destructive: true,
+        onConfirm: function () {
+          setBatches(batches.map(function (b) {
+            return b.id === batch.id ? Object.assign({}, b, { status: "cancelled" }) : b;
+          }));
+          saToast("Cancelled " + batch.id, "ok");
+        }
+      });
+    }
+
+    var filtered = batches.filter(function (b) { return filter === "all" || b.status === filter; });
+    var counts = {};
+    batches.forEach(function (b) { counts[b.status] = (counts[b.status] || 0) + 1; });
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+      ["all", "running", "queued", "complete", "failed", "cancelled"].map(function (f) {
+        var label = f === "all" ? "All (" + batches.length + ")" : f.charAt(0).toUpperCase() + f.slice(1) + (counts[f] ? " (" + counts[f] + ")" : "");
+        return h("button", { key: f, type: "button", onClick: function () { setFilter(f); },
+          style: { background: filter === f ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === f ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === f ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, label);
+      }));
+
+    var batchCards = filtered.map(function (b) {
+      var pct = b.pages > 0 ? Math.round((b.succeeded / b.pages) * 100) : 0;
+      var statusDot = b.status === "complete" ? "ok" : b.status === "failed" || b.status === "cancelled" ? "err" : b.status === "running" ? "warn" : "warn";
+      return h("div", { key: b.id, className: "nv-sa-card", style: col("var(--space-md)") },
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "var(--space-sm)" } },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
+            saStatusDot(statusDot),
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, b.id),
+            h("span", { style: SA_CAP }, b.source)),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: b.status === "running" ? "var(--volt-emerald)" : "var(--text-secondary)" } }, b.status)),
+        /* Progress bar */
+        h("div", { style: col("4px") },
+          h("div", { className: "nv-sa-bar", style: { height: "8px" } },
+            h("div", { className: "nv-sa-bar-fill", style: { width: pct + "%", background: b.status === "failed" ? "var(--volt-red,#ef4444)" : "var(--volt-emerald)" } })),
+          h("div", { style: { display: "flex", justifyContent: "space-between" } },
+            h("span", { style: SA_CAP }, b.succeeded + " / " + b.pages + " pages (" + pct + "%)"),
+            b.failed > 0 ? h("span", { style: { font: "var(--type-caption)", color: "var(--volt-red,#ef4444)" } }, b.failed + " failed") : null)),
+        /* Stats + actions row */
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP },
+            (b.started ? "Started " + new Date(b.started).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Queued") +
+            (b.finished ? " \u00b7 Finished " + new Date(b.finished).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit" }) : "")),
+          h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+            b.status === "failed" || (b.status === "complete" && b.failed > 0) ? h(Button, { variant: "outline", size: "sm", onClick: function () { retryBatch(b); } }, "Retry failed") : null,
+            b.status === "running" ? h(Button, { variant: "ghost", size: "sm", onClick: function () { cancelBatch(b); } }, "Cancel") : null)));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Catalog", "Catalog ingestion", "Batch import status, retry failed pages, and monitor the ingestion pipeline."),
+      filterBar,
+      batchCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, batchCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No batches match this filter.")),
+      h(Note, null, "Retry re-queues only failed pages. Cancel preserves already-processed pages. \u00b7 illustrative data"));
+  }
+
+  /* ── 11. Page corrections & takedowns ──────────────────────────────────── */
+  function SuperadminCorrections(props) {
+    var Note = W("Note");
+
+    var INIT_TICKETS = [
+      { id: "COR-001", slug: "facebook/react", type: "correction", field: "description", submitted_by: "maya-chen", submitted_at: "2026-09-05T14:00:00Z", current: "A JavaScript library for building user interfaces", proposed: "A JavaScript library for building user interfaces, maintained by Meta", status: "pending" },
+      { id: "COR-002", slug: "vercel/next.js", type: "correction", field: "category", submitted_by: "rajpatel", submitted_at: "2026-09-04T10:00:00Z", current: "Utilities", proposed: "Frameworks", status: "pending" },
+      { id: "COR-003", slug: "fake-org/malware-lib", type: "takedown", field: null, submitted_by: "alexr", submitted_at: "2026-09-03T18:30:00Z", current: null, proposed: null, reason: "Distributes obfuscated malware via postinstall script", status: "pending" },
+      { id: "COR-004", slug: "some-org/deprecated-pkg", type: "takedown", field: null, submitted_by: "nina.io", submitted_at: "2026-09-02T08:00:00Z", current: null, proposed: null, reason: "Package author requested removal from all registries", status: "pending" },
+      { id: "COR-005", slug: "lodash/lodash", type: "correction", field: "homepage", submitted_by: "tomasz.k", submitted_at: "2026-09-01T12:00:00Z", current: "https://lodash.com/", proposed: "https://lodash.com", status: "approved" },
+      { id: "COR-006", slug: "expressjs/express", type: "correction", field: "description", submitted_by: "sara_dev", submitted_at: "2026-08-30T09:00:00Z", current: "Fast web framework for Node.js", proposed: "Fast, unopinionated, minimalist web framework for Node.js", status: "rejected", reject_reason: "Original npm description is canonical" }
+    ];
+
+    var ts = React.useState(INIT_TICKETS), tickets = ts[0], setTickets = ts[1];
+    var fs = React.useState("pending"), filter = fs[0], setFilter = fs[1];
+
+    function approveTicket(ticket) {
+      var label = ticket.type === "takedown" ? "Execute takedown" : "Apply correction";
+      saConfirmModal({
+        title: label + " for " + ticket.slug + "?",
+        body: ticket.type === "takedown"
+          ? "This removes " + ticket.slug + " from the catalog. The page will show a takedown notice."
+          : "This changes the " + ticket.field + " field from \"" + ticket.current + "\" to \"" + ticket.proposed + "\".",
+        confirmLabel: label,
+        destructive: ticket.type === "takedown",
+        onConfirm: function () {
+          setTickets(tickets.map(function (t) { return t.id === ticket.id ? Object.assign({}, t, { status: "approved" }) : t; }));
+          saToast((ticket.type === "takedown" ? "Takedown executed: " : "Correction applied: ") + ticket.slug, "ok");
+        }
+      });
+    }
+    function rejectTicket(ticket) {
+      var reasonRef = { value: "" };
+      saConfirmModal({
+        title: "Reject " + ticket.id + "?",
+        body: "The submitted " + ticket.type + " for " + ticket.slug + " will be dismissed.",
+        confirmLabel: "Reject",
+        destructive: true,
+        input: h("input", { className: "nv-field", placeholder: "Reason (optional)\u2026", onChange: function (e) { reasonRef.value = e.target.value; },
+          style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        onConfirm: function () {
+          setTickets(tickets.map(function (t) { return t.id === ticket.id ? Object.assign({}, t, { status: "rejected", reject_reason: reasonRef.value || "No reason given" }) : t; }));
+          saToast("Rejected " + ticket.id, "ok");
+        }
+      });
+    }
+
+    var filtered = tickets.filter(function (t) { return filter === "all" || t.status === filter; });
+    var pendingCount = tickets.filter(function (t) { return t.status === "pending"; }).length;
+    var typeColors = { correction: "#3b82f6", takedown: "var(--volt-red,#ef4444)" };
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+      [["pending", "Pending (" + pendingCount + ")"], ["approved", "Approved"], ["rejected", "Rejected"], ["all", "All (" + tickets.length + ")"]].map(function (p) {
+        return h("button", { key: p[0], type: "button", onClick: function () { setFilter(p[0]); },
+          style: { background: filter === p[0] ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === p[0] ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === p[0] ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, p[1]);
+      }));
+
+    var ticketCards = filtered.map(function (t) {
+      var isPending = t.status === "pending";
+      return h("div", { key: t.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-md)"), { opacity: t.status === "rejected" ? 0.5 : 1 }) },
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: typeColors[t.type], padding: "2px 8px", border: "1px solid " + typeColors[t.type], borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, t.type),
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, t.slug),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)" } }, t.id)),
+        t.type === "correction" ? h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" } },
+          h("div", { style: Object.assign({}, col("4px"), { padding: "var(--space-md)", background: "var(--volt-void)", borderRadius: "8px" }) },
+            h("span", { style: SA_EYE }, "Current " + t.field),
+            h("span", { style: { font: "var(--type-body-md)", color: "var(--text-secondary)" } }, t.current)),
+          h("div", { style: Object.assign({}, col("4px"), { padding: "var(--space-md)", background: "var(--volt-void)", borderRadius: "8px" }) },
+            h("span", { style: SA_EYE }, "Proposed"),
+            h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, t.proposed)))
+          : h("div", { style: Object.assign({}, col("4px"), { padding: "var(--space-md)", background: "var(--volt-void)", borderRadius: "8px" }) },
+              h("span", { style: SA_EYE }, "Takedown reason"),
+              h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, t.reason)),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, "Submitted by " + t.submitted_by + " \u00b7 " + new Date(t.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })),
+          isPending
+            ? h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "outline", size: "sm", onClick: function () { approveTicket(t); } }, t.type === "takedown" ? "Execute" : "Apply"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { rejectTicket(t); } }, "Reject"))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: t.status === "approved" ? "var(--volt-emerald)" : "var(--text-secondary)" } },
+                t.status === "approved" ? "\u2713 " + (t.type === "takedown" ? "Taken down" : "Applied") : "\u2717 Rejected" + (t.reject_reason ? " \u2014 " + t.reject_reason : ""))));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Catalog", "Page corrections & takedowns", "Review field corrections and takedown requests submitted by users."),
+      filterBar,
+      ticketCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, ticketCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No tickets match this filter.")),
+      h(Note, null, "Corrections update catalog data in-place. Takedowns replace the page with a notice. \u00b7 illustrative data"));
+  }
+
+  /* ── 12. Taxonomy & categories ─────────────────────────────────────────── */
+  function SuperadminTaxonomy(props) {
+    var Note = W("Note");
+
+    var INIT_CATEGORIES = [
+      { id: 1, type: "ecosystem", name: "React", slug: "react", projects: 847, order: 1 },
+      { id: 2, type: "ecosystem", name: "Vue", slug: "vue", projects: 412, order: 2 },
+      { id: 3, type: "ecosystem", name: "Svelte", slug: "svelte", projects: 189, order: 3 },
+      { id: 4, type: "ecosystem", name: "Angular", slug: "angular", projects: 356, order: 4 },
+      { id: 5, type: "ecosystem", name: "Node.js", slug: "nodejs", projects: 1204, order: 5 },
+      { id: 6, type: "intent", name: "Frameworks", slug: "frameworks", projects: 234, order: 1 },
+      { id: 7, type: "intent", name: "Build tools", slug: "build-tools", projects: 156, order: 2 },
+      { id: 8, type: "intent", name: "Testing", slug: "testing", projects: 198, order: 3 },
+      { id: 9, type: "intent", name: "Databases & ORMs", slug: "databases-orms", projects: 267, order: 4 },
+      { id: 10, type: "intent", name: "Auth & security", slug: "auth-security", projects: 89, order: 5 },
+      { id: 11, type: "intent", name: "UI components", slug: "ui-components", projects: 445, order: 6 },
+      { id: 12, type: "intent", name: "Utilities", slug: "utilities", projects: 612, order: 7 }
+    ];
+
+    var cs = React.useState(INIT_CATEGORIES), categories = cs[0], setCategories = cs[1];
+    var editing = React.useState(null), editId = editing[0], setEditId = editing[1];
+    var en = React.useState(""), editName = en[0], setEditName = en[1];
+    var addType = React.useState("ecosystem"), newType = addType[0], setNewType = addType[1];
+    var addName = React.useState(""), newName = addName[0], setNewName = addName[1];
+
+    function startEdit(cat) { setEditId(cat.id); setEditName(cat.name); }
+    function saveEdit(cat) {
+      if (!editName.trim()) return;
+      setCategories(categories.map(function (c) { return c.id === cat.id ? Object.assign({}, c, { name: editName.trim(), slug: editName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") }) : c; }));
+      setEditId(null);
+      saToast("Renamed to " + editName.trim(), "ok");
+    }
+    function deleteCategory(cat) {
+      saConfirmModal({
+        title: "Delete \"" + cat.name + "\"?",
+        body: cat.projects + " projects are currently tagged with this category. They will become uncategorized.",
+        confirmLabel: "Delete",
+        destructive: true,
+        onConfirm: function () {
+          setCategories(categories.filter(function (c) { return c.id !== cat.id; }));
+          saToast("Deleted " + cat.name, "ok");
+        }
+      });
+    }
+    function moveUp(cat) {
+      setCategories(categories.map(function (c) {
+        if (c.type !== cat.type) return c;
+        if (c.id === cat.id) return Object.assign({}, c, { order: c.order - 1 });
+        if (c.order === cat.order - 1) return Object.assign({}, c, { order: c.order + 1 });
+        return c;
+      }));
+    }
+    function addCategory() {
+      if (!newName.trim()) return;
+      var maxId = Math.max.apply(null, categories.map(function (c) { return c.id; }));
+      var maxOrder = Math.max.apply(null, categories.filter(function (c) { return c.type === newType; }).map(function (c) { return c.order; }).concat([0]));
+      setCategories(categories.concat([{ id: maxId + 1, type: newType, name: newName.trim(), slug: newName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"), projects: 0, order: maxOrder + 1 }]));
+      setNewName("");
+      saToast("Added " + newName.trim(), "ok");
+    }
+
+    function renderGroup(type, label) {
+      var items = categories.filter(function (c) { return c.type === type; }).sort(function (a, b) { return a.order - b.order; });
+      return h("div", { className: "nv-sa-card", style: col("0") },
+        h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)", display: "flex", justifyContent: "space-between", alignItems: "center" } },
+          h("span", { style: SA_EYE }, label),
+          h("span", { style: SA_CAP }, items.length + " categories")),
+        items.map(function (c) {
+          var isEditing = editId === c.id;
+          return h("div", { key: c.id, className: "nv-sa-row" },
+            h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flex: 1 } },
+              h("span", { style: { font: "var(--type-mono-label)", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }, onClick: function () { moveUp(c); } }, "\u2191"),
+              isEditing
+                ? h("input", { value: editName, onChange: function (e) { setEditName(e.target.value); }, onKeyDown: function (e) { if (e.key === "Enter") saveEdit(c); if (e.key === "Escape") setEditId(null); }, autoFocus: true,
+                    style: { background: "var(--volt-void)", border: "1px solid var(--volt-emerald)", borderRadius: "var(--radius-md)", padding: "6px 10px", font: "var(--type-body-md)", color: "var(--text-body)", width: "200px" } })
+                : h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, c.name),
+              h("span", { style: SA_CAP }, c.projects + " projects")),
+            h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+              isEditing
+                ? h(Button, { variant: "outline", size: "sm", onClick: function () { saveEdit(c); } }, "Save")
+                : h(Button, { variant: "ghost", size: "sm", onClick: function () { startEdit(c); } }, "Rename"),
+              h(Button, { variant: "ghost", size: "sm", onClick: function () { deleteCategory(c); } }, "\u00d7")));
+        }));
+    }
+
+    var addCard = h("div", { className: "nv-sa-card", style: col("var(--space-md)") },
+      h("span", { style: SA_EYE }, "Add category"),
+      h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+        h("select", { value: newType, onChange: function (e) { setNewType(e.target.value); },
+          style: { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", font: "var(--type-body-md)", color: "var(--text-body)", cursor: "pointer" } },
+          h("option", { value: "ecosystem" }, "Ecosystem"), h("option", { value: "intent" }, "Intent")),
+        h("input", { value: newName, onChange: function (e) { setNewName(e.target.value); }, onKeyDown: function (e) { if (e.key === "Enter") addCategory(); }, placeholder: "Category name\u2026",
+          style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        h(Button, { variant: "outline", onClick: addCategory, disabled: !newName.trim() }, "Add")));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Catalog", "Taxonomy & categories", "Manage ecosystem and intent categories. Reorder, rename, or add new ones."),
+      renderGroup("ecosystem", "Ecosystems"),
+      renderGroup("intent", "Intent categories"),
+      addCard,
+      h(Note, null, "Reorder with \u2191 arrows. Deleting a category uncategorizes its projects. \u00b7 illustrative data"));
+  }
+
+  /* ── 13. Vocabulary contests ───────────────────────────────────────────── */
+  function SuperadminVocab(props) {
+    var Note = W("Note");
+
+    var INIT_TERMS = [
+      { id: "VOC-001", current: "dependents", proposed: "downstream consumers", proposed_by: "maya-chen", proposed_at: "2026-09-04T10:00:00Z", votes_for: 14, votes_against: 8, reason: "\"Dependents\" is jargon. \"Downstream consumers\" is clearer for non-developers.", status: "open" },
+      { id: "VOC-002", current: "score", proposed: "health signal", proposed_by: "alexr", proposed_at: "2026-09-03T15:00:00Z", votes_for: 22, votes_against: 3, reason: "\"Score\" implies ranking/judgment. \"Health signal\" aligns with our honesty invariant.", status: "open" },
+      { id: "VOC-003", current: "maintainer", proposed: "steward", proposed_by: "tomasz.k", proposed_at: "2026-09-01T08:00:00Z", votes_for: 5, votes_against: 19, reason: "\"Steward\" better reflects the caretaking aspect. \"Maintainer\" is industry-standard though.", status: "open" },
+      { id: "VOC-004", current: "interest", proposed: "watchlist entry", proposed_by: "nina.io", proposed_at: "2026-08-28T12:00:00Z", votes_for: 11, votes_against: 11, reason: "\"Interest\" is vague. \"Watchlist entry\" is more concrete.", status: "resolved", winner: "interest", resolve_reason: "Community split. Keeping the existing term avoids churn." },
+      { id: "VOC-005", current: "claim", proposed: "ownership assertion", proposed_by: "rajpatel", proposed_at: "2026-08-25T09:00:00Z", votes_for: 3, votes_against: 24, reason: "\"Claim\" sounds too aggressive.", status: "resolved", winner: "claim", resolve_reason: "Strong consensus for keeping \"claim\" — it's precise and brief." }
+    ];
+
+    var ts = React.useState(INIT_TERMS), terms = ts[0], setTerms = ts[1];
+    var fs = React.useState("open"), filter = fs[0], setFilter = fs[1];
+
+    function resolveVocab(term, winner) {
+      var reasonRef = { value: "" };
+      saConfirmModal({
+        title: "Resolve: keep \"" + winner + "\"?",
+        body: "This closes the vocabulary contest. The " + (winner === term.current ? "current" : "proposed") + " term \"" + winner + "\" becomes canonical.",
+        confirmLabel: "Resolve",
+        destructive: false,
+        input: h("input", { className: "nv-field", placeholder: "Resolution reason\u2026", onChange: function (e) { reasonRef.value = e.target.value; },
+          style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        onConfirm: function () {
+          setTerms(terms.map(function (t) { return t.id === term.id ? Object.assign({}, t, { status: "resolved", winner: winner, resolve_reason: reasonRef.value || "Resolved by admin" }) : t; }));
+          saToast("Resolved: \"" + winner + "\" is canonical", "ok");
+        }
+      });
+    }
+
+    var filtered = terms.filter(function (t) { return filter === "all" || t.status === filter; });
+    var openCount = terms.filter(function (t) { return t.status === "open"; }).length;
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)" } },
+      [["open", "Open (" + openCount + ")"], ["resolved", "Resolved"], ["all", "All"]].map(function (p) {
+        return h("button", { key: p[0], type: "button", onClick: function () { setFilter(p[0]); },
+          style: { background: filter === p[0] ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === p[0] ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === p[0] ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, p[1]);
+      }));
+
+    var vocabCards = filtered.map(function (t) {
+      var isOpen = t.status === "open";
+      var total = t.votes_for + t.votes_against;
+      var forPct = total > 0 ? Math.round((t.votes_for / total) * 100) : 50;
+      return h("div", { key: t.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-md)"), { opacity: isOpen ? 1 : 0.7 }) },
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)" } }, t.id),
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)" } },
+            h("code", { style: { font: "var(--type-body-md-strong)", padding: "4px 10px", background: "var(--volt-void)", borderRadius: "var(--radius-sm)", textDecoration: !isOpen && t.winner !== t.current ? "line-through" : "none" } }, t.current),
+            h("span", { style: { color: "var(--text-secondary)" } }, "\u2192"),
+            h("code", { style: { font: "var(--type-body-md-strong)", padding: "4px 10px", background: "var(--volt-void)", borderRadius: "var(--radius-sm)", textDecoration: !isOpen && t.winner !== t.proposed ? "line-through" : "none" } }, t.proposed))),
+        h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)" } }, t.reason),
+        /* Vote bar */
+        h("div", { style: col("4px") },
+          h("div", { style: { display: "flex", height: "8px", borderRadius: "4px", overflow: "hidden" } },
+            h("div", { style: { width: forPct + "%", background: "var(--volt-emerald)", transition: "width .3s" } }),
+            h("div", { style: { flex: 1, background: "var(--volt-red,#ef4444)" } })),
+          h("div", { style: { display: "flex", justifyContent: "space-between" } },
+            h("span", { style: SA_CAP }, t.votes_for + " for change (" + forPct + "%)"),
+            h("span", { style: SA_CAP }, t.votes_against + " keep current"))),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, "Proposed by " + t.proposed_by + " \u00b7 " + new Date(t.proposed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })),
+          isOpen
+            ? h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "outline", size: "sm", onClick: function () { resolveVocab(t, t.proposed); } }, "Accept change"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { resolveVocab(t, t.current); } }, "Keep current"))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--volt-emerald)", textTransform: "uppercase" } }, "\u2713 \"" + t.winner + "\" \u2014 " + t.resolve_reason)));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Catalog", "Vocabulary contests", "Community-proposed terminology changes. Resolve disputes to keep the ubiquitous language consistent."),
+      filterBar,
+      vocabCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, vocabCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No vocabulary contests match this filter.")),
+      h(Note, null, "Resolution updates CONTEXT.md terminology. Both terms remain searchable. \u00b7 illustrative data"));
+  }
+
+  /* ── 14. Anomaly quarantine ────────────────────────────────────────────── */
+  function SuperadminAnomaly(props) {
+    var Note = W("Note");
+
+    var INIT_ANOMALIES = [
+      { id: "ANO-001", slug: "unknown-org/suspiciously-perfect", type: "score_anomaly", severity: "high", detected: "2026-09-05T22:00:00Z", detail: "All signal dimensions at 100th percentile simultaneously. Statistically improbable (p < 0.001).", status: "quarantined" },
+      { id: "ANO-002", slug: "cool-tools/helper-utils", type: "duplicate", severity: "medium", detected: "2026-09-05T18:00:00Z", detail: "98.7% README similarity with existing page cool-tools/util-helpers. Likely renamed fork.", status: "quarantined" },
+      { id: "ANO-003", slug: "fast-framework/turbo-js", type: "star_inflation", severity: "high", detected: "2026-09-04T10:00:00Z", detail: "Gained 2,400 stars in 24h from accounts created in the same hour. Likely purchased stars.", status: "quarantined" },
+      { id: "ANO-004", slug: "data-org/csv-parser", type: "duplicate", severity: "low", detected: "2026-09-03T14:00:00Z", detail: "Shares 82% dependency overlap with data-org/tsv-parser. Might be intentional variants.", status: "released" },
+      { id: "ANO-005", slug: "gaming-sdk/unity-helper", type: "scope_mismatch", severity: "medium", detected: "2026-09-02T08:00:00Z", detail: "Tagged as npm package but is a Unity/C# library. Registry mismatch.", status: "quarantined" },
+      { id: "ANO-006", slug: "spam-project/seo-magic", type: "score_anomaly", severity: "high", detected: "2026-09-01T03:00:00Z", detail: "npm weekly downloads jumped from 3 to 450,000 overnight. Likely download inflation.", status: "suppressed" }
+    ];
+
+    var as = React.useState(INIT_ANOMALIES), anomalies = as[0], setAnomalies = as[1];
+    var fs = React.useState("quarantined"), filter = fs[0], setFilter = fs[1];
+
+    function releaseAnomaly(a) {
+      saConfirmModal({
+        title: "Release " + a.slug + "?",
+        body: "Removes from quarantine. The page returns to the public catalog with all its signals intact.",
+        confirmLabel: "Release",
+        destructive: false,
+        onConfirm: function () {
+          setAnomalies(anomalies.map(function (x) { return x.id === a.id ? Object.assign({}, x, { status: "released" }) : x; }));
+          saToast("Released " + a.slug, "ok");
+        }
+      });
+    }
+    function suppressAnomaly(a) {
+      saConfirmModal({
+        title: "Suppress " + a.slug + "?",
+        body: "The page is removed from the catalog and shows a suppression notice. This action is logged.",
+        confirmLabel: "Suppress",
+        destructive: true,
+        onConfirm: function () {
+          setAnomalies(anomalies.map(function (x) { return x.id === a.id ? Object.assign({}, x, { status: "suppressed" }) : x; }));
+          saToast("Suppressed " + a.slug, "ok");
+        }
+      });
+    }
+
+    var filtered = anomalies.filter(function (a) { return filter === "all" || a.status === filter; });
+    var qCount = anomalies.filter(function (a) { return a.status === "quarantined"; }).length;
+    var sevColors = { high: "var(--volt-red,#ef4444)", medium: "var(--volt-amber,#f59e0b)", low: "var(--text-secondary)" };
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+      [["quarantined", "Quarantined (" + qCount + ")"], ["released", "Released"], ["suppressed", "Suppressed"], ["all", "All (" + anomalies.length + ")"]].map(function (p) {
+        return h("button", { key: p[0], type: "button", onClick: function () { setFilter(p[0]); },
+          style: { background: filter === p[0] ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === p[0] ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === p[0] ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, p[1]);
+      }));
+
+    var anomalyCards = filtered.map(function (a) {
+      var isQ = a.status === "quarantined";
+      return h("div", { key: a.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-md)"), { opacity: a.status === "suppressed" ? 0.5 : 1 }) },
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: sevColors[a.severity], padding: "2px 8px", border: "1px solid " + sevColors[a.severity], borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, a.severity),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)", padding: "2px 8px", border: "1px solid var(--volt-border)", borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, a.type.replace(/_/g, " ")),
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, a.slug),
+          h("span", { style: { font: "var(--type-mono-label)", color: "var(--text-secondary)" } }, a.id)),
+        h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } }, a.detail),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, "Detected " + new Date(a.detected).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })),
+          isQ
+            ? h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "outline", size: "sm", onClick: function () { releaseAnomaly(a); } }, "Release"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { suppressAnomaly(a); } }, "Suppress"))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: a.status === "released" ? "var(--volt-emerald)" : "var(--text-secondary)" } },
+                a.status === "released" ? "\u2713 Released" : "\u2717 Suppressed")));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Catalog", "Anomaly quarantine", "Auto-flagged pages with suspicious signals. Review, release, or suppress."),
+      filterBar,
+      anomalyCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, anomalyCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No anomalies match this filter.")),
+      h(Note, null, "Quarantine is automatic. Release returns to catalog. Suppress replaces with notice. \u00b7 illustrative data"));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     INTEGRITY GROUP
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── 15. Sybil detection ───────────────────────────────────────────────── */
+  function SuperadminSybil(props) {
+    var Note = W("Note");
+
+    var INIT_CLUSTERS = [
+      { id: "SYB-001", accounts: ["starbot-01", "starbot-02", "starbot-03", "starbot-04", "starbot-05"], pattern: "bulk_registration", confidence: 97, detected: "2026-09-05T04:00:00Z", detail: "5 accounts created within 90 seconds from the same IP block. All starred the same 3 repos within 10 minutes.", status: "flagged" },
+      { id: "SYB-002", accounts: ["promo-user-a", "promo-user-b", "promo-user-c"], pattern: "coordinated_interest", confidence: 89, detected: "2026-09-04T16:00:00Z", detail: "3 accounts registered interest in identical 12 projects in the same order within 5 minutes.", status: "flagged" },
+      { id: "SYB-003", accounts: ["new-dev-x"], pattern: "velocity_anomaly", confidence: 72, detected: "2026-09-03T09:00:00Z", detail: "Single account registered 47 interests in 2 minutes. Possible automation, but could be enthusiastic new user.", status: "flagged" },
+      { id: "SYB-004", accounts: ["fake-reviewer-1", "fake-reviewer-2"], pattern: "nomination_spam", confidence: 94, detected: "2026-09-02T20:00:00Z", detail: "2 accounts nominated 15 projects each with identical boilerplate reason text.", status: "banned" },
+      { id: "SYB-005", accounts: ["legit-user-999"], pattern: "velocity_anomaly", confidence: 58, detected: "2026-09-01T11:00:00Z", detail: "Burst of 20 list saves in 3 minutes. Review found it was a real user organizing their workspace.", status: "dismissed" }
+    ];
+
+    var cs = React.useState(INIT_CLUSTERS), clusters = cs[0], setClusters = cs[1];
+    var fs = React.useState("flagged"), filter = fs[0], setFilter = fs[1];
+
+    function banCluster(cluster) {
+      saConfirmModal({
+        title: "Ban " + cluster.accounts.length + " accounts?",
+        body: "Accounts: " + cluster.accounts.join(", ") + ". All accounts will be disabled and their activity (interests, nominations, lists) purged.",
+        confirmLabel: "Ban all",
+        destructive: true,
+        onConfirm: function () {
+          setClusters(clusters.map(function (c) { return c.id === cluster.id ? Object.assign({}, c, { status: "banned" }) : c; }));
+          saToast("Banned " + cluster.accounts.length + " accounts", "ok");
+        }
+      });
+    }
+    function dismissCluster(cluster) {
+      setClusters(clusters.map(function (c) { return c.id === cluster.id ? Object.assign({}, c, { status: "dismissed" }) : c; }));
+      saToast("Dismissed " + cluster.id + " — false positive", "ok");
+    }
+
+    var filtered = clusters.filter(function (c) { return filter === "all" || c.status === filter; });
+    var flaggedCount = clusters.filter(function (c) { return c.status === "flagged"; }).length;
+    var confColor = function (c) { return c >= 90 ? "var(--volt-red,#ef4444)" : c >= 70 ? "var(--volt-amber,#f59e0b)" : "var(--text-secondary)"; };
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+      [["flagged", "Flagged (" + flaggedCount + ")"], ["banned", "Banned"], ["dismissed", "Dismissed"], ["all", "All"]].map(function (p) {
+        return h("button", { key: p[0], type: "button", onClick: function () { setFilter(p[0]); },
+          style: { background: filter === p[0] ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === p[0] ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === p[0] ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, p[1]);
+      }));
+
+    var clusterCards = filtered.map(function (c) {
+      var isFlagged = c.status === "flagged";
+      return h("div", { key: c.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-md)"), { opacity: c.status === "dismissed" ? 0.5 : 1 }) },
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: confColor(c.confidence), padding: "2px 8px", border: "1px solid " + confColor(c.confidence), borderRadius: "999px", fontSize: "10px" } }, c.confidence + "% confidence"),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)", padding: "2px 8px", border: "1px solid var(--volt-border)", borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, c.pattern.replace(/_/g, " ")),
+          h("span", { style: { font: "var(--type-mono-label)", color: "var(--text-secondary)" } }, c.id)),
+        h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+          c.accounts.map(function (a) {
+            return h("code", { key: a, style: { font: "var(--type-mono-label)", padding: "3px 8px", background: "var(--volt-void)", borderRadius: "var(--radius-sm)", color: "var(--text-body)" } }, a);
+          })),
+        h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } }, c.detail),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, "Detected " + new Date(c.detected).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })),
+          isFlagged
+            ? h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "outline", size: "sm", onClick: function () { banCluster(c); }, style: { borderColor: "var(--volt-red,#ef4444)", color: "var(--volt-red,#ef4444)" } }, "Ban all"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { dismissCluster(c); } }, "Dismiss"))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: c.status === "banned" ? "var(--volt-red,#ef4444)" : "var(--text-secondary)" } },
+                c.status === "banned" ? "\u2717 Banned" : "\u2713 Dismissed")));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Integrity", "Sybil detection", "Clusters of suspicious accounts detected by pattern analysis. Review and ban or dismiss."),
+      filterBar,
+      clusterCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, clusterCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No clusters match this filter.")),
+      h(Note, null, "Detection runs hourly. Banning purges all activity from affected accounts. Dismiss marks as false positive. \u00b7 illustrative data"));
+  }
+
+  /* ── 16. Project moderation ────────────────────────────────────────────── */
+  function SuperadminModeration(props) {
+    var Note = W("Note");
+
+    var INIT_REPORTS = [
+      { id: "MOD-001", slug: "shady-org/crypto-miner", reported_by: "alexr", reported_at: "2026-09-05T20:00:00Z", reason: "Package installs a cryptocurrency miner in postinstall script", category: "malware", status: "pending" },
+      { id: "MOD-002", slug: "some-dev/copycat-react", reported_by: "maya-chen", reported_at: "2026-09-05T14:00:00Z", reason: "Blatant copy of facebook/react with minor name changes. Typosquatting.", category: "impersonation", status: "pending" },
+      { id: "MOD-003", slug: "personal/my-homework", reported_by: "nina.io", reported_at: "2026-09-04T09:00:00Z", reason: "Not a real open-source project. Personal homework repo with 0 stars.", category: "not_oss", status: "pending" },
+      { id: "MOD-004", slug: "ad-network/tracking-sdk", reported_by: "tomasz.k", reported_at: "2026-09-03T16:00:00Z", reason: "Undisclosed tracking. README doesn't mention data collection but the code phones home.", category: "privacy", status: "pending" },
+      { id: "MOD-005", slug: "useful-lib/disputed-fork", reported_by: "rajpatel", reported_at: "2026-09-01T10:00:00Z", reason: "This is a legitimate fork, not impersonation. Reporter is mistaken.", category: "impersonation", status: "dismissed", dismiss_reason: "Verified as a legitimate community fork with different maintainers." },
+      { id: "MOD-006", slug: "old-project/abandoned-2019", reported_by: "sara_dev", reported_at: "2026-08-28T08:00:00Z", reason: "Completely abandoned since 2019. No response from maintainer.", category: "abandoned", status: "actioned", action_taken: "Moved to Retired state. Added banner." }
+    ];
+
+    var rs = React.useState(INIT_REPORTS), reports = rs[0], setReports = rs[1];
+    var fs = React.useState("pending"), filter = fs[0], setFilter = fs[1];
+    var catColors = { malware: "var(--volt-red,#ef4444)", impersonation: "#ec4899", not_oss: "var(--text-secondary)", privacy: "var(--volt-amber,#f59e0b)", abandoned: "#8b5cf6" };
+
+    function actionReport(report) {
+      var actionRef = { value: "" };
+      saConfirmModal({
+        title: "Take action on " + report.slug + "?",
+        body: "Report: " + report.reason,
+        confirmLabel: "Take action",
+        destructive: true,
+        input: h("input", { className: "nv-field", placeholder: "Action taken (e.g., \"Suppressed\", \"Retired\")\u2026", onChange: function (e) { actionRef.value = e.target.value; },
+          style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        onConfirm: function () {
+          setReports(reports.map(function (r) { return r.id === report.id ? Object.assign({}, r, { status: "actioned", action_taken: actionRef.value || "Action taken" }) : r; }));
+          saToast("Actioned " + report.slug, "ok");
+        }
+      });
+    }
+    function dismissReport(report) {
+      var reasonRef = { value: "" };
+      saConfirmModal({
+        title: "Dismiss report on " + report.slug + "?",
+        body: "The project remains in the catalog unchanged.",
+        confirmLabel: "Dismiss",
+        destructive: false,
+        input: h("input", { className: "nv-field", placeholder: "Reason\u2026", onChange: function (e) { reasonRef.value = e.target.value; },
+          style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        onConfirm: function () {
+          setReports(reports.map(function (r) { return r.id === report.id ? Object.assign({}, r, { status: "dismissed", dismiss_reason: reasonRef.value || "Dismissed" }) : r; }));
+          saToast("Dismissed " + report.id, "ok");
+        }
+      });
+    }
+
+    var filtered = reports.filter(function (r) { return filter === "all" || r.status === filter; });
+    var pendingCount = reports.filter(function (r) { return r.status === "pending"; }).length;
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+      [["pending", "Pending (" + pendingCount + ")"], ["actioned", "Actioned"], ["dismissed", "Dismissed"], ["all", "All (" + reports.length + ")"]].map(function (p) {
+        return h("button", { key: p[0], type: "button", onClick: function () { setFilter(p[0]); },
+          style: { background: filter === p[0] ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === p[0] ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === p[0] ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, p[1]);
+      }));
+
+    var reportCards = filtered.map(function (r) {
+      var isPending = r.status === "pending";
+      return h("div", { key: r.id, className: "nv-sa-card", style: Object.assign({}, col("var(--space-md)"), { opacity: r.status === "dismissed" ? 0.5 : 1 }) },
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: catColors[r.category] || "var(--text-secondary)", padding: "2px 8px", border: "1px solid " + (catColors[r.category] || "var(--volt-border)"), borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, r.category.replace(/_/g, " ")),
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r.slug),
+          h("span", { style: { font: "var(--type-mono-label)", color: "var(--text-secondary)" } }, r.id)),
+        h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } }, r.reason),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, "Reported by " + r.reported_by + " \u00b7 " + new Date(r.reported_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })),
+          isPending
+            ? h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "outline", size: "sm", onClick: function () { actionReport(r); }, style: { borderColor: "var(--volt-red,#ef4444)", color: "var(--volt-red,#ef4444)" } }, "Take action"),
+                h(Button, { variant: "ghost", size: "sm", onClick: function () { dismissReport(r); } }, "Dismiss"))
+            : h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: r.status === "actioned" ? "var(--volt-red,#ef4444)" : "var(--text-secondary)" } },
+                r.status === "actioned" ? "\u2717 " + r.action_taken : "\u2713 Dismissed \u2014 " + r.dismiss_reason)));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Integrity", "Project moderation", "User-reported projects flagged for review. Take action or dismiss."),
+      filterBar,
+      reportCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, reportCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No reports match this filter.")),
+      h(Note, null, "Actions are logged in the audit trail. Dismissed reports are kept for review history. \u00b7 illustrative data"));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     PLATFORM GROUP
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── 17. User lookup (deep inspect) ────────────────────────────────────── */
+  function SuperadminUserLookup(props) {
+    var Note = W("Note");
+    var INPUT_STYLE = { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" };
+
+    var qs = React.useState(""), query = qs[0], setQuery = qs[1];
+    var rs = React.useState(null), result = rs[0], setResult = rs[1];
+
+    var MOCK_USERS = {
+      "maya-chen": { handle: "maya-chen", email: "maya@example.com", provider: "GitHub", provider_id: "gh-84729", status: "active", joined: "2026-07-02", last_active: "2026-09-06T08:14:00Z", grants: [{ slug: "vuejs/pinia", granted: "2026-08-27", method: "admin" }], lists: ["Frontend essentials", "Vue ecosystem", "Testing tools", "ORMs compared", "Auth solutions"], interests: 24, scans: 3, nominations: 2, claims: [{ slug: "vuejs/pinia", status: "active", filed: "2026-08-25" }], ip_last: "203.0.113.42", ua_last: "Mozilla/5.0 ... Chrome/128" },
+      "rajpatel": { handle: "rajpatel", email: "raj@example.com", provider: "GitHub", provider_id: "gh-15823", status: "active", joined: "2026-07-14", last_active: "2026-09-05T22:30:00Z", grants: [], lists: ["Node.js backend", "Database tools", "API testing"], interests: 12, scans: 1, nominations: 1, claims: [], ip_last: "198.51.100.7", ua_last: "Mozilla/5.0 ... Firefox/130" },
+      "sara_dev": { handle: "sara_dev", email: "sara@example.com", provider: "GitHub", provider_id: "gh-99281", status: "disabled", joined: "2026-08-01", last_active: "2026-08-04T14:22:00Z", grants: [{ slug: "unjs/unbuild", granted: "2026-07-30", method: "claim", revoked: "2026-08-04" }], lists: [], interests: 0, scans: 0, nominations: 0, claims: [{ slug: "unjs/unbuild", status: "revoked", filed: "2026-07-29" }], ip_last: "192.0.2.99", ua_last: "Mozilla/5.0 ... Chrome/127" }
+    };
+
+    function lookup() {
+      var q = query.trim().toLowerCase();
+      if (!q) return;
+      var user = MOCK_USERS[q] || null;
+      setResult(user === null ? "not_found" : user);
+      if (!user) saToast("No user found for \"" + q + "\"", "err");
+    }
+
+    var field = function (label, val) {
+      return h("div", { style: col("2px") },
+        h("span", { style: SA_EYE }, label),
+        h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)", wordBreak: "break-all" } }, val));
+    };
+
+    var searchCard = h("div", { className: "nv-sa-card", style: col("var(--space-md)") },
+      h("span", { style: SA_EYE }, "Look up user"),
+      h("div", { style: { display: "flex", gap: "var(--space-sm)" } },
+        h("input", { value: query, onChange: function (e) { setQuery(e.target.value); }, onKeyDown: function (e) { if (e.key === "Enter") lookup(); },
+          placeholder: "Handle or email\u2026", style: Object.assign({}, INPUT_STYLE, { flex: 1 }) }),
+        h(Button, { variant: "outline", onClick: lookup }, "Look up")),
+      h("span", { style: SA_CAP }, "Try: maya-chen, rajpatel, sara_dev"));
+
+    var resultCard = null;
+    if (result && result !== "not_found") {
+      var u = result;
+      var isOff = u.status === "disabled";
+      resultCard = h("div", { style: col("var(--space-lg)") },
+        h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
+            saStatusDot(isOff ? "err" : "ok"),
+            h("span", { style: { font: "var(--type-display-sm)" } }, u.handle),
+            h("span", { style: { font: "var(--type-mono-label)", color: "var(--text-secondary)", textTransform: "uppercase" } }, isOff ? "Disabled" : "Active")),
+          h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-lg)" } },
+            field("Email", u.email), field("Provider", u.provider + " (" + u.provider_id + ")"), field("Joined", u.joined)),
+          h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-lg)" } },
+            field("Last active", new Date(u.last_active).toLocaleString()), field("Last IP", u.ip_last), field("User agent", u.ua_last))),
+        /* Activity summary */
+        h("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-md)" } },
+          saTile("Interests", String(u.interests), "registered"),
+          saTile("Scans", String(u.scans), "completed"),
+          saTile("Nominations", String(u.nominations), "submitted"),
+          saTile("Lists", String(u.lists.length), "created")),
+        /* Grants */
+        u.grants.length > 0 ? h("div", { className: "nv-sa-card", style: col("var(--space-md)") },
+          h("span", { style: SA_EYE }, "Grants (" + u.grants.length + ")"),
+          u.grants.map(function (g) {
+            return h("div", { key: g.slug, className: "nv-sa-row" },
+              h("span", { style: { font: "var(--type-body-md-strong)" } }, g.slug),
+              h("span", { style: SA_CAP }, "Granted " + g.granted + " via " + g.method + (g.revoked ? " \u00b7 Revoked " + g.revoked : "")));
+          })) : null,
+        /* Claims */
+        u.claims.length > 0 ? h("div", { className: "nv-sa-card", style: col("var(--space-md)") },
+          h("span", { style: SA_EYE }, "Claims (" + u.claims.length + ")"),
+          u.claims.map(function (c) {
+            return h("div", { key: c.slug, className: "nv-sa-row" },
+              h("span", { style: { font: "var(--type-body-md-strong)" } }, c.slug),
+              h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)" } },
+                saStatusDot(c.status === "active" ? "ok" : "err"),
+                h("span", { style: SA_CAP }, c.status + " \u00b7 Filed " + c.filed)));
+          })) : null,
+        /* Lists */
+        u.lists.length > 0 ? h("div", { className: "nv-sa-card", style: col("var(--space-md)") },
+          h("span", { style: SA_EYE }, "Lists (" + u.lists.length + ")"),
+          h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+            u.lists.map(function (l) {
+              return h("span", { key: l, style: { font: "var(--type-mono-label)", padding: "4px 12px", background: "var(--volt-void)", borderRadius: "999px", color: "var(--text-body)" } }, l);
+            }))) : null);
+    } else if (result === "not_found") {
+      resultCard = h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-2xl)" } },
+        h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No user found for \"" + query + "\""));
+    }
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Platform", "User lookup", "Deep inspect any account \u2014 activity, grants, claims, sessions, and metadata."),
+      searchCard, resultCard,
+      h(Note, null, "IP and UA data is for debugging only. Never expose to other users. \u00b7 illustrative data"));
+  }
+
+  /* ── 18. Editorial tools ───────────────────────────────────────────────── */
+  function SuperadminEditorial(props) {
+    var Note = W("Note");
+
+    var INIT_VERDICTS = [
+      { id: "EDT-001", slug: "vercel/next.js", status: "draft", author: "maghraby", updated: "2026-09-05T16:00:00Z", headline: "The full-stack React framework that defined the meta-framework era", signals: 8, sources: 12, word_count: 420 },
+      { id: "EDT-002", slug: "vuejs/vue", status: "draft", author: "ramy", updated: "2026-09-04T10:00:00Z", headline: "Progressive framework with the gentlest learning curve in its class", signals: 7, sources: 9, word_count: 380 },
+      { id: "EDT-003", slug: "sveltejs/svelte", status: "review", author: "maghraby", updated: "2026-09-03T14:00:00Z", headline: "Compiler-first UI framework that ships zero runtime", signals: 6, sources: 8, word_count: 350 },
+      { id: "EDT-004", slug: "facebook/react", status: "published", author: "maghraby", updated: "2026-09-01T09:00:00Z", headline: "The library that launched a thousand frameworks", signals: 9, sources: 15, word_count: 510, published_at: "2026-09-01" },
+      { id: "EDT-005", slug: "denoland/deno", status: "published", author: "ramy", updated: "2026-08-28T11:00:00Z", headline: "A secure runtime that asked: what if we started Node over?", signals: 7, sources: 10, word_count: 390, published_at: "2026-08-28" },
+      { id: "EDT-006", slug: "drizzle-team/drizzle-orm", status: "queued", author: null, updated: null, headline: null, signals: 6, sources: 0, word_count: 0 },
+      { id: "EDT-007", slug: "biomejs/biome", status: "queued", author: null, updated: null, headline: null, signals: 5, sources: 0, word_count: 0 }
+    ];
+
+    var vs = React.useState(INIT_VERDICTS), verdicts = vs[0], setVerdicts = vs[1];
+    var fs = React.useState("all"), filter = fs[0], setFilter = fs[1];
+
+    function publishVerdict(v) {
+      saConfirmModal({
+        title: "Publish verdict for " + v.slug + "?",
+        body: "\"" + v.headline + "\" will be visible on the project page. This cannot be undone without a new edit.",
+        confirmLabel: "Publish",
+        destructive: false,
+        onConfirm: function () {
+          setVerdicts(verdicts.map(function (x) {
+            return x.id === v.id ? Object.assign({}, x, { status: "published", published_at: new Date().toISOString().slice(0, 10) }) : x;
+          }));
+          saToast("Published verdict for " + v.slug, "ok");
+        }
+      });
+    }
+    function claimVerdict(v) {
+      setVerdicts(verdicts.map(function (x) {
+        return x.id === v.id ? Object.assign({}, x, { status: "draft", author: "you", updated: new Date().toISOString() }) : x;
+      }));
+      saToast("Claimed " + v.slug + " for drafting", "ok");
+    }
+
+    var filtered = verdicts.filter(function (v) { return filter === "all" || v.status === filter; });
+    var counts = {};
+    verdicts.forEach(function (v) { counts[v.status] = (counts[v.status] || 0) + 1; });
+    var statusColors = { queued: "var(--text-secondary)", draft: "var(--volt-amber,#f59e0b)", review: "#3b82f6", published: "var(--volt-emerald)" };
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" } },
+      ["all", "queued", "draft", "review", "published"].map(function (f) {
+        var label = f === "all" ? "All (" + verdicts.length + ")" : f.charAt(0).toUpperCase() + f.slice(1) + (counts[f] ? " (" + counts[f] + ")" : "");
+        return h("button", { key: f, type: "button", onClick: function () { setFilter(f); },
+          style: { background: filter === f ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === f ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === f ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, label);
+      }));
+
+    var verdictCards = filtered.map(function (v) {
+      return h("div", { key: v.id, className: "nv-sa-card", style: col("var(--space-md)") },
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flexWrap: "wrap" } },
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: statusColors[v.status], padding: "2px 8px", border: "1px solid " + statusColors[v.status], borderRadius: "999px", textTransform: "uppercase", fontSize: "10px" } }, v.status),
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, v.slug)),
+        v.headline ? h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-body)", fontStyle: "italic" } }, "\u201c" + v.headline + "\u201d") : null,
+        h("div", { style: { display: "flex", gap: "var(--space-xl)" } },
+          h("span", { style: SA_CAP }, v.signals + " signals"),
+          h("span", { style: SA_CAP }, v.sources + " sources"),
+          h("span", { style: SA_CAP }, v.word_count > 0 ? v.word_count + " words" : "Not started"),
+          v.author ? h("span", { style: SA_CAP }, "Author: " + v.author) : null),
+        h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-sm)" } },
+          h("span", { style: SA_CAP }, v.updated ? "Updated " + new Date(v.updated).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Not started"),
+          h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+            v.status === "queued" ? h(Button, { variant: "outline", size: "sm", onClick: function () { claimVerdict(v); } }, "Claim") : null,
+            v.status === "review" ? h(Button, { variant: "outline", size: "sm", onClick: function () { publishVerdict(v); } }, "Publish") : null,
+            v.status === "published" ? h("span", { style: { font: "var(--type-mono-label)", color: "var(--volt-emerald)" } }, "Published " + v.published_at) : null)));
+    });
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Platform", "Editorial tools", "Draft, review, and publish project verdicts. The editorial queue for the Ledger."),
+      filterBar,
+      verdictCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, verdictCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No verdicts match this filter.")),
+      h(Note, null, "Verdicts are sourced-signal summaries, not scores. Publish only when all cited sources are verified. \u00b7 illustrative data"));
+  }
+
+  /* ── 19. Demand signals ────────────────────────────────────────────────── */
+  function SuperadminDemand(props) {
+    var Note = W("Note");
+
+    var SIGNALS = [
+      { slug: "shadcn/ui", interests: 89, nominations: 3, scans_matched: 142, searches: 210, in_catalog: false },
+      { slug: "biomejs/biome", interests: 67, nominations: 2, scans_matched: 98, searches: 156, in_catalog: false },
+      { slug: "lucia-auth/lucia", interests: 54, nominations: 1, scans_matched: 76, searches: 89, in_catalog: false },
+      { slug: "electric-sql/pglite", interests: 41, nominations: 1, scans_matched: 23, searches: 67, in_catalog: false },
+      { slug: "vercel/next.js", interests: 312, nominations: 0, scans_matched: 847, searches: 1240, in_catalog: true },
+      { slug: "facebook/react", interests: 287, nominations: 0, scans_matched: 1102, searches: 980, in_catalog: true },
+      { slug: "tailwindlabs/tailwindcss", interests: 198, nominations: 0, scans_matched: 634, searches: 720, in_catalog: true },
+      { slug: "vuejs/vue", interests: 176, nominations: 0, scans_matched: 412, searches: 560, in_catalog: true },
+      { slug: "sveltejs/svelte", interests: 89, nominations: 0, scans_matched: 189, searches: 340, in_catalog: true },
+      { slug: "astro-build/astro", interests: 78, nominations: 0, scans_matched: 156, searches: 280, in_catalog: true }
+    ];
+
+    var fs = React.useState("unmet"), filter = fs[0], setFilter = fs[1];
+    var sort = React.useState("interests"), sortBy = sort[0], setSortBy = sort[1];
+
+    var filtered = SIGNALS.filter(function (s) {
+      if (filter === "unmet") return !s.in_catalog;
+      if (filter === "catalog") return s.in_catalog;
+      return true;
+    }).sort(function (a, b) { return b[sortBy] - a[sortBy]; });
+
+    var maxVal = Math.max.apply(null, SIGNALS.map(function (s) { return s[sortBy]; }).concat([1]));
+
+    var filterBar = h("div", { style: { display: "flex", gap: "var(--space-sm)", flexWrap: "wrap", alignItems: "center" } },
+      [["unmet", "Unmet demand"], ["catalog", "In catalog"], ["all", "All"]].map(function (p) {
+        return h("button", { key: p[0], type: "button", onClick: function () { setFilter(p[0]); },
+          style: { background: filter === p[0] ? "var(--volt-emerald-20,rgba(16,185,129,.15))" : "transparent", border: "1px solid " + (filter === p[0] ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "6px 16px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: filter === p[0] ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, p[1]);
+      }),
+      h("span", { style: Object.assign({}, SA_EYE, { marginLeft: "auto" }) }, "Sort by"),
+      ["interests", "nominations", "scans_matched", "searches"].map(function (s) {
+        return h("button", { key: s, type: "button", onClick: function () { setSortBy(s); },
+          style: { background: "transparent", border: "1px solid " + (sortBy === s ? "var(--volt-emerald)" : "var(--volt-border)"), borderRadius: "999px", padding: "4px 10px", font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", fontSize: "10px", color: sortBy === s ? "var(--volt-emerald)" : "var(--text-secondary)", cursor: "pointer" } }, s.replace(/_/g, " "));
+      }));
+
+    var table = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { display: "grid", gridTemplateColumns: "2fr 80px 80px 80px 80px 1fr", gap: "var(--space-md)", padding: "var(--space-md) var(--space-lg)", borderBottom: "1px solid var(--volt-border)" } },
+        ["Project", "Interests", "Noms", "Scans", "Searches", "Signal"].map(function (l) { return h("span", { key: l, style: SA_EYE }, l); })),
+      filtered.map(function (s) {
+        var barPct = maxVal > 0 ? Math.round((s[sortBy] / maxVal) * 100) : 0;
+        return h("div", { key: s.slug, className: "nv-sa-row", style: { display: "grid", gridTemplateColumns: "2fr 80px 80px 80px 80px 1fr", gap: "var(--space-md)", padding: "var(--space-md) var(--space-lg)" } },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)" } },
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, s.slug),
+            !s.in_catalog ? h("span", { style: { font: "var(--type-mono-label)", fontSize: "9px", padding: "1px 6px", borderRadius: "999px", background: "var(--volt-amber,#f59e0b)", color: "#000", textTransform: "uppercase" } }, "Missing") : null),
+          h("span", { style: { font: "var(--type-body-md)", textAlign: "center" } }, s.interests),
+          h("span", { style: { font: "var(--type-body-md)", textAlign: "center" } }, s.nominations),
+          h("span", { style: { font: "var(--type-body-md)", textAlign: "center" } }, s.scans_matched),
+          h("span", { style: { font: "var(--type-body-md)", textAlign: "center" } }, s.searches),
+          h("div", { style: { display: "flex", alignItems: "center" } },
+            h("div", { className: "nv-sa-bar", style: { flex: 1, height: "8px" } },
+              h("div", { className: "nv-sa-bar-fill", style: { width: barPct + "%", background: s.in_catalog ? "var(--volt-emerald)" : "var(--volt-amber,#f59e0b)" } }))));
+      }));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Platform", "Demand signals", "What users are looking for. Interest registrations, nominations, scan matches, and search queries aggregated by project."),
+      filterBar, table,
+      h(Note, null, "\"Unmet demand\" = projects users want but aren't in the catalog yet. High unmet demand \u2192 priority for ingestion. \u00b7 illustrative data"));
+  }
+
+  /* ── 20. Runtime config ────────────────────────────────────────────────── */
+  function SuperadminConfig(props) {
+    var Note = W("Note");
+
+    var INIT_CONFIG = [
+      { key: "claim.sla_hours", value: "72", type: "number", description: "Hours before a claim contest expires", group: "Claims" },
+      { key: "claim.cooldown_days", value: "30", type: "number", description: "Days a user must wait between claims on the same project", group: "Claims" },
+      { key: "claim.max_pending", value: "3", type: "number", description: "Max pending claims per user", group: "Claims" },
+      { key: "ingestion.batch_size", value: "500", type: "number", description: "Pages per ingestion batch", group: "Ingestion" },
+      { key: "ingestion.refresh_interval_hours", value: "24", type: "number", description: "Hours between signal refresh cycles", group: "Ingestion" },
+      { key: "ingestion.error_threshold", value: "10", type: "number", description: "Max errors before batch is marked failed", group: "Ingestion" },
+      { key: "gate.password", value: "mkr2026", type: "string", description: "Private preview password", group: "Access" },
+      { key: "gate.enabled", value: "true", type: "boolean", description: "Password gate active", group: "Access" },
+      { key: "rate_limit.api_rpm", value: "60", type: "number", description: "API requests per minute per user", group: "Limits" },
+      { key: "rate_limit.scan_daily", value: "5", type: "number", description: "Stack scans per user per day", group: "Limits" },
+      { key: "rate_limit.nomination_daily", value: "3", type: "number", description: "Nominations per user per day", group: "Limits" },
+      { key: "ui.deck_size", value: "20", type: "number", description: "Max projects in Your Deck", group: "UI" },
+      { key: "ui.search_results_limit", value: "50", type: "number", description: "Max search results per page", group: "UI" },
+      { key: "ui.curation_chat_entries", value: "3", type: "number", description: "Max curation chat entries per session", group: "UI" }
+    ];
+
+    var cfg = React.useState(INIT_CONFIG), config = cfg[0], setConfig = cfg[1];
+    var editing = React.useState(null), editKey = editing[0], setEditKey = editing[1];
+    var ev = React.useState(""), editValue = ev[0], setEditValue = ev[1];
+    var ss = React.useState(""), search = ss[0], setSearch = ss[1];
+
+    function startEdit(item) { setEditKey(item.key); setEditValue(item.value); }
+    function saveEdit(item) {
+      saConfirmModal({
+        title: "Update " + item.key + "?",
+        body: "Changing from \"" + item.value + "\" to \"" + editValue + "\". Takes effect immediately.",
+        confirmLabel: "Save",
+        destructive: false,
+        onConfirm: function () {
+          setConfig(config.map(function (c) { return c.key === item.key ? Object.assign({}, c, { value: editValue }) : c; }));
+          setEditKey(null);
+          saToast("Updated " + item.key, "ok");
+        }
+      });
+    }
+    function cancelEdit() { setEditKey(null); }
+
+    var groups = [];
+    var seen = {};
+    config.forEach(function (c) { if (!seen[c.group]) { seen[c.group] = true; groups.push(c.group); } });
+
+    var filtered = config.filter(function (c) {
+      if (!search) return true;
+      var q = search.toLowerCase();
+      return c.key.toLowerCase().indexOf(q) >= 0 || c.description.toLowerCase().indexOf(q) >= 0;
+    });
+
+    var searchBar = h("div", { style: { display: "flex", gap: "var(--space-md)", alignItems: "center" } },
+      h("input", { value: search, onChange: function (e) { setSearch(e.target.value); }, placeholder: "Search config keys\u2026",
+        style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+      h("span", { style: SA_CAP }, filtered.length + " keys"));
+
+    var groupCards = groups.map(function (group) {
+      var items = filtered.filter(function (c) { return c.group === group; });
+      if (items.length === 0) return null;
+      return h("div", { key: group, className: "nv-sa-card", style: col("0") },
+        h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+          h("span", { style: SA_EYE }, group)),
+        items.map(function (c) {
+          var isEditing = editKey === c.key;
+          return h("div", { key: c.key, className: "nv-sa-row" },
+            h("div", { style: Object.assign({}, col("2px"), { flex: 1 }) },
+              h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "1px", color: "var(--text-body)" } }, c.key),
+              h("span", { style: SA_CAP }, c.description)),
+            h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-sm)", minWidth: "200px", justifyContent: "flex-end" } },
+              isEditing
+                ? h(React.Fragment, null,
+                    h("input", { value: editValue, onChange: function (e) { setEditValue(e.target.value); }, onKeyDown: function (e) { if (e.key === "Enter") saveEdit(c); if (e.key === "Escape") cancelEdit(); }, autoFocus: true,
+                      style: { width: "120px", background: "var(--volt-void)", border: "1px solid var(--volt-emerald)", borderRadius: "var(--radius-md)", padding: "6px 10px", font: "var(--type-mono-label)", color: "var(--text-body)", textAlign: "right" } }),
+                    h(Button, { variant: "outline", size: "sm", onClick: function () { saveEdit(c); } }, "Save"),
+                    h(Button, { variant: "ghost", size: "sm", onClick: cancelEdit }, "\u00d7"))
+                : h(React.Fragment, null,
+                    h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "1px", color: "var(--volt-emerald)", padding: "4px 10px", background: "var(--volt-void)", borderRadius: "var(--radius-sm)" } }, c.value),
+                    h(Button, { variant: "ghost", size: "sm", onClick: function () { startEdit(c); } }, "Edit"))));
+        }));
+    }).filter(Boolean);
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Platform", "Config", "Runtime configuration values. Changes take effect immediately \u2014 no deploy needed."),
+      searchBar,
+      groupCards.length > 0 ? h("div", { style: col("var(--space-lg)") }, groupCards)
+        : h("div", { className: "nv-sa-card", style: { textAlign: "center", padding: "var(--space-3xl)" } }, h("span", { style: { font: "var(--type-body-lg)", color: "var(--text-secondary)" } }, "No config keys match your search.")),
+      h(Note, null, "All config changes are logged in the audit trail. Boolean values: \"true\"/\"false\". \u00b7 illustrative data"));
   }
 
   Object.assign(window, {
