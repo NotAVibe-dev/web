@@ -1954,6 +1954,13 @@
     if (name === "maintainer.settings") return MaintainerSettingsV2;
     if (name === "account.identities") return AccountIdentities;
     if (name === "account.delete") return AccountDelete;
+    /* Superadmin founder portal — local scope, DS-clobber-safe. */
+    if (name === "admin.pulse") return SuperadminPulse;
+    if (name === "admin.usersmgmt") return SuperadminUsers;
+    if (name === "admin.invites") return SuperadminInvites;
+    if (name === "admin.features") return SuperadminFeatures;
+    if (name === "admin.overrides") return SuperadminOverrides;
+    if (name === "admin.health") return SuperadminHealth;
     var T = {
       discover: "Discover", category: "CategoryView", search: "SearchResults", project: "ProjectPage",
       methodology: "MethodologyPage", "list.public": "PublicListPage", "stack.public": "PublicStackPage",
@@ -2127,8 +2134,12 @@
       h(Eyebrow, { size: "caption" }, "Role"),
       segment,
       h(Note, null, "Last-used context on login. Single-role users see no switcher."),
-      h("div", { style: { marginTop: "var(--space-sm)", paddingTop: "var(--space-md)", borderTop: "1px solid var(--volt-border)" } },
-        h(Button, { variant: "ghost", fullWidth: true, onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out")));
+      h("div", { style: { marginTop: "var(--space-sm)", paddingTop: "var(--space-md)", borderTop: "1px solid var(--volt-border)", display: "flex", flexDirection: "column", gap: "var(--space-xs)" } },
+        h(Button, { variant: "ghost", fullWidth: true, onClick: function () { ctx.toggleSignedIn(); ctx.go({ name: "discover" }); } }, "Sign out"),
+        h("a", { href: "#", onClick: function (e) { e.preventDefault(); ctx.go({ name: "admin.pulse" }); },
+          style: { display: "block", textAlign: "center", font: "var(--type-mono-caption)", letterSpacing: "var(--ls-mono-caption)", color: "var(--volt-text-600)", textDecoration: "none", padding: "4px 0", transition: "color .2s cubic-bezier(0.16, 1, 0.3, 1)" },
+          onMouseEnter: function (e) { e.currentTarget.style.color = "var(--volt-emerald)"; },
+          onMouseLeave: function (e) { e.currentTarget.style.color = "var(--volt-text-600)"; } }, "Admin")));
 
     return h("aside", { className: "nv-app-nav",
       style: { width: "232px", flex: "0 0 232px", borderRight: "var(--border-level-1)", background: "var(--surface-canvas)",
@@ -2149,6 +2160,7 @@
   function AdminNavV2(props) {
     var ctx = props.ctx;
     var groups = [
+      ["Superadmin", [["Pulse", "admin.pulse"], ["Users", "admin.usersmgmt"], ["Invites & access", "admin.invites"], ["Feature control", "admin.features"], ["Overrides", "admin.overrides"], ["System health", "admin.health"]]],
       ["Adjudication", [["Claim contest queue", "admin.contests"], ["Nomination inbox", "admin.nominations"]]],
       ["Catalog", [["Catalog ingestion", "admin.ingestion"], ["Page corrections & takedowns", "admin.corrections"], ["Taxonomy & categories", "admin.taxonomy"], ["Vocabulary contests", "admin.vocab"], ["Anomaly quarantine", "admin.anomaly"]]],
       ["Integrity", [["Sybil detection", "admin.sybil"], ["Project moderation", "admin.moderation"], ["Audit log", "admin.audit"]]],
@@ -2987,6 +2999,509 @@
       turns.length ? transcript : cold,
       draftCard,
       form);
+  }
+
+  /* ── Superadmin CSS ────────────────────────────────────────────────────────
+     Shared styles for the founder portal. Injected once, never duplicated.
+     The sparkline draw animation reuses nv-spark-line / nv-spark-dot from the
+     maintainer dashboard CSS; the toggle and status-dot classes are new. All
+     emerald usage is in classes, never inline on buttons. */
+  (function injectSuperadminCSS() {
+    if (typeof document === "undefined" || document.getElementById("nv-superadmin-css")) return;
+    var s = document.createElement("style");
+    s.id = "nv-superadmin-css";
+    var EXPO = "cubic-bezier(0.16, 1, 0.3, 1)";
+    s.textContent = [
+      ".nv-sa-toggle{position:relative;width:44px;height:24px;border-radius:12px;border:1px solid var(--volt-border);background:var(--volt-void);cursor:pointer;transition:background .3s " + EXPO + ",border-color .3s " + EXPO + ";}",
+      ".nv-sa-toggle.on{background:var(--volt-emerald-20);border-color:var(--volt-emerald);}",
+      ".nv-sa-toggle::after{content:\"\";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--text-secondary);transition:transform .3s " + EXPO + ",background .3s " + EXPO + ";}",
+      ".nv-sa-toggle.on::after{transform:translateX(20px);background:var(--volt-emerald);}",
+      ".nv-sa-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}",
+      ".nv-sa-dot--ok{background:var(--volt-emerald);box-shadow:0 0 0 3px var(--volt-emerald-20);}",
+      ".nv-sa-dot--warn{background:var(--volt-amber,#f59e0b);box-shadow:0 0 0 3px rgba(245,158,11,.15);}",
+      ".nv-sa-dot--err{background:var(--volt-red,#ef4444);box-shadow:0 0 0 3px rgba(239,68,68,.15);}",
+      ".nv-sa-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);padding:var(--space-md) 0;border-bottom:1px solid var(--volt-border);}",
+      ".nv-sa-row:last-child{border-bottom:none;}",
+      ".nv-sa-bar{height:6px;background:var(--volt-void);border-radius:3px;overflow:hidden;}",
+      ".nv-sa-bar-fill{height:100%;border-radius:3px;transition:width .6s " + EXPO + ";}",
+      ".nv-sa-card{border:1px solid var(--volt-border);background:var(--volt-surface);border-radius:12px;padding:var(--space-2xl);}",
+      ".nv-sa-card:hover{border-color:color-mix(in srgb, var(--volt-emerald) 30%, var(--volt-border));}",
+      "@media (prefers-reduced-motion:reduce){.nv-sa-toggle,.nv-sa-toggle::after,.nv-sa-bar-fill{transition:none;}}",
+    ].join("");
+    document.head.appendChild(s);
+  })();
+
+  /* ── Superadmin shared helpers ─────────────────────────────────────────── */
+  var SA_WRAP = { maxWidth: "1000px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-2xl)", padding: "var(--space-3xl) var(--space-2xl)" };
+  var SA_EYE = { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", textTransform: "uppercase", color: "var(--volt-text-500)" };
+  var SA_CAP = { font: "var(--type-caption)", color: "var(--text-secondary)" };
+
+  function saHeader(eyebrow, title, sub) {
+    return h("header", { style: col("var(--space-sm)") },
+      h("span", { style: SA_EYE }, eyebrow),
+      h("h1", { style: { margin: 0, font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)", textWrap: "balance" } }, title),
+      sub ? h("span", { style: { font: "var(--type-body-lg)", letterSpacing: "var(--ls-body-lg)", color: "var(--text-secondary)", textWrap: "pretty" } }, sub) : null);
+  }
+
+  function saTile(label, value, cap, delta) {
+    var pill = delta != null ? h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: delta > 0 ? "var(--volt-emerald)" : "var(--text-secondary)", whiteSpace: "nowrap" } },
+      (delta > 0 ? "↑ " : (delta < 0 ? "↓ " : "→ ")) + Math.abs(delta) + "%") : null;
+    return h("div", { className: "nv-sa-card", style: col("var(--space-xs)") },
+      h("span", { style: SA_EYE }, label),
+      h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-sm)", flexWrap: "wrap" } },
+        h("span", { style: { font: "var(--type-display-md)", letterSpacing: "var(--ls-display-md)" } }, value),
+        pill),
+      h("span", { style: SA_CAP }, cap));
+  }
+
+  function saToggle(on, onClick) {
+    return h("button", { type: "button", className: "nv-sa-toggle" + (on ? " on" : ""),
+      "aria-pressed": on ? "true" : "false", onClick: onClick,
+      style: { WebkitAppearance: "none", appearance: "none" } });
+  }
+
+  function saStatusDot(status) {
+    return h("span", { className: "nv-sa-dot nv-sa-dot--" + status, "aria-label": status });
+  }
+
+  /* ── 1. Platform pulse ─────────────────────────────────────────────────── */
+  function SuperadminPulse(props) {
+    var Note = W("Note");
+    var tiles = [
+      { label: "Signups today", value: "14", cap: "47 this week · 312 total · illustrative data", delta: 23 },
+      { label: "Active users (7d)", value: "89", cap: "Signed in and performed ≥1 action · illustrative data", delta: 8 },
+      { label: "Claims filed", value: "31", cap: "12 granted · 4 pending · 15 expired · illustrative data", delta: 12 },
+      { label: "Interest registrations", value: "247", cap: "Across 68 distinct projects · illustrative data", delta: 18 },
+      { label: "Stack scans", value: "156", cap: "93 with ≥1 matched dep · illustrative data", delta: 5 },
+      { label: "Page views (7d)", value: "4,218", cap: "Project pages only · illustrative data", delta: 14 },
+      { label: "Deck impressions", value: "612", cap: "Unique backer × project · illustrative data", delta: 9 },
+      { label: "Nominations", value: "34", cap: "19 approved → ingested · illustrative data", delta: null }
+    ];
+
+    /* Mini sparkline for the hero tile */
+    function spark() {
+      var pts = "0,28 18,24 36,22 54,18 72,14 90,16 108,10 126,5";
+      return h("svg", { viewBox: "0 0 130 32", width: "100%", height: 38, preserveAspectRatio: "none", fill: "none", "aria-hidden": "true", style: { overflow: "visible" } },
+        h("polyline", { className: "nv-spark-line", points: pts, stroke: "var(--volt-emerald)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" }),
+        h("circle", { className: "nv-spark-dot", cx: 126, cy: 5, r: 3, fill: "var(--volt-emerald)" }));
+    }
+
+    /* Hero row: signups + active users side by side, wider */
+    var heroRow = h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-lg)" } },
+      h("div", { className: "nv-sa-card", style: col("var(--space-xs)") },
+        h("span", { style: SA_EYE }, "Signups"),
+        h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-sm)" } },
+          h("span", { style: { font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)" } }, "312"),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--volt-emerald)" } }, "↑ 23%")),
+        spark(),
+        h("span", { style: SA_CAP }, "14 today · 47 this week · total · illustrative data")),
+      h("div", { className: "nv-sa-card", style: col("var(--space-xs)") },
+        h("span", { style: SA_EYE }, "Active users · 7d"),
+        h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-sm)" } },
+          h("span", { style: { font: "var(--type-display-lg)", letterSpacing: "var(--ls-display-lg)" } }, "89"),
+          h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--volt-emerald)" } }, "↑ 8%")),
+        spark(),
+        h("span", { style: SA_CAP }, "Signed in + ≥1 action · illustrative data")));
+
+    var grid = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-lg)" } },
+      tiles.slice(2).map(function (t) { return saTile(t.label, t.value, t.cap, t.delta); }));
+
+    /* Referrer split */
+    var referrers = [
+      ["Direct / bookmark", 38], ["Search engine", 27], ["GitHub README", 18], ["Stack scan", 12], ["Shared list", 5]
+    ];
+    var refCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Traffic sources · 7d"),
+      referrers.map(function (r) {
+        return h("div", { key: r[0], style: col("4px") },
+          h("div", { style: { display: "flex", justifyContent: "space-between", font: "var(--type-caption)" } },
+            h("span", null, r[0]), h("span", { style: { color: "var(--text-secondary)" } }, r[1] + "%")),
+          h("div", { className: "nv-sa-bar" },
+            h("div", { className: "nv-sa-bar-fill", style: { width: r[1] + "%", background: "var(--volt-emerald)" } })));
+      }),
+      h("span", { style: SA_CAP }, "illustrative data"));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Superadmin · Founder portal", "Platform pulse", "Real-time view of what's happening across notavibe."),
+      heroRow, grid, refCard,
+      h(Note, null, "All figures are illustrative. In production this reads from the metrics pipeline — no visitor-level data, aggregate only."));
+  }
+
+  /* ── 2. User management ────────────────────────────────────────────────── */
+  function SuperadminUsers(props) {
+    var ctx = props.ctx, Note = W("Note");
+    var ss = React.useState(""), search = ss[0], setSearch = ss[1];
+    var USERS = [
+      { handle: "rajpatel", email: "raj@example.com", provider: "GitHub", status: "active", grants: 0, lists: 3, interests: 12, joined: "2026-07-14" },
+      { handle: "maya-chen", email: "maya@example.com", provider: "GitHub", status: "active", grants: 2, lists: 5, interests: 24, joined: "2026-07-02" },
+      { handle: "tomasz.k", email: "tom@example.com", provider: "GitLab", status: "active", grants: 0, lists: 1, interests: 6, joined: "2026-07-21" },
+      { handle: "sara_dev", email: "sara@example.com", provider: "GitHub", status: "disabled", grants: 1, lists: 0, interests: 0, joined: "2026-08-01" },
+      { handle: "alexr", email: "alex@example.com", provider: "Bitbucket", status: "active", grants: 0, lists: 7, interests: 31, joined: "2026-06-28" },
+      { handle: "nina.io", email: "nina@example.com", provider: "GitHub", status: "active", grants: 1, lists: 2, interests: 9, joined: "2026-07-30" }
+    ];
+    var filtered = USERS.filter(function (u) {
+      if (!search) return true;
+      var q = search.toLowerCase();
+      return u.handle.toLowerCase().indexOf(q) >= 0 || u.email.toLowerCase().indexOf(q) >= 0 || u.provider.toLowerCase().indexOf(q) >= 0;
+    });
+
+    var ds = React.useState({}), disabled = ds[0], setDisabled = ds[1];
+    function toggleUser(handle) {
+      var next = Object.assign({}, disabled);
+      next[handle] = !next[handle];
+      setDisabled(next);
+    }
+
+    var searchBar = h("div", { style: { display: "flex", gap: "var(--space-md)", alignItems: "center" } },
+      h("input", { className: "nv-field", value: search, onChange: function (e) { setSearch(e.target.value); },
+        placeholder: "Search by handle, email, or provider\u2026",
+        style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+      h("span", { style: SA_CAP }, filtered.length + " of " + USERS.length));
+
+    var table = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: Object.assign({}, { display: "grid", gridTemplateColumns: "1fr 1fr 80px 50px 50px 56px 100px", gap: "var(--space-md)", padding: "var(--space-md) var(--space-lg)", borderBottom: "1px solid var(--volt-border)" }) },
+        ["Handle", "Email", "Provider", "Grants", "Lists", "Status", "Actions"].map(function (l) {
+          return h("span", { key: l, style: SA_EYE }, l);
+        })),
+      filtered.map(function (u) {
+        var isOff = disabled[u.handle] || u.status === "disabled";
+        return h("div", { key: u.handle, className: "nv-sa-row",
+          style: { display: "grid", gridTemplateColumns: "1fr 1fr 80px 50px 50px 56px 100px", gap: "var(--space-md)", padding: "var(--space-md) var(--space-lg)", opacity: isOff ? 0.5 : 1 } },
+          h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, u.handle),
+          h("span", { style: SA_CAP }, u.email),
+          h("span", { style: SA_CAP }, u.provider),
+          h("span", { style: { font: "var(--type-body-md)", textAlign: "center" } }, u.grants),
+          h("span", { style: { font: "var(--type-body-md)", textAlign: "center" } }, u.lists),
+          h("span", null, saStatusDot(isOff ? "err" : "ok")),
+          h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+            h(Button, { variant: "ghost", size: "sm", onClick: function () { toggleUser(u.handle); } }, isOff ? "Enable" : "Disable"),
+            h(Button, { variant: "ghost", size: "sm", onClick: function () {} }, "View")));
+      }));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Superadmin", "User management", "Browse, search, and manage all accounts."),
+      searchBar, table,
+      h(Note, null, "Actions write to the audit log with actor and reason. Impersonate opens a view-as-user session for debugging — no writes. · illustrative data"));
+  }
+
+  /* ── 3. Invite & access management ─────────────────────────────────────── */
+  function SuperadminInvites(props) {
+    var Note = W("Note");
+    var gs = React.useState(false), gateOn = gs[0], setGateOn = gs[1];
+    React.useEffect(function () { setGateOn(true); }, []);
+
+    var CODES = [
+      { code: "NV-ALPHA-001", used: true, usedBy: "rajpatel", usedAt: "2026-07-14" },
+      { code: "NV-ALPHA-002", used: true, usedBy: "maya-chen", usedAt: "2026-07-02" },
+      { code: "NV-ALPHA-003", used: false, usedBy: null, usedAt: null },
+      { code: "NV-ALPHA-004", used: true, usedBy: "tomasz.k", usedAt: "2026-07-21" },
+      { code: "NV-ALPHA-005", used: false, usedBy: null, usedAt: null },
+      { code: "NV-ALPHA-006", used: true, usedBy: "alexr", usedAt: "2026-06-28" },
+      { code: "NV-ALPHA-007", used: false, usedBy: null, usedAt: null },
+      { code: "NV-ALPHA-008", used: true, usedBy: "nina.io", usedAt: "2026-07-30" }
+    ];
+    var usedCount = CODES.filter(function (c) { return c.used; }).length;
+
+    var gateCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } },
+        h("div", { style: col("2px") },
+          h("span", { style: { font: "var(--type-body-lg-strong)", letterSpacing: "var(--ls-body-lg)" } }, "Password gate"),
+          h("span", { style: SA_CAP }, "Private preview password required to access the prototype")),
+        saToggle(gateOn, function () { setGateOn(!gateOn); })),
+      h("div", { style: Object.assign({}, col("var(--space-sm)"), { padding: "var(--space-lg)", background: "var(--volt-void)", borderRadius: "10px" }) },
+        h("span", { style: SA_EYE }, "Current password"),
+        h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)" } },
+          h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "2px", color: "var(--text-body)", padding: "6px 12px", background: "var(--volt-surface)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-sm)" } }, "mkr2026"),
+          h(Button, { variant: "ghost", size: "sm" }, "Regenerate"))));
+
+    var codesCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between" } },
+        h("span", { style: SA_EYE }, "Invite codes"),
+        h("span", { style: SA_CAP }, usedCount + " of " + CODES.length + " used")),
+      CODES.map(function (c) {
+        return h("div", { key: c.code, className: "nv-sa-row" },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flex: 1 } },
+            saStatusDot(c.used ? "ok" : "warn"),
+            h("code", { style: { font: "var(--type-mono-label)", letterSpacing: "1px", color: "var(--text-body)" } }, c.code)),
+          c.used
+            ? h("span", { style: SA_CAP }, c.usedBy + " · " + c.usedAt)
+            : h("div", { style: { display: "flex", gap: "var(--space-xs)" } },
+                h(Button, { variant: "ghost", size: "sm" }, "Copy"),
+                h(Button, { variant: "ghost", size: "sm" }, "Revoke")));
+      }),
+      h("div", { style: { borderTop: "1px solid var(--volt-border)", paddingTop: "var(--space-md)" } },
+        h(Button, { variant: "outline" }, "Generate 5 more codes")));
+
+    var allowlistCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Email allowlist"),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
+        ["@notavibe.dev", "raj@example.com", "maya@example.com", "ramy@example.com"].map(function (e) {
+          return h("span", { key: e, style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-body)", border: "1px solid var(--volt-border)", borderRadius: "999px", padding: "4px 12px", display: "inline-flex", alignItems: "center", gap: "8px" } },
+            e, h("button", { type: "button", style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", font: "var(--type-caption)", padding: 0 } }, "×"));
+        })),
+      h("div", { style: { display: "flex", gap: "var(--space-sm)" } },
+        h("input", { className: "nv-field", placeholder: "Add email or domain\u2026",
+          style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        h(Button, { variant: "outline" }, "Add")));
+
+    var transition = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Launch transition"),
+      h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
+        "When you're ready, disable the password gate and invite codes. The site becomes publicly accessible. This is a one-way transition — codes and allowlists are archived, not deleted."),
+      h("div", null, h(Button, { variant: "outline" }, "Transition to public beta")));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Superadmin", "Invites & access", "Manage the private preview gate, invite codes, and the email allowlist."),
+      gateCard, codesCard, allowlistCard, transition,
+      h(Note, null, "illustrative data · gate changes take effect immediately"));
+  }
+
+  /* ── 4. Feature control ────────────────────────────────────────────────── */
+  function SuperadminFeatures(props) {
+    var Note = W("Note");
+    var initFlags = {
+      "Deck personalization": true,
+      "Stack scan (public)": true,
+      "Curation chat": true,
+      "Editorial verdicts": false,
+      "Peer recommendations": false,
+      "List discovery on project pages": false,
+      "Claim flow (cold entry)": true,
+      "MCP server": true
+    };
+    var fs = React.useState(initFlags), flags = fs[0], setFlags = fs[1];
+    function toggleFlag(name) {
+      var next = Object.assign({}, flags);
+      next[name] = !next[name];
+      setFlags(next);
+    }
+    var apis = {
+      "GitHub API": { status: "ok", label: "Healthy · 4,212 / 5,000 calls remaining" },
+      "npm registry": { status: "ok", label: "Healthy · avg 142ms response" },
+      "OpenSSF Scorecard": { status: "warn", label: "Degraded · avg 890ms (threshold 500ms)" },
+      "Libraries.io": { status: "ok", label: "Healthy · fallback for dependents" }
+    };
+    var ks = React.useState({}), kills = ks[0], setKills = ks[1];
+    function toggleKill(name) {
+      var next = Object.assign({}, kills);
+      next[name] = !next[name];
+      setKills(next);
+    }
+
+    var flagsCard = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+        h("span", { style: SA_EYE }, "Feature flags")),
+      Object.keys(initFlags).map(function (name) {
+        return h("div", { key: name, className: "nv-sa-row" },
+          h("div", { style: col("2px", { flex: 1 }) },
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, name),
+            h("span", { style: SA_CAP }, flags[name] ? "Enabled — live for all users" : "Disabled — hidden from all surfaces")),
+          saToggle(flags[name], function () { toggleFlag(name); }));
+      }));
+
+    var killCard = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+        h("span", { style: SA_EYE }, "API kill switches")),
+      h("p", { style: { margin: "0 0 var(--space-md)", font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
+        "Kill switches disconnect an external API and fall back to cached data. Affected health signals show \"Insufficient data\" — never a fabricated zero."),
+      Object.keys(apis).map(function (name) {
+        var a = apis[name], killed = kills[name];
+        return h("div", { key: name, className: "nv-sa-row" },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flex: 1 } },
+            saStatusDot(killed ? "err" : a.status),
+            h("div", { style: col("2px") },
+              h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, name),
+              h("span", { style: SA_CAP }, killed ? "Killed — serving cached data" : a.label))),
+          h(Button, { variant: killed ? "outline" : "ghost", size: "sm", onClick: function () { toggleKill(name); } }, killed ? "Restore" : "Kill"));
+      }));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Superadmin", "Feature control", "Toggle features and external API connections without deploying."),
+      flagsCard, killCard,
+      h(Note, null, "Changes take effect immediately. Kill switches degrade gracefully — health signals show dashed empty tracks, never fabricated values. · illustrative data"));
+  }
+
+  /* ── 5. Manual overrides ───────────────────────────────────────────────── */
+  function SuperadminOverrides(props) {
+    var Note = W("Note");
+    var rs = React.useState(""), reason = rs[0], setReason = rs[1];
+
+    var grantCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Grant / revoke maintainer status"),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
+        h("input", { className: "nv-field", placeholder: "owner/repo slug\u2026",
+          style: { flex: "1 1 200px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        h("input", { className: "nv-field", placeholder: "user handle\u2026",
+          style: { flex: "1 1 160px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } })),
+      h("div", { style: { display: "flex", gap: "var(--space-sm)" } },
+        h(Button, { variant: "outline" }, "Grant"),
+        h(Button, { variant: "ghost" }, "Revoke")));
+
+    var claimCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Override claim state"),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap", alignItems: "flex-end" } },
+        h("div", { style: col("4px", { flex: "1 1 200px" }) },
+          h("label", { style: SA_CAP }, "Project slug"),
+          h("input", { className: "nv-field", placeholder: "owner/repo\u2026",
+            style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } })),
+        h("div", { style: col("4px", { flex: "1 1 160px" }) },
+          h("label", { style: SA_CAP }, "New state"),
+          h("select", { style: { background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)", cursor: "pointer" } },
+            ["Active", "Lapsed", "Retired", "Suppressed"].map(function (s) { return h("option", { key: s }, s); })))),
+      h("div", { style: col("4px") },
+        h("label", { style: SA_CAP }, "Reason (required — writes to audit log)"),
+        h("textarea", { value: reason, onChange: function (e) { setReason(e.target.value); }, placeholder: "Why is this override necessary?\u2026",
+          rows: 3, style: { width: "100%", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)", resize: "vertical" } })),
+      h("div", null, h(Button, { variant: "outline", disabled: !reason }, "Apply override")));
+
+    var contestCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Force-resolve claim contest"),
+      h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
+        "Bypasses the 72h SLA window. The winner receives the grant; the loser's pending claim is cleared. Both are notified."),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
+        h("input", { className: "nv-field", placeholder: "Contest ID or slug\u2026",
+          style: { flex: "1 1 200px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        h("input", { className: "nv-field", placeholder: "Winner handle\u2026",
+          style: { flex: "1 1 160px", background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } })),
+      h("div", null, h(Button, { variant: "outline" }, "Force resolve")));
+
+    var suppressCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Emergency unsuppress"),
+      h("p", { style: { margin: 0, font: "var(--type-body-md)", color: "var(--text-secondary)", textWrap: "pretty" } },
+        "Reverses a suppression. The page returns to its pre-suppression state (Active or Retired). Use only when a suppression was applied in error."),
+      h("div", { style: { display: "flex", gap: "var(--space-md)", flexWrap: "wrap" } },
+        h("input", { className: "nv-field", placeholder: "Suppressed slug\u2026",
+          style: { flex: 1, background: "var(--volt-void)", border: "1px solid var(--volt-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", font: "var(--type-body-md)", color: "var(--text-body)" } }),
+        h(Button, { variant: "outline" }, "Unsuppress")));
+
+    var recent = [
+      { action: "Grant revoked", target: "sara_dev → unjs/unbuild", by: "maghraby", when: "2026-08-04 14:22", reason: "Account disabled — spam activity" },
+      { action: "Claim state → Retired", target: "example/old-lib", by: "ramy", when: "2026-08-01 09:15", reason: "Maintainer requested retirement via support" },
+      { action: "Emergency unsuppress", target: "nodejs/undici", by: "maghraby", when: "2026-07-28 16:40", reason: "Suppression was filed by non-owner — reversed" }
+    ];
+    var auditCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Recent override actions"),
+      recent.map(function (r) {
+        return h("div", { key: r.when, className: "nv-sa-row", style: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "4px", padding: "var(--space-md) 0" } },
+          h("div", { style: { display: "flex", justifyContent: "space-between", gap: "var(--space-md)" } },
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, r.action + " — " + r.target),
+            h("span", { style: SA_CAP }, r.by + " · " + r.when)),
+          h("span", { style: SA_CAP }, "Reason: " + r.reason));
+      }),
+      h("span", { style: SA_CAP }, "illustrative data"));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Superadmin", "Manual overrides", "Direct actions on grants, claims, contests, and suppressions. Every action requires a reason and writes to the audit log."),
+      grantCard, claimCard, contestCard, suppressCard, auditCard,
+      h(Note, null, "All overrides are logged with actor, timestamp, and reason. They are visible in the audit log and cannot be hidden. · illustrative data"));
+  }
+
+  /* ── 6. System health ──────────────────────────────────────────────────── */
+  function SuperadminHealth(props) {
+    var Note = W("Note");
+
+    var apis = [
+      { name: "GitHub REST API", status: "ok", quota: "4,212 / 5,000", reset: "53 min", latency: "89ms", label: "Rate limit healthy" },
+      { name: "GitHub GraphQL", status: "ok", quota: "4,800 / 5,000", reset: "53 min", latency: "124ms", label: "Rate limit healthy" },
+      { name: "npm registry", status: "ok", quota: "—", reset: "—", latency: "142ms", label: "No rate limit · public API" },
+      { name: "OpenSSF Scorecard", status: "warn", quota: "—", reset: "—", latency: "890ms", label: "Latency above 500ms threshold" },
+      { name: "Libraries.io", status: "ok", quota: "48 / 60", reset: "12 min", latency: "230ms", label: "Rate limit healthy" },
+      { name: "ecosyste.ms", status: "ok", quota: "—", reset: "—", latency: "310ms", label: "No rate limit · public API" }
+    ];
+
+    var apiCard = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+        h("span", { style: SA_EYE }, "External API status")),
+      apis.map(function (a) {
+        return h("div", { key: a.name, className: "nv-sa-row" },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flex: 1 } },
+            saStatusDot(a.status),
+            h("div", { style: col("2px") },
+              h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, a.name),
+              h("span", { style: SA_CAP }, a.label))),
+          h("div", { style: { display: "flex", gap: "var(--space-xl)", alignItems: "center" } },
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Quota"),
+              h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, a.quota)),
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Reset"),
+              h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, a.reset)),
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Latency"),
+              h("span", { style: { font: "var(--type-body-md)", color: "var(--text-body)" } }, a.latency))));
+      }));
+
+    var ingestion = [
+      { source: "npm top-5k seed", status: "ok", pages: "4,847", rate: "312/hr", queue: 0, errors: 0 },
+      { source: "GitHub signals refresh", status: "ok", pages: "4,847", rate: "186/hr", queue: 23, errors: 2 },
+      { source: "OpenSSF Scorecard refresh", status: "warn", pages: "3,210", rate: "94/hr", queue: 1637, errors: 18 },
+      { source: "Nomination pipeline", status: "ok", pages: "34", rate: "on-demand", queue: 3, errors: 0 }
+    ];
+    var ingestionCard = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+        h("span", { style: SA_EYE }, "Ingestion pipeline")),
+      ingestion.map(function (s) {
+        return h("div", { key: s.source, className: "nv-sa-row" },
+          h("div", { style: { display: "flex", alignItems: "center", gap: "var(--space-md)", flex: 1 } },
+            saStatusDot(s.status),
+            h("div", { style: col("2px") },
+              h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, s.source),
+              h("span", { style: SA_CAP }, s.pages + " pages · " + s.rate + " throughput"))),
+          h("div", { style: { display: "flex", gap: "var(--space-xl)", alignItems: "center" } },
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Queue"),
+              h("span", { style: { font: "var(--type-body-md)", color: s.queue > 100 ? "var(--volt-amber,#f59e0b)" : "var(--text-body)" } }, s.queue)),
+            h("div", { style: col("1px", { alignItems: "flex-end" }) },
+              h("span", { style: SA_EYE }, "Errors"),
+              h("span", { style: { font: "var(--type-body-md)", color: s.errors > 10 ? "var(--volt-red,#ef4444)" : "var(--text-body)" } }, s.errors))));
+      }));
+
+    /* Error rate bar chart */
+    var errors = [
+      { day: "Mon", count: 2 }, { day: "Tue", count: 5 }, { day: "Wed", count: 1 },
+      { day: "Thu", count: 18 }, { day: "Fri", count: 8 }, { day: "Sat", count: 3 }, { day: "Sun", count: 1 }
+    ];
+    var maxErr = Math.max.apply(null, errors.map(function (e) { return e.count; }));
+    var errCard = h("div", { className: "nv-sa-card", style: col("var(--space-lg)") },
+      h("span", { style: SA_EYE }, "Errors · last 7 days"),
+      h("div", { style: { display: "flex", alignItems: "flex-end", gap: "var(--space-sm)", height: "80px" } },
+        errors.map(function (e) {
+          var pct = maxErr > 0 ? (e.count / maxErr * 100) : 0;
+          var isHigh = e.count > 10;
+          return h("div", { key: e.day, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" } },
+            h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: isHigh ? "var(--volt-red,#ef4444)" : "var(--text-secondary)" } }, e.count),
+            h("div", { style: { width: "100%", height: pct + "%", minHeight: "2px", background: isHigh ? "var(--volt-red,#ef4444)" : "var(--volt-emerald)", borderRadius: "3px 3px 0 0", transition: "height .6s cubic-bezier(0.16, 1, 0.3, 1)" } }),
+            h("span", { style: { font: "var(--type-mono-label)", letterSpacing: "var(--ls-mono-label)", color: "var(--text-secondary)" } }, e.day));
+        })),
+      h("span", { style: SA_CAP }, "38 total · Thu spike = OpenSSF timeout burst · illustrative data"));
+
+    /* Alert thresholds */
+    var thresholds = [
+      { name: "API latency", value: "500ms", active: true },
+      { name: "Queue depth", value: "500 items", active: true },
+      { name: "Error rate", value: "> 10/day per source", active: true },
+      { name: "GitHub rate limit", value: "< 500 remaining", active: false }
+    ];
+    var ts = React.useState(thresholds.reduce(function (acc, t) { acc[t.name] = t.active; return acc; }, {})), alerts = ts[0], setAlerts = ts[1];
+    var threshCard = h("div", { className: "nv-sa-card", style: col("0") },
+      h("div", { style: { padding: "0 0 var(--space-md)", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--volt-border)" } },
+        h("span", { style: SA_EYE }, "Alert thresholds")),
+      thresholds.map(function (t) {
+        return h("div", { key: t.name, className: "nv-sa-row" },
+          h("div", { style: col("2px", { flex: 1 }) },
+            h("span", { style: { font: "var(--type-body-md-strong)", letterSpacing: "var(--ls-body-md)" } }, t.name),
+            h("span", { style: SA_CAP }, "Threshold: " + t.value)),
+          saToggle(alerts[t.name], function () {
+            var next = Object.assign({}, alerts);
+            next[t.name] = !next[t.name];
+            setAlerts(next);
+          }));
+      }));
+
+    return h("div", { style: SA_WRAP },
+      saHeader("Superadmin", "System health", "External API status, ingestion pipeline, error rates, and alert thresholds."),
+      apiCard, ingestionCard, errCard, threshCard,
+      h(Note, null, "All figures illustrative. In production, reads from the ops metrics pipeline. Alert notifications go to the founders Slack channel."));
   }
 
   Object.assign(window, {
