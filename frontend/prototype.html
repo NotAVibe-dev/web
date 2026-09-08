@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Private preview: keep it out of search indexes. The gate below is client-side
+     only, so noindex is the control that actually stops this page being findable. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- ── Theme resolution (pre-paint) ─────────────────────────────────────────────
      Sets data-theme on <html> BEFORE any stylesheet or paint, so there is no
      flash of the wrong theme. Resolution order: a remembered manual choice

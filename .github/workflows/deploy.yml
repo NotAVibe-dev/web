@@ -31,28 +31,52 @@ jobs:
 
       - uses: actions/configure-pages@v6
 
-      # Stamp the commit SHA onto every local asset URL in index.html so a
-      # deploy always busts Cloudflare's 4h edge cache (assets are max-age=14400;
-      # index.html is served fresh). No manual version bumping, no CF API needed.
+      # Stamp the commit SHA onto every local asset URL in EVERY page so a deploy
+      # always busts Cloudflare's edge cache. Measured at the edge: .js/.css come
+      # back max-age=14400 (4h, cached at the edge too), while HTML is max-age=600
+      # and cf-cache-status: DYNAMIC. So a deploy ships new HTML that still points
+      # at asset URLs the edge answers from its 4h-old copy — new page, old code.
+      # A ?v=<sha> query string changes the cache key, so there is nothing to hit.
+      #
+      # Every .html under frontend/ is rewritten, not just the front page. This
+      # step used to hardcode frontend/index.html, from when that file WAS the
+      # whole app; prototype.html and privacy/ have since become their own pages
+      # loading the same shared scripts/ and design-system/ assets, and a page
+      # left unstamped keeps serving whatever the edge already had.
+      #
+      # The rewrite touches the uploaded artifact, never the repo, so no ?v= is
+      # ever committed and nothing needs bumping by hand (see #16, #24).
       - name: Cache-bust frontend asset URLs
         env:
           SHA: ${{ github.sha }}
         run: |
           node -e '
             const fs = require("fs");
-            const f = "frontend/index.html";
+            const path = require("path");
             const v = (process.env.SHA || "dev").slice(0, 12);
-            let n = 0;
-            const out = fs.readFileSync(f, "utf8").replace(
-              /(src|href)="([^"]+?\.(?:js|css))(\?[^"]*)?"/g,
-              (m, attr, path) => {
-                if (/^(https?:)?\/\//.test(path)) return m; // leave external URLs alone
-                n++;
-                return attr + "=\"" + path + "?v=" + v + "\"";
-              }
-            );
-            fs.writeFileSync(f, out);
-            console.log("cache-busted " + n + " local asset refs with ?v=" + v);
+            const files = fs.readdirSync("frontend", { recursive: true })
+              .map((p) => path.join("frontend", p))
+              .filter((p) => p.endsWith(".html"));
+            if (!files.length) {
+              console.error("no HTML found under frontend/ — refusing to deploy an empty site");
+              process.exit(1);
+            }
+            let total = 0;
+            for (const f of files) {
+              let n = 0;
+              const out = fs.readFileSync(f, "utf8").replace(
+                /(src|href)="([^"]+?\.(?:js|css))(\?[^"]*)?"/g,
+                (m, attr, p) => {
+                  if (/^(https?:)?\/\//.test(p)) return m; // leave external URLs alone
+                  n++;
+                  return attr + "=\"" + p + "?v=" + v + "\"";
+                }
+              );
+              fs.writeFileSync(f, out);
+              total += n;
+              console.log(f + ": " + n + " ref(s)");
+            }
+            console.log("cache-busted " + total + " local asset refs across " + files.length + " page(s) with ?v=" + v);
           '
       - name: Upload frontend artifact
         uses: actions/upload-pages-artifact@v5
