@@ -1,203 +1,629 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>notavibe — Privacy Policy</title>
-<meta name="description" content="How notavibe handles personal data: what we collect, why, who we share it with, how long we keep it, and your rights under the GDPR." />
-<link rel="canonical" href="https://notavibe.dev/privacy/" />
-<meta name="robots" content="index, follow" />
-<meta name="color-scheme" content="dark" />
-<meta name="theme-color" content="#050507" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>notavibe — privacy policy</title>
+<meta name="description" content="How notavibe handles personal data: what we collect, why, who we share it with, how long we keep it, and your rights under the GDPR.">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="https://notavibe.dev/privacy/">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <!--
-  Standalone, PUBLIC privacy policy. Deliberately does NOT load scripts/runtime.js,
-  so the private-preview password gate never mounts here — Meta's crawler and any
-  visitor can read it without authentication. Styled with the live VoltAgent design
-  tokens (linked below) so it matches the rest of notavibe.dev. Content is grounded
-  in NotAVibe-dev/infra docs/compliance/gdpr-baseline.md.
+  Standalone, PUBLIC privacy policy. Deliberately loads no runtime and no app
+  scripts, so the private-preview password gate (which lives in prototype.html)
+  never mounts over a legal document — any crawler or visitor can read it
+  without authentication.
+
+  This is a document, not a landing page: one column of prose at a readable
+  measure, numbered sections, a sticky table of contents, and tables where the
+  content is tabular. It takes its colour, type and hairlines from the site's
+  own tokens so it belongs to notavibe.dev, but none of the marketing furniture.
+  Content is grounded in NotAVibe-dev/infra docs/compliance/gdpr-baseline.md.
 -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2300d992' d='M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z'/%3E%3C/svg%3E" type="image/svg+xml" />
-<link rel="stylesheet" href="/design-system/voltagent/styles.css" />
+<script>
+(function () {
+  var t = "dark";
+  try {
+    var saved = localStorage.getItem("nv-theme");
+    if (saved === "light" || saved === "dark") t = saved;
+  } catch (e) {}
+  document.documentElement.setAttribute("data-theme", t);
+  document.documentElement.style.colorScheme = t;
+})();
+</script>
+<link rel="stylesheet" href="/design-system/voltagent/tokens/fonts.css">
+<link rel="stylesheet" href="/design-system/voltagent/tokens/colors.css">
+<link rel="stylesheet" href="/styles/hashicorp-tokens.css">
 <style>
-  body {
-    margin: 0;
-    min-height: 100svh;
-    -webkit-font-smoothing: antialiased;
-    line-height: var(--type-body-md-lh);
-  }
-  .wrap {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: clamp(var(--space-4xl), 8vh, var(--space-6xl)) var(--gutter-mobile) var(--space-6xl);
-  }
-  @media (min-width: 768px) { .wrap { padding-inline: var(--gutter-desktop); } }
+/* ── Light theme overrides (identical to the front page) ─────────────────── */
+:root[data-theme="light"] {
+  --volt-void:#ffffff;
+  --volt-canvas:#f5f6f7;
+  --volt-surface:#eaecef;
+  --volt-panel:#eceef1;
+  --volt-white:#0b0d10;
+  --volt-text-100:#141719;
+  --volt-text-200:#22262b;
+  --volt-text-300:#3a3f46;
+  --volt-text-400:#565c64;
+  --volt-text-500:#5e646c;
+  --volt-text-600:#787f88;
+  --volt-border:rgba(11,13,16,0.12);
+  --volt-border-faint:rgba(11,13,16,0.08);
+  --volt-border-hover:rgba(11,13,16,0.22);
+  --volt-emerald:#00ca8e;
+  --volt-emerald-soft:#047857;
+  --volt-emerald-deep:#047857;
+  --volt-emerald-08:rgba(0,202,142,0.10);
+  --volt-emerald-10:rgba(0,202,142,0.14);
+  --volt-emerald-20:rgba(0,202,142,0.22);
+  --volt-on-emerald:#04120d;
+  --volt-indigo:#c9d4ff;
+}
 
-  .brand {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.01em;
-    color: var(--text-heading); text-decoration: none;
-  }
-  .brand svg { width: 22px; height: 22px; display: block; }
-  .brand:hover { color: var(--text-heading); }
+/* ── Base ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; padding: 0; background: var(--volt-void); }
+body {
+  font-family: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
+  color: var(--volt-text-500);
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px; line-height: 1.75;
+}
+a { color: var(--volt-emerald-deep); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--volt-emerald); }
+strong { font-weight: 600; color: var(--volt-text-200); }
+code {
+  font-family: var(--font-mono, monospace); font-size: 0.9em;
+  color: var(--volt-text-300);
+}
+:focus-visible { outline: 2px solid var(--volt-emerald); outline-offset: 3px; border-radius: 3px; }
 
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--type-eyebrow-size);
-    font-weight: var(--type-eyebrow-weight);
-    letter-spacing: var(--type-eyebrow-ls);
-    text-transform: uppercase;
-    color: var(--text-accent);
-    margin: var(--space-6xl) 0 var(--space-md);
-  }
-  h1 {
-    font-family: var(--font-sans);
-    font-size: var(--type-display-lg-size);
-    font-weight: var(--type-display-lg-weight);
-    line-height: var(--type-display-lg-lh);
-    letter-spacing: var(--type-display-lg-ls);
-    color: var(--text-heading);
-    margin: 0;
-  }
-  .updated {
-    font-family: var(--font-mono);
-    font-size: var(--type-code-size);
-    color: var(--text-caption);
-    margin-top: var(--space-md);
-  }
-  .lead {
-    font-size: var(--type-body-lg-size);
-    line-height: var(--type-body-lg-lh);
-    color: var(--text-body);
-    margin-top: var(--space-3xl);
-  }
-  h2 {
-    font-family: var(--font-sans);
-    font-size: var(--type-h2-size);
-    font-weight: var(--type-h2-weight);
-    line-height: var(--type-h2-lh);
-    text-transform: var(--type-h2-case);
-    letter-spacing: 0.01em;
-    color: var(--text-heading);
-    margin: var(--space-6xl) 0 var(--space-lg);
-  }
-  p, li { font-size: var(--type-body-md-size); line-height: var(--type-body-md-lh); color: var(--text-body); }
-  p { margin: 0 0 var(--space-lg); }
-  strong { font-weight: 600; color: var(--text-body); }
-  ul { margin: 0 0 var(--space-lg); padding-left: 0; list-style: none; display: grid; gap: var(--space-md); }
-  li { position: relative; padding-left: var(--space-xl); }
-  li::before {
-    content: ""; position: absolute; left: 0; top: 10px;
-    width: 6px; height: 6px; border-radius: var(--radius-xs);
-    background: var(--volt-emerald);
-  }
-  a { color: var(--text-link); }
-  a:hover { color: var(--volt-emerald); }
-  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; border-radius: var(--radius-xs); }
+/* ── Masthead bar ────────────────────────────────────────────────────────── */
+.bar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--volt-void) 88%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--volt-border);
+}
+.bar-inner {
+  max-width: 1120px; margin: 0 auto; padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
+.logo-ring {
+  width: 28px; height: 28px; border-radius: 9999px;
+  border: 2px solid var(--volt-emerald); background: rgba(0,202,142,0.12);
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.logo-ring svg { width: 16px; height: 16px; display: block; }
+.logo-word {
+  font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--volt-emerald);
+}
+.bar-right { display: flex; align-items: center; gap: 8px; }
+.bar-link {
+  font-size: 14px; font-weight: 500; color: var(--volt-text-500);
+  text-decoration: none; padding: 6px 10px; border-radius: 6px;
+}
+.bar-link:hover { color: var(--volt-white); }
+.theme-toggle {
+  width: 32px; height: 32px; border-radius: 9999px;
+  border: 1px solid var(--volt-border); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--volt-text-400); flex-shrink: 0;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.theme-toggle:hover { border-color: var(--volt-border-hover); color: var(--volt-white); }
 
-  hr { border: none; border-top: 1px solid var(--border-default); margin: var(--space-6xl) 0 var(--space-3xl); }
-  .foot { display: flex; flex-wrap: wrap; gap: var(--space-md) var(--space-2xl); align-items: center; justify-content: space-between; }
-  .foot a.back { font-family: var(--font-mono); font-size: var(--type-code-size); }
-  .foot .contact { font-family: var(--font-mono); font-size: var(--type-code-size); color: var(--text-caption); }
+/* ── Page frame ──────────────────────────────────────────────────────────── */
+.wrap {
+  max-width: 1120px; margin: 0 auto; padding: 56px 32px 96px;
+  display: grid; grid-template-columns: 1fr; gap: 48px;
+}
+@media (min-width: 1024px) {
+  .wrap { grid-template-columns: minmax(0, 1fr) 232px; gap: 64px; align-items: start; }
+}
+
+/* ── Document head ───────────────────────────────────────────────────────── */
+h1 {
+  margin: 0; font-weight: 700;
+  font-size: clamp(30px, 3.4vw, 42px);
+  line-height: 1.16; letter-spacing: -0.024em;
+  color: var(--volt-white);
+}
+.updated {
+  margin: 12px 0 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px; color: var(--volt-text-600);
+}
+.intro {
+  margin: 28px 0 0; font-size: 17px; line-height: 1.72;
+  color: var(--volt-text-400);
+  padding-bottom: 32px; border-bottom: 1px solid var(--volt-border);
+}
+
+/* ── Article ─────────────────────────────────────────────────────────────── */
+article { max-width: 72ch; }
+article p { margin: 0 0 18px; }
+article p:last-child { margin-bottom: 0; }
+
+h2 {
+  margin: 52px 0 16px; font-weight: 700;
+  font-size: 22px; line-height: 1.3; letter-spacing: -0.012em;
+  color: var(--volt-white);
+  scroll-margin-top: 88px;
+}
+h2 .num {
+  font-family: var(--font-mono, monospace);
+  font-size: 15px; font-weight: 500; color: var(--volt-text-600);
+  margin-right: 10px;
+}
+h3 {
+  margin: 32px 0 12px; font-weight: 600;
+  font-size: 17px; line-height: 1.4;
+  color: var(--volt-text-200);
+}
+
+ul { margin: 0 0 18px; padding-left: 22px; }
+li { margin-bottom: 8px; }
+li::marker { color: var(--volt-text-600); }
+
+/* The GDPR lawful basis for each purpose, called out under the paragraph it
+   applies to — the convention every EU-facing policy of this kind follows. */
+.basis {
+  margin: 12px 0 0;
+  padding-left: 14px; border-left: 2px solid var(--volt-border-hover);
+  font-size: 14px; line-height: 1.6; color: var(--volt-text-600);
+}
+.basis b { font-weight: 600; color: var(--volt-text-400); }
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.table-wrap {
+  margin: 0 0 18px; overflow-x: auto;
+  border: 1px solid var(--volt-border); border-radius: 8px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+thead th {
+  text-align: left; padding: 11px 18px;
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--volt-text-400);
+  background: var(--volt-canvas);
+  border-bottom: 1px solid var(--volt-border);
+  white-space: nowrap;
+}
+tbody td { padding: 14px 18px; vertical-align: top; line-height: 1.6; }
+tbody tr + tr td { border-top: 1px solid var(--volt-border); }
+tbody td:first-child {
+  font-weight: 600; color: var(--volt-text-200); white-space: nowrap;
+}
+
+/* ── Table of contents ───────────────────────────────────────────────────── */
+.toc { display: none; }
+@media (min-width: 1024px) {
+  .toc {
+    display: block; position: sticky; top: 96px;
+    font-size: 14px; line-height: 1.5;
+  }
+  .toc-label {
+    margin: 0 0 12px; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--volt-text-400);
+  }
+  .toc ol { margin: 0; padding: 0; list-style: none; }
+  .toc li { margin: 0; }
+  .toc a {
+    display: block; padding: 5px 0 5px 14px;
+    border-left: 2px solid var(--volt-border);
+    color: var(--volt-text-500); text-decoration: none;
+    transition: color 150ms ease, border-color 150ms ease;
+  }
+  .toc a:hover { color: var(--volt-text-200); border-left-color: var(--volt-border-hover); }
+  .toc a[aria-current="true"] {
+    color: var(--volt-emerald); border-left-color: var(--volt-emerald);
+  }
+}
+
+/* ── Contact block ───────────────────────────────────────────────────────── */
+.contact {
+  margin: 24px 0 0; padding: 20px 22px;
+  background: var(--volt-canvas);
+  border: 1px solid var(--volt-border); border-radius: 8px;
+  font-size: 15px; line-height: 1.7;
+}
+.contact p { margin: 0; }
+.contact p + p { margin-top: 6px; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 32px 0;
+  border-top: 1px solid var(--volt-border);
+  text-align: center;
+}
+.footer p { margin: 0; font-size: 13px; color: var(--volt-text-600); }
+.footer a { color: var(--volt-text-500); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .bar-inner { padding: 12px 20px; }
+  .wrap { padding: 40px 20px 72px; }
+  h2 { margin-top: 44px; font-size: 20px; }
+  .bar-link { display: none; }
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────── */
+@media print {
+  .bar, .toc, .footer { display: none; }
+  html, body { background: #fff; color: #000; }
+  .wrap { display: block; max-width: none; padding: 0; }
+  article { max-width: none; }
+  h1, h2, h3, strong, tbody td:first-child { color: #000; }
+  a { color: #000; }
+  .table-wrap, .contact { border-color: #999; }
+  thead th { background: #f2f2f2; color: #000; }
+}
 </style>
 </head>
 <body>
-  <main class="wrap">
-    <a class="brand" href="/" aria-label="notavibe home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d992" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/></svg>
-      <span>notavibe</span>
+
+<!-- ── Bar ───────────────────────────────────────────────────────────────── -->
+<header class="bar">
+  <div class="bar-inner">
+    <a class="logo" href="/" aria-label="notavibe home">
+      <span class="logo-ring">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="var(--volt-emerald)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
+        </svg>
+      </span>
+      <span class="logo-word">notavibe</span>
     </a>
-
-    <p class="eyebrow">// privacy</p>
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: <time datetime="2026-08-11">11 August 2026</time></p>
-
-    <p class="lead">
-      notavibe connects the companies that depend on open source with the maintainers who keep it
-      alive, matched to real usage. This explains what personal data we handle, why, and the rights
-      you have. Any question or request:
-      <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a> — we are the data controller.
-    </p>
-
-    <h2>What we collect, and why</h2>
-    <ul>
-      <li>
-        <strong>Early-access sign-ups.</strong> If you join the waitlist, we store your email address
-        and whether you identified as a maintainer or a backer — used only to tell you when notavibe
-        launches. Legal basis: your <strong>consent</strong>. You can opt out at any time, permanently.
-      </li>
-      <li>
-        <strong>Open-source maintainer information.</strong> To match funding to real usage, we process
-        professional information about maintainers — name, a public/professional email, platform
-        handles, and bio — collected <strong>only from public sources</strong> (a maintainer&rsquo;s
-        public GitHub profile, npm-published metadata, or their own funding/website page). We never
-        harvest emails from commit logs. Legal basis: our <strong>legitimate interest</strong> in
-        connecting maintainers with funding, balanced against your rights.
-      </li>
-      <li>
-        <strong>WhatsApp infra bot (internal).</strong> A private bot lets our own team open
-        infrastructure requests over WhatsApp. It processes the sender&rsquo;s WhatsApp number and the
-        content of the messages they send it; each request is recorded as an issue in our private
-        GitHub repository and kept in that issue history. Access is limited to an allow-list of our own
-        team, and our operational logs record only handles and outcomes — never phone numbers or
-        message contents. Legal basis: our <strong>legitimate interest</strong> in operating our own
-        infrastructure.
-      </li>
-      <li>
-        <strong>Website analytics.</strong> We use Cloudflare Web Analytics, which is
-        <strong>cookieless</strong> — it does not track you across sites or build a profile of you.
-      </li>
-    </ul>
-    <p>
-      We do not collect special-category data, and we don&rsquo;t use cookies for advertising or
-      cross-site tracking.
-    </p>
-
-    <h2>Who we share it with</h2>
-    <p>
-      We use a small set of processors to run the service, each under a data-processing agreement:
-      <strong>Google</strong> (Workspace and Cloud), <strong>GitHub</strong> (source and data), and
-      <strong>Cloudflare</strong> (DNS, content delivery/security, and analytics). The site is served
-      through Cloudflare&rsquo;s edge network, which transiently processes connection data (including
-      your IP address) to deliver and protect it — legal basis: our <strong>legitimate interest</strong>
-      in secure, reliable delivery. Where these providers transfer data internationally, that transfer
-      is covered by the EU Standard Contractual Clauses and/or the EU–US Data Privacy Framework.
-      <strong>We do not sell your personal data.</strong>
-    </p>
-
-    <h2>How long we keep it</h2>
-    <ul>
-      <li><strong>Waitlist email:</strong> until notavibe launches or you opt out, whichever comes first.</li>
-      <li>
-        <strong>Maintainer information:</strong> until you opt out or it is no longer relevant. Opt-outs
-        are permanent — once you ask to be removed, we keep a minimal suppression record so we
-        don&rsquo;t re-add you.
-      </li>
-      <li>
-        <strong>Infra-bot requests:</strong> kept in our private issue history for as long as they are
-        operationally useful.
-      </li>
-    </ul>
-
-    <h2>Your rights</h2>
-    <p>
-      Under the GDPR you can ask us to <strong>access, correct, delete, or export</strong> your personal
-      data, or <strong>object</strong> to our processing. To exercise any of these, email
-      <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a> and we&rsquo;ll action it — if a
-      maintainer asks to be removed, we delete the record and add it to a permanent suppression list the
-      same day. You also have the right to lodge a complaint with your local data-protection authority.
-    </p>
-
-    <h2>Changes</h2>
-    <p>
-      We&rsquo;ll update this policy as notavibe takes shape; the &ldquo;last updated&rdquo; date above
-      always reflects the current version.
-    </p>
-
-    <hr />
-    <div class="foot">
-      <a class="back" href="/">&larr; Back to notavibe</a>
-      <span class="contact">notavibe · <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a></span>
+    <div class="bar-right">
+      <a class="bar-link" href="/">Back to notavibe</a>
+      <button class="theme-toggle" id="theme-btn" type="button" aria-label="Toggle theme">
+        <svg id="icon-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path>
+        </svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.5 13.4A8.2 8.2 0 1 1 10.6 3.5a6.4 6.4 0 0 0 9.9 9.9z"></path>
+        </svg>
+      </button>
     </div>
-  </main>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <article>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: 8 September 2026</p>
+
+    <p class="intro">
+      This policy explains what personal data notavibe handles when you visit
+      <strong>notavibe.dev</strong>, why we handle it, who else touches it, how long it is kept,
+      and the rights you have over it. notavibe has not launched: this site is a description of
+      what we are building, plus a form to be told when it is ready. When the product itself
+      starts processing personal data, this policy will be updated before that happens, not
+      after.
+    </p>
+
+    <h2 id="who-we-are"><span class="num">1.</span>Who we are</h2>
+    <p>
+      notavibe connects the companies that depend on open source with the maintainers who keep
+      it alive, matched to real usage. For the purposes of the EU General Data Protection
+      Regulation (GDPR) and the UK GDPR, notavibe is the <strong>data controller</strong> for
+      the personal data described in this policy.
+    </p>
+    <p>
+      You can reach us about anything in this document at
+      <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a>. We have not appointed a Data
+      Protection Officer, as we are not required to; that address reaches the people who can
+      action your request directly.
+    </p>
+
+    <h2 id="what-we-collect"><span class="num">2.</span>What we collect, and why</h2>
+    <p>
+      Four things, and only while you are on this site. Each is listed with the lawful basis we
+      rely on for it.
+    </p>
+
+    <h3>2.1 Waitlist sign-ups</h3>
+    <p>
+      If you give us your email address to be told when notavibe launches, we store that address
+      and nothing else alongside it. We use it for that one announcement. We do not use it for
+      unrelated marketing, we do not pass it to anyone else, and you can withdraw your consent
+      and be removed at any time, permanently.
+    </p>
+    <p class="basis"><b>Lawful basis:</b> consent (Article 6(1)(a)).</p>
+
+    <h3>2.2 Server and CDN request logs</h3>
+    <p>
+      Serving a page necessarily involves receiving a request for it. Our content delivery
+      network records the metadata it needs in order to serve and protect the site — your IP
+      address, the time of the request, the URL requested, your user agent and the referring
+      page. We see this only as aggregate traffic figures.
+    </p>
+    <p class="basis">
+      <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) — secure, reliable delivery of
+      the site.
+    </p>
+
+    <h3>2.3 Website analytics</h3>
+    <p>
+      We use <strong>Cloudflare Web Analytics</strong> to see how many people visit and which
+      pages they read. It is <strong>cookieless</strong>: it stores nothing on your device, it
+      does not follow you between websites, and it does not build a profile of you. It reports
+      page views, referring sites, and coarse technical details such as browser, operating
+      system and country, together with page performance measurements.
+    </p>
+    <p>
+      It works through a small script that Cloudflare adds to our pages at its edge, served from
+      <code>static.cloudflareinsights.com</code>. There is no advertising network involved and no
+      data broker; the measurements are visible only to us.
+    </p>
+    <p class="basis">
+      <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) — understanding whether the
+      site is read and whether it performs.
+    </p>
+
+    <h3>2.4 Web fonts</h3>
+    <p>
+      The typefaces on these pages are served by <strong>Google Fonts</strong> rather than by us,
+      which means your browser requests those font files from Google directly and Google receives
+      your IP address and user agent as a consequence. We set no cookie for it and we send Google
+      no information about you beyond what any request for a file necessarily reveals.
+    </p>
+    <p class="basis">
+      <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) — presenting a consistent,
+      legible site.
+    </p>
+
+    <h2 id="what-we-do-not"><span class="num">3.</span>What we do not collect</h2>
+    <p>
+      We do not collect special-category data as defined in Article 9 of the GDPR — nothing
+      about health, ethnicity, religion, political opinions, sexual orientation, trade union
+      membership, genetics or biometrics. We do not carry out profiling or automated
+      decision-making. We do not sell personal data, and we have never sold personal data.
+    </p>
+    <p>
+      There are no accounts on this site, so there is nothing to sign in to and no profile
+      attached to you. notavibe is a tool for professional software developers and the
+      organisations that employ them; it is not directed at children, and we do not knowingly
+      collect personal data from anyone under 16.
+    </p>
+
+    <h2 id="cookies"><span class="num">4.</span>Cookies and local storage</h2>
+    <p>
+      <strong>We set no cookies of our own</strong> — none for advertising and none for
+      cross-site tracking. Our analytics is cookieless and stores nothing on your device, which
+      is why there is no cookie banner on this site: there is nothing to consent to.
+    </p>
+    <p>
+      If you use the light/dark theme switch, your choice is saved in your own browser's local
+      storage under the key <code>nv-theme</code>. That is not a cookie, it is never transmitted
+      to us, and clearing your browser storage removes it.
+    </p>
+    <p>
+      Our content delivery network may set a strictly necessary cookie of its own for bot
+      detection and security. We do not control its contents and we do not read it.
+    </p>
+
+    <h2 id="who-we-share-with"><span class="num">5.</span>Who we share it with</h2>
+    <p>
+      We do not sell or rent personal data, and we do not share it for anyone else's marketing.
+      We do use a small number of service providers to run this site, each of them acting as a
+      processor under an agreement with us:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Provider</th><th scope="col">What it does for us</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cloudflare</td>
+            <td>DNS, content delivery, security, and the cookieless website analytics described in section 2.3. This site is served through Cloudflare's edge network, which transiently processes connection data — including your IP address — to deliver and protect it.</td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td>Hosts this site's files and serves them.</td>
+          </tr>
+          <tr>
+            <td>Google</td>
+            <td>Workspace, for the inbox that receives anything you send us. Google Fonts separately serves the typefaces on these pages.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      We may also disclose personal data where we are legally required to — for example in
+      response to a valid legal request — or to establish, exercise or defend legal claims.
+    </p>
+
+    <h2 id="transfers"><span class="num">6.</span>International transfers</h2>
+    <p>
+      Some of the providers above process data outside the European Economic Area, principally in
+      the United States. Where that happens, the transfer is covered by the European Commission's
+      Standard Contractual Clauses and/or the EU&ndash;US Data Privacy Framework, together with
+      the additional safeguards those mechanisms require.
+    </p>
+
+    <h2 id="retention"><span class="num">7.</span>How long we keep it</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Data</th><th scope="col">Retention period</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Waitlist email</td>
+            <td>Until notavibe launches and we have told you, or until you opt out — whichever comes first. Then deleted.</td>
+          </tr>
+          <tr>
+            <td>Request logs</td>
+            <td>Retained by our content delivery network under its own retention schedule. We keep no separate copy and build no history of your visits.</td>
+          </tr>
+          <tr>
+            <td>Analytics</td>
+            <td>Retained by Cloudflare under its own retention schedule, as aggregate counts rather than records about individuals. We keep no separate copy.</td>
+          </tr>
+          <tr>
+            <td>Theme preference</td>
+            <td>Stays in your browser until you clear its storage. We never receive it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="your-rights"><span class="num">8.</span>Your rights</h2>
+    <p>
+      If the GDPR applies to you, you have the right to:
+    </p>
+    <ul>
+      <li><strong>Access</strong> the personal data we hold about you, and receive a copy of it.</li>
+      <li><strong>Rectify</strong> it, if it is inaccurate or incomplete.</li>
+      <li><strong>Erase</strong> it, in the circumstances set out in Article 17.</li>
+      <li><strong>Restrict</strong> how we process it, in the circumstances set out in Article 18.</li>
+      <li><strong>Port</strong> it — receive it in a structured, commonly used, machine-readable format.</li>
+      <li><strong>Object</strong> to processing we carry out on the basis of legitimate interests.</li>
+      <li><strong>Withdraw consent</strong> at any time, where consent is the basis we rely on.</li>
+    </ul>
+    <p>
+      To exercise any of these, email <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a>.
+      We will respond within one month, as the GDPR requires. There is no form to complete and no
+      account to create, and exercising a right will never cost you anything.
+    </p>
+    <p>
+      You also have the right to lodge a complaint with a supervisory authority — normally the
+      data protection authority of the country where you live or work — at any time, and without
+      contacting us first.
+    </p>
+
+    <h2 id="changes"><span class="num">9.</span>Changes to this policy</h2>
+    <p>
+      We will update this policy as notavibe develops, and we will do so <em>before</em> any new
+      processing begins rather than after. The "last updated" date at the top always reflects the
+      version you are reading. Because this site is maintained in a public repository, the
+      complete history of every change to this page is public in <code>NotAVibe-dev/web</code>.
+    </p>
+
+    <h2 id="contact"><span class="num">10.</span>How to contact us</h2>
+    <div class="contact">
+      <p><strong>notavibe</strong> — data controller</p>
+      <p>Email: <a href="mailto:hello@notavibe.dev">hello@notavibe.dev</a></p>
+      <p>For any request under <a href="#your-rights">section 8</a>, that address is the fastest route.</p>
+    </div>
+  </article>
+
+  <!-- ── Table of contents ───────────────────────────────────────────────── -->
+  <nav class="toc" aria-label="On this page">
+    <p class="toc-label">On this page</p>
+    <ol>
+      <li><a href="#who-we-are">Who we are</a></li>
+      <li><a href="#what-we-collect">What we collect, and why</a></li>
+      <li><a href="#what-we-do-not">What we do not collect</a></li>
+      <li><a href="#cookies">Cookies and local storage</a></li>
+      <li><a href="#who-we-share-with">Who we share it with</a></li>
+      <li><a href="#transfers">International transfers</a></li>
+      <li><a href="#retention">How long we keep it</a></li>
+      <li><a href="#your-rights">Your rights</a></li>
+      <li><a href="#changes">Changes to this policy</a></li>
+      <li><a href="#contact">How to contact us</a></li>
+    </ol>
+  </nav>
+
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 notavibe. <a href="/">Back to notavibe</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ── Theme toggle (same behaviour and storage key as the front page) ─── */
+  var btn = document.getElementById("theme-btn");
+  var sunIcon = document.getElementById("icon-sun");
+  var moonIcon = document.getElementById("icon-moon");
+
+  function syncIcons() {
+    var t = document.documentElement.getAttribute("data-theme");
+    sunIcon.style.display = t === "light" ? "block" : "none";
+    moonIcon.style.display = t === "light" ? "none" : "block";
+  }
+  syncIcons();
+
+  btn.addEventListener("click", function () {
+    var current = document.documentElement.getAttribute("data-theme") || "dark";
+    var next = current === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.style.colorScheme = next;
+    try { localStorage.setItem("nv-theme", next); } catch (e) {}
+    syncIcons();
+  });
+
+  /* ── Mark the section you are reading in the table of contents ───────── */
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  if (!links.length) return;
+
+  var headings = links
+    .map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); })
+    .filter(Boolean);
+  if (!headings.length) return;
+
+  var current = null;
+  function mark(id) {
+    if (id === current) return;
+    current = id;
+    links.forEach(function (a) {
+      if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+  }
+
+  /* The active section is the last heading whose top has passed the reading
+     line. Computed from scroll position rather than observed intersections:
+     an IntersectionObserver only reports the headings that cross the viewport,
+     so a jump straight to an anchor leaves its state stale. */
+  var LINE = 120;
+  function update() {
+    /* At the bottom of the page the final sections are shorter than the
+       viewport, so their headings never reach the reading line and the
+       highlight would stick several entries early. Once the page cannot
+       scroll further, the last section is by definition the one being read. */
+    var doc = document.documentElement;
+    if (window.innerHeight + window.scrollY >= doc.scrollHeight - 2) {
+      mark(headings[headings.length - 1].id);
+      return;
+    }
+    var active = headings[0];
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].getBoundingClientRect().top <= LINE) active = headings[i];
+    }
+    mark(active.id);
+  }
+
+  var queued = false;
+  function onScroll() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; update(); });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  /* A hash in the URL is applied by the browser around load and fires no scroll
+     event, so the first update() can run against the pre-jump position. Re-run
+     on load, and whenever the hash changes. */
+  window.addEventListener("load", update);
+  window.addEventListener("hashchange", onScroll);
+  update();
+})();
+</script>
+
 </body>
 </html>

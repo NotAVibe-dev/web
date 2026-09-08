@@ -1,76 +1,77 @@
 # notavibe — web
 
-The public site for **notavibe**: *fund the people behind the code.* This repo
-hosts **two sites on one domain** (`notavibe.dev`):
+The public site for **notavibe** at `notavibe.dev`, and the **design reference** the
+product is built against. Everything that ships lives in **`frontend/`** — a
+self-contained static site, no build step, served as-is.
 
-- **landing** — the full Astro scrollytelling site (this project, at the repo root).
-- **splash** — a static holding page in **`splash/`** that collects early-access
-  emails (maintainer / backer) while the landing is pre-launch.
-
-The deploy workflow publishes whichever you pick (see Deploy). The design system,
-brand, and strategy behind it live in the sibling **`design/`** repo.
-
-## Stack & principles
-
-- **Astro**, static output, ships **~0 JS**. The one script (`src/scripts/scroll.js`)
-  is a tiny, dependency-free progressive enhancement (color-temperature arc +
-  count-up numbers). The whole site is fully readable with **JS disabled** and
-  under **`prefers-reduced-motion`**.
-- **Motion:** native CSS scroll-driven animations (`animation-timeline` +
-  `position: sticky` + `@property --warmth`). No GSAP, no smooth-scroll library.
-  Firefox (which still flags scroll-driven animations in early 2026) degrades to a
-  calm, static page — by design. See `design/docs/design-system/motion-and-scroll.md`.
-- **Type:** JetBrains Mono (brand + all data) + Inter (prose), self-hosted via
-  Fontsource. **Tokens** are vendored from the design repo into
-  `src/styles/tokens.css` — edit them there and sync, not here.
-- **Accessibility & performance are gates:** WCAG 2.2 AA, keyboard, visible focus,
-  skip link; target Lighthouse ≥ 95 mobile, LCP < 2.0s, CLS < 0.05.
-
-## Develop
-
-Requires Node 20.3+ (22 recommended; see `.node-version`).
-
-```bash
-npm install
-npm run dev       # local dev server
-npm run build     # static build -> dist/
-npm run preview   # serve the built output
+```
+/                the public front page — what notavibe is, how it works, the MCP install
+/privacy/        the public privacy policy
+/prototype.html  the app prototype — front door + every app screen (private preview)
 ```
 
-## Pages
+`prototype.html` is the high-fidelity prototype of the product: discovery, search,
+project pages, the maintainer and backer portals, and the superadmin founder portal.
+It sits behind a client-side password gate and is `noindex`. It is **not** a mock-up
+to be admired and discarded — the `app` repo (Go + templ + htmx) ports it screen for
+screen, pinning the SHA it ported against in `app/web/VERSION`. Treat the rendered
+output here as the spec, and `frontend/design-notes/hashicorp.DESIGN.md` as the
+intent behind it.
 
-- `/` — the scrollytelling homepage: a maintainer's arc from spark to burnout to
-  funded, with the page's color temperature tracking the emotion.
-- `/how-it-works` · `/for-companies` · `/manifesto` · `/pricing` · `/faq` · `404`.
+## Run it locally
 
-## Deploy (GitHub Pages — one repo, one domain, pick a site)
+```bash
+python3 -m http.server 4321 --directory frontend
+# → http://localhost:4321                 the front page
+# → http://localhost:4321/prototype.html  the app prototype
+```
 
-Both sites deploy from this repo to **`notavibe.dev`** via
-`.github/workflows/deploy.yml`. Deploys are manual for now — each run you pick
-`landing` or `splash` (no default, so nothing ships by accident).
+The prototype's own `NV_DEV` check is true on localhost, so it draws its authoring
+chrome (the PrototypeBar and the `Simulate:` toggles). That is deliberate; append
+`?dev` to force it, or serve it under any non-localhost host to see it as a visitor
+would.
 
-1. Create the repo (e.g. **`NotAVibe-dev/web`**) and push this repo to it.
-2. Settings → Pages → **Source: GitHub Actions**.
-3. Attach the custom domain **`notavibe.dev`** (apex A/AAAA or ALIAS DNS →
-   GitHub Pages), enable "Enforce HTTPS". `public/CNAME` (landing) and
-   `splash/CNAME` both pin it, so the domain survives either deploy.
-4. **Deploy:** Actions → *Deploy to GitHub Pages* → **Run workflow** → choose
-   **`landing`** or **`splash`**. (landing runs `npm ci && npm run build` → `dist`;
-   splash is served from `splash/` as-is.)
+## Structure
 
-**At launch**, when only the landing remains: uncomment the `push:` trigger in
-the workflow (pushes to `main` then auto-deploy landing) and delete `splash/`.
+```
+frontend/
+├─ index.html                 # the front page (self-contained: own styles, own scripts)
+├─ privacy/index.html         # privacy policy (self-contained, matches the front page)
+├─ prototype.html             # the app prototype — entry + boot
+├─ scripts/                   # the prototype's screens + runtime
+│  ├─ runtime.js              #   rendering runtime
+│  ├─ voltagent-adapter.js    #   maps VoltAgent primitives → the screens' component API
+│  ├─ screens.js · app.js · hifi.js · frontdoor.js · search.js
+├─ styles/hashicorp-tokens.css   # loaded last; wins the dark base
+├─ design-system/voltagent/   # VoltAgent design-system bundle (components + tokens)
+├─ design-notes/              # hashicorp.DESIGN.md — design intent, in prose
+├─ favicon.svg · og.svg · og.png · robots.txt · CNAME
+└─ thumbnail.webp             # preview tile from the VoltAgent kit import
+```
 
-## Notes / launch TODOs
+`og.png` is the share card that ships (most social scrapers won't render an SVG);
+`og.svg` beside it is the source. Re-render after editing it — headless Chrome at
+1200×630, since Inter is not a system font and ImageMagick alone sets the type wrong.
 
-- **Forms** (`CtaJoin.astro`) currently `mailto:` so they are functional, never
-  fake. Wire a real endpoint (Formspree/Buttondown/backend) before launch and
-  point `hello@notavibe.dev` at a real inbox.
-- **Share image:** `og.png` (2400×1260, a 2× raster of `og.svg`) is the OG/Twitter
-  image, referenced by default in `src/layouts/Base.astro`. If you change the
-  design, re-render it: `og.svg` is the source. (Raster is used because many
-  social scrapers don't render SVG previews.)
-- All external claims trace to `design/docs/strategy/oss-funding-facts.md`; the
-  protagonist (Sam / `tinsel`) is fictional. Keep it that way.
+## Design systems
 
-*This is not a vibe.*
+Built on **VoltAgent** components with **HashiCorp** design tokens.
+
+Typefaces come from Google Fonts at runtime, via the `@import` in
+`design-system/voltagent/tokens/fonts.css` — nothing is self-hosted. The prototype
+additionally loads React from unpkg and its icons from jsdelivr at runtime, so it
+needs a network connection to render.
+
+## Deploy
+
+`.github/workflows/deploy.yml` publishes `frontend/` to GitHub Pages on every push to
+`main` that touches it. There is no build. `workflow_dispatch` re-deploys without a
+code change.
+
+The zone is proxied through Cloudflare, whose edge caches assets for 4h, so the
+workflow stamps `?v=<sha>` onto every local `.js`/`.css` reference in every page at
+deploy time. That is why a deploy is never masked by the edge cache, and why no asset
+URL should be hand-versioned.
+
+Infrastructure — DNS, TLS, the Cloudflare zone, Pages settings — is **not** managed
+here. It lives in `NotAVibe-dev/infra`; see `CLAUDE.md`.

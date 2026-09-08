@@ -1,26 +1,13 @@
 name: Deploy to GitHub Pages
 
-# One repo, one domain (notavibe.dev). Three sites live here:
-#   frontend : the static VoltAgent/HashiCorp prototype in ./frontend -> served as-is
-#   landing  : the full Astro site at the repo root      -> built to ./dist
-#   splash   : the static placeholder in ./splash          -> served as-is
+# One repo, one domain (notavibe.dev), one site: the static site in ./frontend,
+# served as-is with no build step. The Astro landing and the splash placeholder
+# that used to live here are gone, so there is nothing left to choose between.
 #
-# Auto-deploy: a push to main that touches the frontend (or this workflow)
-# ships it to notavibe.dev. workflow_dispatch stays for on-demand deploys and
-# for publishing landing/splash instead. The build job resolves a `push` event
-# to the frontend site.
+# A push to main that touches ./frontend (or this workflow) ships it.
+# workflow_dispatch is there for a re-deploy without a code change.
 on:
   workflow_dispatch:
-    inputs:
-      site:
-        description: "Which site to deploy? (defaults to frontend)"
-        required: true
-        type: choice
-        default: frontend
-        options:
-          - frontend
-          - landing
-          - splash
   push:
     branches: [main]
     paths:
@@ -42,78 +29,59 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Resolve which site to deploy
-        id: pick
-        run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            SITE=frontend           # auto-deploy target once the push trigger is enabled
-          else
-            SITE="${{ inputs.site }}"
-          fi
-          case "$SITE" in
-            frontend|landing|splash) ;;
-            *) echo "::error::Unexpected site '$SITE' (expected frontend, landing or splash)."; exit 1 ;;
-          esac
-          echo "site=$SITE" >> "$GITHUB_OUTPUT"
-          echo "Deploying **$SITE** to notavibe.dev." >> "$GITHUB_STEP_SUMMARY"
-
       - uses: actions/configure-pages@v6
 
-      # --- frontend: static prototype (no build) ---
-      # Stamp the commit SHA onto every local asset URL in index.html so a
-      # deploy always busts Cloudflare's 4h edge cache (assets are max-age=14400;
-      # index.html is served fresh). No manual version bumping, no CF API needed.
+      # Stamp the commit SHA onto every local asset URL in EVERY page so a deploy
+      # always busts Cloudflare's edge cache. Measured at the edge: .js/.css come
+      # back max-age=14400 (4h, cached at the edge too), while HTML is max-age=600
+      # and cf-cache-status: DYNAMIC. So a deploy ships new HTML that still points
+      # at asset URLs the edge answers from its 4h-old copy — new page, old code.
+      # A ?v=<sha> query string changes the cache key, so there is nothing to hit.
+      #
+      # Every .html under frontend/ is rewritten, not just the front page. This
+      # step used to hardcode frontend/index.html, from when that file WAS the
+      # whole app; prototype.html and privacy/ have since become their own pages
+      # loading the same shared scripts/ and design-system/ assets, and a page
+      # left unstamped keeps serving whatever the edge already had.
+      #
+      # The rewrite touches the uploaded artifact, never the repo, so no ?v= is
+      # ever committed and nothing needs bumping by hand (see #16, #24).
       - name: Cache-bust frontend asset URLs
-        if: steps.pick.outputs.site == 'frontend'
         env:
           SHA: ${{ github.sha }}
         run: |
           node -e '
             const fs = require("fs");
-            const f = "frontend/index.html";
+            const path = require("path");
             const v = (process.env.SHA || "dev").slice(0, 12);
-            let n = 0;
-            const out = fs.readFileSync(f, "utf8").replace(
-              /(src|href)="([^"]+?\.(?:js|css))(\?[^"]*)?"/g,
-              (m, attr, path) => {
-                if (/^(https?:)?\/\//.test(path)) return m; // leave external URLs alone
-                n++;
-                return attr + "=\"" + path + "?v=" + v + "\"";
-              }
-            );
-            fs.writeFileSync(f, out);
-            console.log("cache-busted " + n + " local asset refs with ?v=" + v);
+            const files = fs.readdirSync("frontend", { recursive: true })
+              .map((p) => path.join("frontend", p))
+              .filter((p) => p.endsWith(".html"));
+            if (!files.length) {
+              console.error("no HTML found under frontend/ — refusing to deploy an empty site");
+              process.exit(1);
+            }
+            let total = 0;
+            for (const f of files) {
+              let n = 0;
+              const out = fs.readFileSync(f, "utf8").replace(
+                /(src|href)="([^"]+?\.(?:js|css))(\?[^"]*)?"/g,
+                (m, attr, p) => {
+                  if (/^(https?:)?\/\//.test(p)) return m; // leave external URLs alone
+                  n++;
+                  return attr + "=\"" + p + "?v=" + v + "\"";
+                }
+              );
+              fs.writeFileSync(f, out);
+              total += n;
+              console.log(f + ": " + n + " ref(s)");
+            }
+            console.log("cache-busted " + total + " local asset refs across " + files.length + " page(s) with ?v=" + v);
           '
       - name: Upload frontend artifact
-        if: steps.pick.outputs.site == 'frontend'
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./frontend
-
-      # --- landing: build the Astro site (repo root) -> ./dist ---
-      - name: Set up Node
-        if: steps.pick.outputs.site == 'landing'
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - name: Build landing
-        if: steps.pick.outputs.site == 'landing'
-        run: |
-          npm ci
-          npm run build
-      - name: Upload landing artifact
-        if: steps.pick.outputs.site == 'landing'
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: ./dist
-
-      # --- splash: static placeholder (no build) ---
-      - name: Upload splash artifact
-        if: steps.pick.outputs.site == 'splash'
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: ./splash
 
   deploy:
     needs: build
