@@ -302,11 +302,12 @@ tbody td:first-child {
     <p class="updated">Last updated: 8 September 2026</p>
 
     <p class="intro">
-      This policy explains what personal data notavibe handles when you visit this website,
-      why we handle it, who else touches it, how long it is kept, and the rights you have over
-      it. notavibe has not launched: this site is a description of what we are building, plus a
-      form to be told when it is ready. When the product itself starts processing personal
-      data, this policy will be updated before that happens, not after.
+      This policy explains what personal data notavibe handles when you visit
+      <strong>notavibe.dev</strong>, why we handle it, who else touches it, how long it is kept,
+      and the rights you have over it. notavibe has not launched: this site is a description of
+      what we are building, plus a form to be told when it is ready. When the product itself
+      starts processing personal data, this policy will be updated before that happens, not
+      after.
     </p>
 
     <h2 id="who-we-are"><span class="num">1.</span>Who we are</h2>
@@ -325,7 +326,7 @@ tbody td:first-child {
 
     <h2 id="what-we-collect"><span class="num">2.</span>What we collect, and why</h2>
     <p>
-      Three things, and only while you are on this site. Each is listed with the lawful basis we
+      Four things, and only while you are on this site. Each is listed with the lawful basis we
       rely on for it.
     </p>
 
@@ -340,33 +341,40 @@ tbody td:first-child {
 
     <h3>2.2 Server and CDN request logs</h3>
     <p>
-      We run <strong>no analytics script</strong> on this site: no beacon, no tracking pixel, and
-      nothing that follows you between sites or builds a profile of you. What does exist is the
-      request metadata our content delivery network needs in order to serve and protect the site
-      — your IP address, the time of the request, the URL requested, your user agent and the
-      referring page. We see this only as aggregate traffic figures.
+      Serving a page necessarily involves receiving a request for it. Our content delivery
+      network records the metadata it needs in order to serve and protect the site — your IP
+      address, the time of the request, the URL requested, your user agent and the referring
+      page. We see this only as aggregate traffic figures.
     </p>
     <p class="basis">
       <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) — secure, reliable delivery of
       the site.
     </p>
 
-    <h3>2.3 Files loaded from other hosts</h3>
+    <h3>2.3 Website analytics</h3>
     <p>
-      Some files that make up our pages are served by third parties rather than by us, which
-      means your browser requests them directly and those hosts receive your IP address and user
-      agent as a consequence:
+      We use <strong>Cloudflare Web Analytics</strong> to see how many people visit and which
+      pages they read. It is <strong>cookieless</strong>: it stores nothing on your device, it
+      does not follow you between websites, and it does not build a profile of you. It reports
+      page views, referring sites, and coarse technical details such as browser, operating
+      system and country, together with page performance measurements.
     </p>
-    <ul>
-      <li><strong>Google Fonts</strong> serves the typefaces used across the site.</li>
-      <li>
-        <strong>unpkg</strong> and <strong>jsDelivr</strong> serve the JavaScript libraries and
-        icons used by our private product preview.
-      </li>
-    </ul>
     <p>
-      We set no cookie for any of this and we send those hosts no information about you beyond
-      what any request for a file necessarily reveals.
+      It works through a small script that Cloudflare adds to our pages at its edge, served from
+      <code>static.cloudflareinsights.com</code>. There is no advertising network involved and no
+      data broker; the measurements are visible only to us.
+    </p>
+    <p class="basis">
+      <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) — understanding whether the
+      site is read and whether it performs.
+    </p>
+
+    <h3>2.4 Web fonts</h3>
+    <p>
+      The typefaces on these pages are served by <strong>Google Fonts</strong> rather than by us,
+      which means your browser requests those font files from Google directly and Google receives
+      your IP address and user agent as a consequence. We set no cookie for it and we send Google
+      no information about you beyond what any request for a file necessarily reveals.
     </p>
     <p class="basis">
       <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) — presenting a consistent,
@@ -389,9 +397,9 @@ tbody td:first-child {
 
     <h2 id="cookies"><span class="num">4.</span>Cookies and local storage</h2>
     <p>
-      <strong>We set no cookies of our own</strong> — none for advertising, none for analytics,
-      and none for cross-site tracking. There is no cookie banner on this site because there is
-      nothing to consent to.
+      <strong>We set no cookies of our own</strong> — none for advertising and none for
+      cross-site tracking. Our analytics is cookieless and stores nothing on your device, which
+      is why there is no cookie banner on this site: there is nothing to consent to.
     </p>
     <p>
       If you use the light/dark theme switch, your choice is saved in your own browser's local
@@ -417,7 +425,7 @@ tbody td:first-child {
         <tbody>
           <tr>
             <td>Cloudflare</td>
-            <td>DNS, content delivery and security. This site is served through Cloudflare's edge network, which transiently processes connection data — including your IP address — to deliver and protect it.</td>
+            <td>DNS, content delivery, security, and the cookieless website analytics described in section 2.3. This site is served through Cloudflare's edge network, which transiently processes connection data — including your IP address — to deliver and protect it.</td>
           </tr>
           <tr>
             <td>GitHub</td>
@@ -426,10 +434,6 @@ tbody td:first-child {
           <tr>
             <td>Google</td>
             <td>Workspace, for the inbox that receives anything you send us. Google Fonts separately serves the typefaces on these pages.</td>
-          </tr>
-          <tr>
-            <td>unpkg, jsDelivr</td>
-            <td>Public content delivery networks that serve the JavaScript libraries and icons used by our private product preview.</td>
           </tr>
         </tbody>
       </table>
@@ -461,6 +465,10 @@ tbody td:first-child {
           <tr>
             <td>Request logs</td>
             <td>Retained by our content delivery network under its own retention schedule. We keep no separate copy and build no history of your visits.</td>
+          </tr>
+          <tr>
+            <td>Analytics</td>
+            <td>Retained by Cloudflare under its own retention schedule, as aggregate counts rather than records about individuals. We keep no separate copy.</td>
           </tr>
           <tr>
             <td>Theme preference</td>
