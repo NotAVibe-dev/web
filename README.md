@@ -68,6 +68,12 @@ needs a network connection to render.
 `main` that touches it. There is no build. `workflow_dispatch` re-deploys without a
 code change.
 
+`sitemap.xml` is **generated at deploy** by `.github/scripts/generate-sitemap.js`
+and is not committed — that is why you won't find it in the tree. It lists every
+page that doesn't declare `noindex`, uses each page's own `<link rel="canonical">`
+as its `<loc>`, and takes `lastmod` from that file's last commit. Run it the way CI
+does to see what would ship: `node .github/scripts/generate-sitemap.js`.
+
 The zone is proxied through Cloudflare, whose edge caches assets for 4h, so the
 workflow stamps `?v=<sha>` onto every local `.js`/`.css` reference in every page at
 deploy time. That is why a deploy is never masked by the edge cache, and why no asset
