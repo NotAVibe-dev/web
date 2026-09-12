@@ -1007,7 +1007,7 @@
     },
       h(Container, { style: { padding: "16px 32px", display: "flex", alignItems: "center", gap: "16px 24px", flexWrap: "wrap" } },
         h("p", { style: Object.assign({}, SMALL, { flex: "1 1 320px", minWidth: 0 }) },
-          "We measure campaign traffic server-side. No client pixels, ours included. Declining changes nothing about what you can read here."),
+          "Our analytics are first-party and cookieless \u2014 no tracking pixels, no fingerprinting, no profile of you. Declining changes nothing about what you can read here."),
         h("div", { style: { display: "flex", gap: "8px", flexWrap: "wrap" } },
           /* identical variant, identical size, one tap each */
           h(Button, { variant: "outline", size: "sm", onClick: function () { setDone(true); } }, "Accept"),
