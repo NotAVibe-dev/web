@@ -27,7 +27,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Full history: the sitemap's lastmod comes from each page's own last
+      # commit, and a shallow checkout would report the deploy commit for all
+      # of them — a fabricated date dressed up as a real one.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/configure-pages@v6
 
@@ -78,6 +83,12 @@ jobs:
             }
             console.log("cache-busted " + total + " local asset refs across " + files.length + " page(s) with ?v=" + v);
           '
+      # The sitemap is generated, not committed — see the script's header for why,
+      # and for the noindex / canonical / lastmod rules it follows. It lives in a
+      # file rather than inline because its regexes do not survive shell quoting.
+      - name: Generate sitemap.xml
+        run: node .github/scripts/generate-sitemap.js
+
       - name: Upload frontend artifact
         uses: actions/upload-pages-artifact@v5
         with:

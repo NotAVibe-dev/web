@@ -6,5 +6,8 @@
 .idea/
 .vscode/
 
+# generated at deploy time by .github/scripts/generate-sitemap.js
+frontend/sitemap.xml
+
 # browser-tool scratch output
 .playwright-mcp/
