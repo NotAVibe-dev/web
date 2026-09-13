@@ -90,15 +90,12 @@
     30%,50%,70% { transform: translateX(-7px) } 40%,60% { transform: translateX(7px) }
   }
 
-  /* notavibe lockup — the ringed bolt glyph + wordmark, in emerald. */
-  .nv-gate-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-  .nv-gate-ring {
-    width: 34px; height: 34px; border-radius: 9999px;
-    border: 2px solid var(--volt-emerald, #00ca8e); background: rgba(0,202,142,0.12);
-    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .nv-gate-ring svg { width: 19px; height: 19px; display: block; }
-  .nv-gate-word { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--volt-emerald, #00ca8e); }
+  /* notavibe lockup — the ¬ mark plus the two-tone wordmark. */
+  .nv-gate-logo { display: inline-flex; align-items: center; gap: 11px; margin-bottom: 28px; }
+  .nv-gate-mark { width: 30px; height: 30px; flex-shrink: 0; display: block; color: var(--volt-emerald, #00ca8e); }
+  .nv-gate-word { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+  .nv-gate-word .a { color: #fff; }
+  .nv-gate-word .b { color: rgba(255,255,255,0.55); }
 
   .nv-gate-hint { margin: 0 0 22px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.52); }
 
@@ -139,12 +136,11 @@
   <canvas id="nv-gate-dots" aria-hidden="true"></canvas>
   <div class="nv-gate-card">
     <span class="nv-gate-logo">
-      <span class="nv-gate-ring">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="var(--volt-emerald, #00ca8e)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
-        </svg>
-      </span>
-      <span class="nv-gate-word">notavibe</span>
+      <svg class="nv-gate-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.5 9.5 H 18.5 V 16" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="nv-gate-word"><span class="a">nota</span><span class="b">vibe</span></span>
     </span>
     <p class="nv-gate-hint">Private preview.<br>Enter the password to continue.</p>
     <form id="nv-gate-form" autocomplete="off">

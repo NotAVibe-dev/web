@@ -110,17 +110,31 @@
     return h(V.CodeMockup, { filename: props.filename, code: props.code, language: props.language, style: props.style });
   }
 
-  /* The notavibe lockup, built on the brand's ringed-glyph pattern — not the
-     VoltAgent wordmark, which belongs to VoltAgent. */
+  /* The notavibe lockup: the ¬ mark — a logical NOT, "not a vibe" said in one
+     glyph — plus the wordmark. Not the VoltAgent wordmark, which belongs to
+     VoltAgent.
+
+     The mark is inline SVG rather than V.Icon. It is notavibe's own glyph, not a
+     Heroicon, so it should not be fetched from a CDN like one; that also drops
+     one request from every screen that renders a lockup.
+
+     "nota" takes the ink, "vibe" the muted step. The contrast is the point — it
+     makes the negation read as a sentence rather than as decoration — and both
+     are tokens, so the lockup follows the theme rather than needing a second
+     hand-maintained variant. */
   function Wordmark(props) {
     var size = props.size || 24;
-    return h("span", { style: { display: "inline-flex", alignItems: "center", gap: "8px", fontFamily: "var(--font-sans)" } },
-      h("span", { style: { width: (size * 1.17) + "px", height: (size * 1.17) + "px", borderRadius: "9999px", border: "2px solid var(--volt-emerald-deep)", background: "var(--volt-emerald-08)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
-        h(V.Icon, { name: "bolt", variant: "solid", size: Math.round(size * 0.66), color: "var(--volt-emerald-deep)" })),
-      /* symbolOnly drops the text lockup and keeps just the ringed glyph — the
-         header uses it to reclaim room in the crowded pill; the footer keeps the
-         full wordmark. */
-      props.symbolOnly ? null : h("span", { style: { fontSize: size + "px", fontWeight: 700, letterSpacing: "-0.02em", color: props.color || "var(--volt-emerald-deep)" } }, "notavibe"));
+    var mark = Math.round(size * 1.35);
+    return h("span", { style: { display: "inline-flex", alignItems: "center", gap: Math.round(size * 0.45) + "px", fontFamily: "var(--font-sans)" } },
+      h("svg", { width: mark, height: mark, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true",
+        style: { display: "block", flexShrink: 0, color: "var(--volt-emerald)" } },
+        h("path", { d: "M4.5 9.5 H 18.5 V 16", stroke: "currentColor", strokeWidth: 2.5,
+          strokeLinecap: "round", strokeLinejoin: "round" })),
+      /* symbolOnly drops the text and keeps just the mark — the header uses it to
+         reclaim room in the crowded pill; the footer keeps the full wordmark. */
+      props.symbolOnly ? null : h("span", { style: { fontSize: size + "px", fontWeight: 600, letterSpacing: "-0.02em" } },
+        h("span", { style: { color: props.color || "var(--volt-white)" } }, "nota"),
+        h("span", { style: { color: "var(--volt-text-500)" } }, "vibe")));
   }
 
   function FooterWordmark(props) {
