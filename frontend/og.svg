@@ -1,13 +1,17 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!--
     Share card (OG / Twitter), 1200x630. The source of truth; og.png is a raster of
-    this file, because most social scrapers will not render an SVG preview. Re-render
-    after any edit here (headless Chrome at 1200x630 — Inter is not a system font, so
-    ImageMagick alone renders the type wrong).
+    this file, because most social scrapers will not render an SVG preview.
+    Re-render after any edit here (headless Chrome at 1200x630 — Inter is not a
+    system font, so ImageMagick alone sets the type wrong).
 
-    Palette and composition track the dark hero in frontend/index.html: black ground,
-    the indigo wash from the top-left, the emerald wash from the top-right, the ring +
-    bolt lockup, and the hero headline with "home?" in emerald.
+    Palette and composition track the dark hero in frontend/index.html: black
+    ground, the indigo wash from the top-left, the emerald wash from the
+    top-right, the ¬ mark and the two-tone wordmark, and the hero headline with
+    "not popularity." in emerald.
+
+    The mark is the site's emerald (#00ca8e) rather than the brand file's lighter
+    #31E29B, so the card matches the page it links to.
   -->
   <defs>
     <radialGradient id="indigo-wash" cx="0.12" cy="-0.2" r="1.05">
@@ -24,13 +28,16 @@
   <rect width="1200" height="630" fill="url(#indigo-wash)"/>
   <rect width="1200" height="630" fill="url(#emerald-wash)"/>
 
-  <!-- lockup: the ring + bolt mark, then the wordmark -->
+  <!-- lockup: the ¬ mark, then the two-tone wordmark -->
   <g transform="translate(80 78)">
-    <circle cx="21" cy="21" r="20" fill="rgba(0,202,142,0.12)" stroke="#00ca8e" stroke-width="2.5"/>
-    <g transform="translate(9.4 9.4) scale(0.97)">
-      <path fill="#00ca8e" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
+    <g transform="scale(1.75)">
+      <path d="M4.5 9.5 H 18.5 V 16" stroke="#00ca8e" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
     </g>
-    <text x="56" y="30" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="30" font-weight="700" letter-spacing="-0.6" fill="#00ca8e">notavibe</text>
+    <text x="52" y="30" font-family="Inter, system-ui, -apple-system, sans-serif"
+          font-size="30" font-weight="600" letter-spacing="-0.6">
+      <tspan fill="#ffffff">nota</tspan><tspan fill="#b2b6bd">vibe</tspan>
+    </text>
   </g>
 
   <!-- headline: the prototype's front-door tagline, over two lines -->
@@ -40,7 +47,7 @@
   </text>
 
   <!-- lead -->
-  <text x="80" y="462" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="26" font-weight="500" letter-spacing="-0.3" fill="#b2b6bd">Five sourced signals, transparent bands, no composite score.</text>
+  <text x="80" y="462" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="26" font-weight="500" letter-spacing="-0.3" fill="#b2b6bd">Five sourced signals, transparent ratings, no composite score.</text>
 
   <!-- emerald hairline, bottom edge -->
   <rect x="80" y="556" width="120" height="3" rx="1.5" fill="#00ca8e"/>

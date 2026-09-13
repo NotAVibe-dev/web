@@ -10,6 +10,9 @@
 <link rel="canonical" href="https://notavibe.dev/privacy/">
 <meta name="robots" content="index, follow">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!--
   Standalone, PUBLIC privacy policy. Deliberately loads no runtime and no app
   scripts, so the private-preview password gate (which lives in prototype.html)
@@ -94,16 +97,11 @@ code {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
 .logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
-.logo-ring {
-  width: 28px; height: 28px; border-radius: 9999px;
-  border: 2px solid var(--volt-emerald); background: rgba(0,202,142,0.12);
-  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.logo-ring svg { width: 16px; height: 16px; display: block; }
-.logo-word {
-  font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
-  color: var(--volt-emerald);
-}
+/* Same mark and two-tone wordmark as the front page, at bar scale. */
+.logo-mark { width: 24px; height: 24px; flex-shrink: 0; display: block; color: var(--volt-emerald); }
+.logo-word { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.logo-word .a { color: var(--volt-white); }
+.logo-word .b { color: var(--volt-text-500); }
 .bar-right { display: flex; align-items: center; gap: 8px; }
 .bar-link {
   font-size: 14px; font-weight: 500; color: var(--volt-text-500);
@@ -273,12 +271,11 @@ tbody td:first-child {
 <header class="bar">
   <div class="bar-inner">
     <a class="logo" href="/" aria-label="notavibe home">
-      <span class="logo-ring">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="var(--volt-emerald)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
-        </svg>
-      </span>
-      <span class="logo-word">notavibe</span>
+      <svg class="logo-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.5 9.5 H 18.5 V 16" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-word"><span class="a">nota</span><span class="b">vibe</span></span>
     </a>
     <div class="bar-right">
       <a class="bar-link" href="/">Back to notavibe</a>
