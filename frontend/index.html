@@ -9,6 +9,9 @@
 <meta name="theme-color" content="#000000">
 <link rel="canonical" href="https://notavibe.dev/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <!-- Share card. og.png is the raster that ships (most scrapers won't render SVG);
      og.svg beside it is the source it was rendered from. -->
@@ -122,18 +125,22 @@ a:hover { color: var(--volt-emerald); }
 
 /* ── Logo lockup ─────────────────────────────────────────────────────────── */
 .logo {
-  display: inline-flex; align-items: center; gap: 10px;
+  display: inline-flex; align-items: center; gap: 11px;
 }
-.logo-ring {
-  width: 34px; height: 34px; border-radius: 9999px;
-  border: 2px solid var(--volt-emerald); background: rgba(0,202,142,0.12);
-  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.logo-ring svg { width: 19px; height: 19px; display: block; }
-.logo-word {
-  font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+/* The mark is a logical NOT (¬) — "not a vibe" in one glyph. currentColor so the
+   single path serves both themes; the emerald is the site's, not the source
+   file's lighter green, so it matches the CTA it sits above. */
+.logo-mark {
+  width: 30px; height: 30px; flex-shrink: 0; display: block;
   color: var(--volt-emerald);
 }
+/* Two-tone wordmark: "nota" in ink, "vibe" muted. The contrast is the point —
+   it makes the mark's negation read as a sentence rather than decoration. */
+.logo-word {
+  font-size: 22px; font-weight: 600; letter-spacing: -0.02em;
+}
+.logo-word .a { color: var(--volt-white); }
+.logo-word .b { color: var(--volt-text-500); }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
@@ -364,12 +371,11 @@ a:hover { color: var(--volt-emerald); }
   <canvas class="hero-dots" id="hero-dots" aria-hidden="true"></canvas>
   <div class="hero-content">
     <span class="logo fade-up fade-up-1">
-      <span class="logo-ring">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="var(--volt-emerald)" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
-        </svg>
-      </span>
-      <span class="logo-word">notavibe</span>
+      <svg class="logo-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.5 9.5 H 18.5 V 16" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-word"><span class="a">nota</span><span class="b">vibe</span></span>
     </span>
 
     <h1 class="fade-up fade-up-2">Your dependencies look fine.<br><span class="accent">Are they?</span></h1>

@@ -45,12 +45,15 @@ frontend/
 ├─ styles/hashicorp-tokens.css   # loaded last; wins the dark base
 ├─ design-system/voltagent/   # VoltAgent design-system bundle (components + tokens)
 ├─ design-notes/              # hashicorp.DESIGN.md — design intent, in prose
-├─ favicon.svg · og.svg · og.png · robots.txt · CNAME
-└─ thumbnail.webp             # preview tile from the VoltAgent kit import
+└─ favicon.svg · favicon.ico · favicon-16/32.png · apple-touch-icon.png
+   og.svg · og.png · robots.txt · CNAME
 ```
 
-`og.png` is the share card that ships (most social scrapers won't render an SVG);
-`og.svg` beside it is the source. Re-render after editing it — headless Chrome at
+The icons and the share card are all the same mark — a logical NOT (¬), drawn in
+the site's own `--volt-emerald` rather than the brand file's lighter green, so the
+logo matches the buttons beside it. `favicon.svg` is the source the raster sizes
+were rendered from; `og.png` is the share card that ships (most social scrapers
+won't render an SVG) and `og.svg` beside it is its source. Re-render after editing it — headless Chrome at
 1200×630, since Inter is not a system font and ImageMagick alone sets the type wrong.
 
 ## Design systems

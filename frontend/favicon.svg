@@ -1,13 +1,19 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notavibe">
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notavibe">
   <title>notavibe</title>
   <!--
-    The header lockup's mark, scaled up: the emerald ring from .logo-ring with the
-    Heroicons bolt inside it (frontend/index.html). Transparent ground on purpose —
-    emerald #00ca8e carries enough contrast to read on both a light and a dark tab
-    bar, so one file serves both without a prefers-color-scheme branch.
+    The mark is a logical NOT (¬) — "not a vibe", said in one glyph.
+
+    Two deliberate departures from the source file in ~/Documents/work/notavibe/logo:
+      · the stroke is #00ca8e, the site's own emerald token, not the source's #31E29B.
+        The brief is to keep the site's colours and bring the logo to them, so the
+        mark matches the buttons and links it sits beside.
+      · a tile rather than a transparent ground, so the glyph has guaranteed
+        contrast whatever colour the browser paints behind a favicon.
+
+    Stroke is 4/32 rather than the 2.5/24 of the full-size mark: at 16px the
+    thinner weight disappears.
   -->
-  <circle cx="32" cy="32" r="30" fill="rgba(0,202,142,0.12)" stroke="#00ca8e" stroke-width="4"/>
-  <g transform="translate(14.12 14.12) scale(1.49)">
-    <path fill="#00ca8e" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"/>
-  </g>
+  <rect width="32" height="32" rx="7" fill="#0C0F0E"/>
+  <path d="M7 13 H 24 V 21" stroke="#00ca8e" stroke-width="4"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
