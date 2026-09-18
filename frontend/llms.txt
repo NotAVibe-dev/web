@@ -5,14 +5,10 @@
 > security posture, and adoption — each shown as a named band with its data
 > source and fetch date. No composite score. Exposed as an MCP server so coding
 > assistants can ground dependency recommendations in real data.
->
-> Status: pre-launch. This site describes what is being built and collects
-> early-access sign-ups. The MCP server is not published yet, so the install
-> commands on the site do not work today.
 
 ## Site
 
-- [Home](https://notavibe.dev/): what notavibe measures, the five signals, and how the MCP server will be installed
+- [Home](https://notavibe.dev/): what notavibe measures, the five signals, and how to install the MCP server
 - [Privacy policy](https://notavibe.dev/privacy/): what personal data the site handles, why, who processes it, and GDPR rights
 
 ## Sections on the home page
