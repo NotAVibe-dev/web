@@ -4,7 +4,7 @@
     The mark is a logical NOT (¬) — "not a vibe", said in one glyph.
 
     Two deliberate departures from the master mark:
-      · the stroke is #00ca8e — --volt-emerald, the site's own accent token — so the
+      · the stroke is #00ca8e — the `volt-emerald` accent token, the site's own — so the
         mark matches the buttons and links it sits beside. (The master kit has since
         been brought to the same value; it used to be a lighter #31E29B.)
       · a tile rather than a transparent ground, so the glyph has guaranteed
