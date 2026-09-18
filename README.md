@@ -75,7 +75,9 @@ code change.
 and is not committed — that is why you won't find it in the tree. It lists every
 page that doesn't declare `noindex`, uses each page's own `<link rel="canonical">`
 as its `<loc>`, and takes `lastmod` from that file's last commit. Run it the way CI
-does to see what would ship: `node .github/scripts/generate-sitemap.js`.
+does to see what would ship: `node .github/scripts/generate-sitemap.js`. It needs
+Node 18.17+ and refuses to run on anything older — on Node 14 the recursive
+directory walk is silently ignored and the sitemap would omit `privacy/`.
 
 The zone is proxied through Cloudflare, whose edge caches assets for 4h, so the
 workflow stamps `?v=<sha>` onto every local `.js`/`.css` reference in every page at
