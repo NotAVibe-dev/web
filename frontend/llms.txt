@@ -18,8 +18,13 @@
 ## Sections on the home page
 
 - [Five signals, fully sourced, no black box](https://notavibe.dev/#how-it-works): the five maintenance signals and why each is reported as a band with its source and fetch date rather than a score
-- [Install the MCP server](https://notavibe.dev/#install): the intended install path for Claude, Cursor, Windsurf, VS Code and other MCP clients — not yet publishable
+- [Install the MCP server](https://notavibe.dev/#install): install with `npx @notavibe/mcp`; works with Claude, Cursor, Windsurf, VS Code and any MCP-compatible client
 - [Built for the questions your tooling doesn't answer](https://notavibe.dev/#why): what notavibe is for, and what it deliberately is not
+
+## Reference
+
+- [npm package](https://www.npmjs.com/package/@notavibe/mcp): `@notavibe/mcp` on npm
+- MCP tools: `check_dependencies`, `search_projects`, `get_project`, `compare_projects`
 
 ## Notes for agents
 
