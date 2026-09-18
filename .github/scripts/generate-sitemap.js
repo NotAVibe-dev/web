@@ -27,6 +27,21 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
+// fs.readdirSync(..., { recursive: true }) arrived in Node 18.17. On older
+// versions the option is silently IGNORED — the walk returns the top level only,
+// so privacy/index.html vanishes and the script cheerfully writes a sitemap
+// missing half the site. Fail loudly instead: a wrong sitemap that looks right
+// is worse than no sitemap. (This machine defaults to Node 14; CI is on 20+.)
+const [major, minor] = process.versions.node.split(".").map(Number);
+if (major < 18 || (major === 18 && minor < 17)) {
+  console.error(
+    `Node ${process.versions.node} cannot walk directories recursively — ` +
+      "this needs 18.17 or newer, or it would silently omit nested pages. " +
+      "Try: fnm exec --using=22 node .github/scripts/generate-sitemap.js"
+  );
+  process.exit(1);
+}
+
 const ORIGIN = "https://notavibe.dev";
 const ROOT = "frontend";
 

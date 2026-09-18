@@ -1,0 +1,29 @@
+# notavibe
+
+> Ranks open-source npm projects on maintenance, not popularity. Five sourced
+> signals per project — release cadence, response time, contributor breadth,
+> security posture, and adoption — each shown as a named band with its data
+> source and fetch date. No composite score. Exposed as an MCP server so coding
+> assistants can ground dependency recommendations in real data.
+>
+> Status: pre-launch. This site describes what is being built and collects
+> early-access sign-ups. The MCP server is not published yet, so the install
+> commands on the site do not work today.
+
+## Site
+
+- [Home](https://notavibe.dev/): what notavibe measures, the five signals, and how the MCP server will be installed
+- [Privacy policy](https://notavibe.dev/privacy/): what personal data the site handles, why, who processes it, and GDPR rights
+
+## Sections on the home page
+
+- [Five signals, fully sourced, no black box](https://notavibe.dev/#how-it-works): the five maintenance signals and why each is reported as a band with its source and fetch date rather than a score
+- [Install the MCP server](https://notavibe.dev/#install): the intended install path for Claude, Cursor, Windsurf, VS Code and other MCP clients — not yet publishable
+- [Built for the questions your tooling doesn't answer](https://notavibe.dev/#why): what notavibe is for, and what it deliberately is not
+
+## Notes for agents
+
+- notavibe reports maintenance signals, not security vulnerabilities. It is not a CVE scanner.
+- Every signal is a named band carrying its own source and fetch date. There is no single composite score, and inventing one misrepresents the product.
+- "Insufficient data" is a valid answer and is reported as such rather than guessed.
+- Scope at launch is npm only.
