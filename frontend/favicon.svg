@@ -3,10 +3,10 @@
   <!--
     The mark is a logical NOT (¬) — "not a vibe", said in one glyph.
 
-    Two deliberate departures from the source file in ~/Documents/work/notavibe/logo:
-      · the stroke is #00ca8e, the site's own emerald token, not the source's #31E29B.
-        The brief is to keep the site's colours and bring the logo to them, so the
-        mark matches the buttons and links it sits beside.
+    Two deliberate departures from the master mark:
+      · the stroke is #00ca8e — --volt-emerald, the site's own accent token — so the
+        mark matches the buttons and links it sits beside. (The master kit has since
+        been brought to the same value; it used to be a lighter #31E29B.)
       · a tile rather than a transparent ground, so the glyph has guaranteed
         contrast whatever colour the browser paints behind a favicon.
 
