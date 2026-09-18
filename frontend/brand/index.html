@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>notavibe — brand</title>
+<meta name="description" content="The notavibe mark, wordmark, colour and type — the assets and the rules for using them.">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="https://notavibe.dev/brand/">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!--
+  The brand page. Two audiences: a person who needs the logo and the rules, and
+  another repository that needs a stable URL to derive assets from.
+
+  It is also why the kit is in version control at all — it used to live only on a
+  founder's disk, which is how the mark and the site ran on two different greens
+  for six days without anyone noticing.
+
+  noindex while pre-launch: this is a reference for people who already know where
+  it is, not a page to be found from search.
+
+  Built on the privacy page's chassis — the same bar, wrap, type scale, tables,
+  table of contents and footer — so the two read as one site.
+-->
+<script>
+(function () {
+  var t = "dark";
+  try { var s = localStorage.getItem("nv-theme"); if (s === "light" || s === "dark") t = s; } catch (e) {}
+  document.documentElement.setAttribute("data-theme", t);
+  document.documentElement.style.colorScheme = t;
+})();
+</script>
+<link rel="stylesheet" href="/design-system/voltagent/tokens/fonts.css">
+<link rel="stylesheet" href="/design-system/voltagent/tokens/colors.css">
+<link rel="stylesheet" href="/styles/hashicorp-tokens.css">
+<style>
+
+/* ── Light theme overrides (identical to the front page) ─────────────────── */
+:root[data-theme="light"] {
+  --volt-void:#ffffff;
+  --volt-canvas:#f5f6f7;
+  --volt-surface:#eaecef;
+  --volt-panel:#eceef1;
+  --volt-white:#0b0d10;
+  --volt-text-100:#141719;
+  --volt-text-200:#22262b;
+  --volt-text-300:#3a3f46;
+  --volt-text-400:#565c64;
+  --volt-text-500:#5e646c;
+  --volt-text-600:#787f88;
+  --volt-border:rgba(11,13,16,0.12);
+  --volt-border-faint:rgba(11,13,16,0.08);
+  --volt-border-hover:rgba(11,13,16,0.22);
+  --volt-emerald:#00ca8e;
+  --volt-emerald-soft:#047857;
+  --volt-emerald-deep:#047857;
+  --volt-emerald-08:rgba(0,202,142,0.10);
+  --volt-emerald-10:rgba(0,202,142,0.14);
+  --volt-emerald-20:rgba(0,202,142,0.22);
+  --volt-on-emerald:#04120d;
+  --volt-indigo:#c9d4ff;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; padding: 0; background: var(--volt-void); }
+body {
+  font-family: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
+  color: var(--volt-text-500);
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px; line-height: 1.75;
+}
+a { color: var(--volt-emerald-deep); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--volt-emerald); }
+strong { font-weight: 600; color: var(--volt-text-200); }
+code {
+  font-family: var(--font-mono, monospace); font-size: 0.9em;
+  color: var(--volt-text-300);
+}
+:focus-visible { outline: 2px solid var(--volt-emerald); outline-offset: 3px; border-radius: 3px; }
+
+/* ── Masthead bar ────────────────────────────────────────────────────────── */
+.bar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--volt-void) 88%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--volt-border);
+}
+.bar-inner {
+  max-width: 1120px; margin: 0 auto; padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
+/* Same mark and two-tone wordmark as the front page, at bar scale. */
+.logo-mark { width: 24px; height: 24px; flex-shrink: 0; display: block; color: var(--volt-emerald); }
+.logo-word { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.logo-word .a { color: var(--volt-white); }
+.logo-word .b { color: var(--volt-text-500); }
+.bar-right { display: flex; align-items: center; gap: 8px; }
+.bar-link {
+  font-size: 14px; font-weight: 500; color: var(--volt-text-500);
+  text-decoration: none; padding: 6px 10px; border-radius: 6px;
+}
+.bar-link:hover { color: var(--volt-white); }
+.theme-toggle {
+  width: 32px; height: 32px; border-radius: 9999px;
+  border: 1px solid var(--volt-border); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--volt-text-400); flex-shrink: 0;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.theme-toggle:hover { border-color: var(--volt-border-hover); color: var(--volt-white); }
+
+/* ── Page frame ──────────────────────────────────────────────────────────── */
+.wrap {
+  max-width: 1120px; margin: 0 auto; padding: 56px 32px 96px;
+  display: grid; grid-template-columns: 1fr; gap: 48px;
+}
+@media (min-width: 1024px) {
+  .wrap { grid-template-columns: minmax(0, 1fr) 232px; gap: 64px; align-items: start; }
+}
+
+/* ── Document head ───────────────────────────────────────────────────────── */
+h1 {
+  margin: 0; font-weight: 700;
+  font-size: clamp(30px, 3.4vw, 42px);
+  line-height: 1.16; letter-spacing: -0.024em;
+  color: var(--volt-white);
+}
+
+/* ── Article ─────────────────────────────────────────────────────────────── */
+article { max-width: 72ch; }
+article p { margin: 0 0 18px; }
+article p:last-child { margin-bottom: 0; }
+
+h2 {
+  margin: 52px 0 16px; font-weight: 700;
+  font-size: 22px; line-height: 1.3; letter-spacing: -0.012em;
+  color: var(--volt-white);
+  scroll-margin-top: 88px;
+}
+h2 .num {
+  font-family: var(--font-mono, monospace);
+  font-size: 15px; font-weight: 500; color: var(--volt-text-600);
+  margin-right: 10px;
+}
+h3 {
+  margin: 32px 0 12px; font-weight: 600;
+  font-size: 17px; line-height: 1.4;
+  color: var(--volt-text-200);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.table-wrap {
+  margin: 0 0 18px; overflow-x: auto;
+  border: 1px solid var(--volt-border); border-radius: 8px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+thead th {
+  text-align: left; padding: 11px 18px;
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--volt-text-400);
+  background: var(--volt-canvas);
+  border-bottom: 1px solid var(--volt-border);
+  white-space: nowrap;
+}
+tbody td { padding: 14px 18px; vertical-align: top; line-height: 1.6; }
+tbody tr + tr td { border-top: 1px solid var(--volt-border); }
+tbody td:first-child {
+  font-weight: 600; color: var(--volt-text-200); white-space: nowrap;
+}
+
+/* ── Table of contents ───────────────────────────────────────────────────── */
+.toc { display: none; }
+@media (min-width: 1024px) {
+  .toc {
+    display: block; position: sticky; top: 96px;
+    font-size: 14px; line-height: 1.5;
+  }
+  .toc-label {
+    margin: 0 0 12px; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--volt-text-400);
+  }
+  .toc ol { margin: 0; padding: 0; list-style: none; }
+  .toc li { margin: 0; }
+  .toc a {
+    display: block; padding: 5px 0 5px 14px;
+    border-left: 2px solid var(--volt-border);
+    color: var(--volt-text-500); text-decoration: none;
+    transition: color 150ms ease, border-color 150ms ease;
+  }
+  .toc a:hover { color: var(--volt-text-200); border-left-color: var(--volt-border-hover); }
+  .toc a[aria-current="true"] {
+    color: var(--volt-emerald); border-left-color: var(--volt-emerald);
+  }
+}
+
+/* ── Contact block ───────────────────────────────────────────────────────── */
+.contact {
+  margin: 24px 0 0; padding: 20px 22px;
+  background: var(--volt-canvas);
+  border: 1px solid var(--volt-border); border-radius: 8px;
+  font-size: 15px; line-height: 1.7;
+}
+.contact p { margin: 0; }
+.contact p + p { margin-top: 6px; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 32px 0;
+  border-top: 1px solid var(--volt-border);
+  text-align: center;
+}
+.footer p { margin: 0; font-size: 13px; color: var(--volt-text-600); }
+.footer a { color: var(--volt-text-500); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .bar-inner { padding: 12px 20px; }
+  .wrap { padding: 40px 20px 72px; }
+  h2 { margin-top: 44px; font-size: 20px; }
+  .bar-link { display: none; }
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────── */
+@media print {
+  .bar, .toc, .footer { display: none; }
+  html, body { background: #fff; color: #000; }
+  .wrap { display: block; max-width: none; padding: 0; }
+  article { max-width: none; }
+  h1, h2, h3, strong, tbody td:first-child { color: #000; }
+  a { color: #000; }
+  .table-wrap, .contact { border-color: #999; }
+  thead th { background: #f2f2f2; color: #000; }
+}
+
+/* ── Brand-page additions ────────────────────────────────────────────────── */
+.lede { margin: 26px 0 0; font-size: 17px; line-height: 1.72; color: var(--volt-text-400);
+        padding-bottom: 32px; border-bottom: 1px solid var(--volt-border); }
+article p { margin: 0 0 18px; }
+article p:last-child { margin-bottom: 0; }
+ul { margin: 0 0 18px; padding-left: 22px; }
+li { margin-bottom: 8px; }
+li::marker { color: var(--volt-text-600); }
+.do li::marker { color: var(--volt-emerald); }
+
+.grid { display: grid; gap: 16px; margin: 0 0 18px;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.stage { background: var(--volt-canvas); border: 1px solid var(--volt-border); border-radius: 8px;
+         display: flex; align-items: center; justify-content: center; padding: 26px; min-height: 108px; }
+.stage.light { background: #ffffff; }
+.stage.dark  { background: #000000; }
+.stage.accent { background: var(--volt-emerald); }
+.stage svg, .stage img { display: block; max-width: 100%; }
+.cap { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--volt-text-500); }
+.cap b { display: block; color: var(--volt-text-200); font-weight: 600; margin-bottom: 2px; }
+
+.sw { border: 1px solid var(--volt-border); border-radius: 8px; overflow: hidden; }
+.sw .chip { height: 72px; }
+.sw .meta { padding: 11px 14px; border-top: 1px solid var(--volt-border); }
+.sw .meta b { display: block; font-size: 14px; color: var(--volt-text-200); font-weight: 600; }
+.sw .meta span { display: block; font-size: 12.5px; color: var(--volt-text-600); margin-top: 3px; }
+
+.dl { display: inline-flex; align-items: center; font-family: var(--font-mono, monospace);
+      font-size: 12px; color: var(--volt-text-400); border: 1px solid var(--volt-border);
+      border-radius: 6px; padding: 5px 10px; text-decoration: none; }
+.dl:hover { border-color: var(--volt-border-hover); color: var(--volt-white); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+.panel { border: 1px solid var(--volt-border); border-radius: 8px; padding: 20px 22px;
+         background: var(--volt-canvas); margin: 0 0 18px; }
+.panel h3 { margin-top: 0; }
+.panel ul { margin-bottom: 0; }
+
+pre { margin: 0 0 18px; background: var(--volt-canvas); border: 1px solid var(--volt-border);
+      border-radius: 8px; padding: 15px 18px; overflow-x: auto;
+      font-family: var(--font-mono, monospace); font-size: 13px; line-height: 1.7; color: var(--volt-text-300); }
+.note { margin: 12px 0 18px; padding-left: 14px; border-left: 2px solid var(--volt-border-hover);
+        font-size: 14px; line-height: 1.6; color: var(--volt-text-600); }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-inner">
+    <a class="logo" href="/" aria-label="notavibe home">
+      <svg class="logo-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.5 9.5 H 18.5 V 16" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-word"><span class="a">nota</span><span class="b">vibe</span></span>
+    </a>
+    <div class="bar-right">
+      <a class="bar-link" href="/">Back to notavibe</a>
+      <button class="theme-toggle" id="theme-btn" type="button" aria-label="Toggle theme">
+        <svg id="icon-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path>
+        </svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.5 13.4A8.2 8.2 0 1 1 10.6 3.5a6.4 6.4 0 0 0 9.9 9.9z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <article>
+    <h1>Brand</h1>
+    <p class="lede">
+      The mark is a logical NOT — <strong>¬</strong> — "not a vibe" said in one glyph. This page is
+      the canonical copy of the mark, the wordmark, the colour and the type, plus the rules for
+      using them. If you need the logo, take it from here rather than from a screenshot, a deck or
+      another repository.
+    </p>
+
+    <h2 id="mark"><span class="num">1.</span>The mark</h2>
+    <p>
+      A single stroke that turns a corner. It carries the product's whole argument — that a package
+      looking popular is not the same as a package being alive — without a word of copy. Drawn on a
+      24-unit grid, stroke 2.5, round caps and joins.
+    </p>
+    <div class="grid">
+      <div>
+        <div class="stage dark"><svg width="104" height="104" viewBox="0 0 24 24" fill="none"><path d="M4.5 9.5 H 18.5 V 16" stroke="#00ca8e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="cap"><b>On dark</b>The default. Accent green on the near-black canvas.</p>
+      </div>
+      <div>
+        <div class="stage light"><svg width="104" height="104" viewBox="0 0 24 24" fill="none"><path d="M4.5 9.5 H 18.5 V 16" stroke="#00ca8e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="cap"><b>On light</b>The same green, unchanged. It holds at this weight.</p>
+      </div>
+      <div>
+        <div class="stage accent"><svg width="104" height="104" viewBox="0 0 24 24" fill="none" style="color:#04120d"><path d="M4.5 9.5 H 18.5 V 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="cap"><b>On accent</b>Use the mono cut, which inherits <code>currentColor</code>.</p>
+      </div>
+    </div>
+
+    <h2 id="lockup"><span class="num">2.</span>The lockup</h2>
+    <p>
+      Mark, then wordmark. <strong>"nota" takes the ink, "vibe" the muted step</strong> — the green
+      negation plus a dimmed "vibe" is what makes the lockup read as a sentence rather than as
+      decoration. Inter SemiBold, tracking &minus;0.4.
+    </p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <div>
+        <div class="stage dark"><img src="/brand/logo-lockup.svg" alt="notavibe lockup on a dark surface" width="215" height="40"></div>
+        <p class="cap"><b>On dark</b><code>logo-lockup.svg</code> — ink <code>#ffffff</code>, muted <code>#b2b6bd</code>.</p>
+      </div>
+      <div>
+        <div class="stage light"><img src="/brand/logo-lockup-light.svg" alt="notavibe lockup on a light surface" width="215" height="40"></div>
+        <p class="cap"><b>On light</b><code>logo-lockup-light.svg</code> — ink <code>#0b0d10</code>, muted <code>#5e646c</code>.</p>
+      </div>
+    </div>
+    <p class="note">
+      Two files, one per surface, with the inks baked in. A single file inheriting
+      <code>currentColor</code> looks tidier and does not work: an SVG loaded through an
+      <code>&lt;img&gt;</code> tag is an isolated document and cannot see the host page's colour, so it
+      renders black on black wherever it is used as an image. Both variants use the site's own ink
+      tokens, so the lockup cannot drift from the chrome beside it.
+    </p>
+
+    <h2 id="colour"><span class="num">3.</span>Colour</h2>
+    <p>
+      <strong><code>#00ca8e</code> is the only brand colour.</strong> It carries the mark, primary
+      actions and live status — nothing else. A second accent is the fastest way to stop looking
+      like one product.
+    </p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="sw"><div class="chip" style="background:#00ca8e"></div><div class="meta"><b>Accent</b><code>#00ca8e</code><span>volt-emerald · mark, primary CTA, live status</span></div></div>
+      <div class="sw"><div class="chip" style="background:#000000"></div><div class="meta"><b>Canvas</b><code>#000000</code><span>volt-void · page, hero, footer</span></div></div>
+      <div class="sw"><div class="chip" style="background:#0C0F0E"></div><div class="meta"><b>Icon tile</b><code>#0C0F0E</code><span>favicon ground only — not a site token</span></div></div>
+      <div class="sw"><div class="chip" style="background:#ffffff"></div><div class="meta"><b>Ink</b><code>#ffffff</code><span>volt-white · headings, "nota"</span></div></div>
+      <div class="sw"><div class="chip" style="background:#b2b6bd"></div><div class="meta"><b>Ink muted</b><code>#b2b6bd</code><span>volt-text-500 · body, "vibe"</span></div></div>
+      <div class="sw"><div class="chip" style="background:#04120d"></div><div class="meta"><b>On accent</b><code>#04120d</code><span>volt-on-emerald · ink on emerald buttons</span></div></div>
+    </div>
+    <p class="note">
+      Never put white on the accent — it measures 2.13:1 and fails.
+      <code>#04120d</code> on <code>#00ca8e</code> is 8.96:1.
+    </p>
+
+    <h2 id="type"><span class="num">4.</span>Type</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Face</th><th scope="col">Where it is used</th></tr></thead>
+        <tbody>
+          <tr><td>Inter</td><td>Headlines, body, and the wordmark. SemiBold 600 in the lockup, 700 for display.</td></tr>
+          <tr><td>IBM Plex Mono</td><td>Every number, command, identifier, timestamp and status value — anything a machine produced or a person could type.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      The lockup's wordmark is live text rather than outlined paths, so it falls back wherever Inter
+      is absent. Outlining it is the remaining known gap.
+    </p>
+
+    <h2 id="assets"><span class="num">5.</span>Assets</h2>
+    <p>These are the canonical files. Everything else — the icon rasters, the share card — is derived from them.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">File</th><th scope="col">What it is</th></tr></thead>
+        <tbody>
+          <tr><td><a class="dl" href="/brand/logo-mark.svg" download>logo-mark.svg</a></td>
+              <td>The mark. 24-grid, stroke 2.5, accent green, transparent ground — place it on a dark surface.</td></tr>
+          <tr><td><a class="dl" href="/brand/logo-mark-mono.svg" download>logo-mark-mono.svg</a></td>
+              <td>The mark with no colour literal at all — inherits <code>currentColor</code>. Use at small sizes, in print, and on accent surfaces.</td></tr>
+          <tr><td><a class="dl" href="/brand/logo-lockup.svg" download>logo-lockup.svg</a></td>
+              <td>Mark plus wordmark, for dark surfaces.</td></tr>
+          <tr><td><a class="dl" href="/brand/logo-lockup-light.svg" download>logo-lockup-light.svg</a></td>
+              <td>The same lockup, for light surfaces.</td></tr>
+          <tr><td><a class="dl" href="/favicon.svg" download>favicon.svg</a></td>
+              <td>The mark on its tile. The source every raster icon size is rendered from.</td></tr>
+          <tr><td><a class="dl" href="/favicon.ico" download>favicon.ico</a> <a class="dl" href="/apple-touch-icon.png" download>apple-touch-icon.png</a></td>
+              <td>Derived icon rasters, at the sizes browsers ask for.</td></tr>
+          <tr><td><a class="dl" href="/og.png" download>og.png</a> <a class="dl" href="/og.svg" download>og.svg</a></td>
+              <td>Share card, 1200&times;630. The PNG is what ships — most scrapers will not render an SVG.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="using"><span class="num">6.</span>Using it</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <div class="panel">
+        <h3>Do</h3>
+        <ul class="do">
+          <li>Reserve <code>#00ca8e</code> for the mark, one primary action, and live status.</li>
+          <li>Use the mono cut on accent or unknown grounds, and set <code>color</code> on the parent.</li>
+          <li>Give the mark clear space of at least its own stroke width on every side.</li>
+          <li>Set numbers and commands in IBM Plex Mono, even inside prose.</li>
+          <li>Derive rasters from the SVG rather than resizing a PNG.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Don't</h3>
+        <ul>
+          <li>Don't recolour the mark. It is accent green, or it inherits — never a third hue.</li>
+          <li>Don't put white ink on the accent. It fails contrast.</li>
+          <li>Don't add a second accent to a marketing surface.</li>
+          <li>Don't stretch, rotate, outline or add effects to the mark.</li>
+          <li>Don't rebuild the glyph by hand — the path is in section 7.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 id="deriving"><span class="num">7.</span>Deriving assets</h2>
+    <p>
+      The glyph is one path. If you are vendoring the mark into another repository, copy this rather
+      than re-drawing it, and record where it came from.
+    </p>
+    <pre>&lt;path d="M4.5 9.5 H 18.5 V 16" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round"/&gt;</pre>
+    <p>Rasterise with <code>rsvg-convert</code> (<code>brew install librsvg</code>):</p>
+    <pre>rsvg-convert -w 180 -h 180 favicon.svg -o apple-touch-icon.png
+rsvg-convert -w 32  -h 32  favicon.svg -o favicon-32.png</pre>
+    <p class="note">
+      Two traps, both of which have already shipped bugs here. <strong>ImageMagick without librsvg
+      silently drops the stroke</strong> — you get the tile and no mark, with no error.
+      <strong>Headless Chrome composites element screenshots onto white</strong>, so rounded corners
+      come out opaque instead of transparent. Use Chrome only for artwork containing webfont text,
+      such as the share card.
+    </p>
+    <p class="note">
+      And never write a CSS custom property into an SVG comment. A double hyphen makes the file
+      malformed XML — browsers render it anyway, so it fails silently until something strict
+      rejects it.
+    </p>
+  </article>
+
+  <nav class="toc" aria-label="On this page">
+    <p class="toc-label">On this page</p>
+    <ol>
+      <li><a href="#mark">The mark</a></li>
+      <li><a href="#lockup">The lockup</a></li>
+      <li><a href="#colour">Colour</a></li>
+      <li><a href="#type">Type</a></li>
+      <li><a href="#assets">Assets</a></li>
+      <li><a href="#using">Using it</a></li>
+      <li><a href="#deriving">Deriving assets</a></li>
+    </ol>
+  </nav>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 notavibe. <a href="/">Back to notavibe</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ── Theme toggle (same behaviour and storage key as the front page) ─── */
+  var btn = document.getElementById("theme-btn");
+  var sunIcon = document.getElementById("icon-sun");
+  var moonIcon = document.getElementById("icon-moon");
+
+  function syncIcons() {
+    var t = document.documentElement.getAttribute("data-theme");
+    sunIcon.style.display = t === "light" ? "block" : "none";
+    moonIcon.style.display = t === "light" ? "none" : "block";
+  }
+  syncIcons();
+
+  btn.addEventListener("click", function () {
+    var current = document.documentElement.getAttribute("data-theme") || "dark";
+    var next = current === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.style.colorScheme = next;
+    try { localStorage.setItem("nv-theme", next); } catch (e) {}
+    syncIcons();
+  });
+
+  /* ── Mark the section you are reading in the table of contents ───────── */
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  if (!links.length) return;
+
+  var headings = links
+    .map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); })
+    .filter(Boolean);
+  if (!headings.length) return;
+
+  var current = null;
+  function mark(id) {
+    if (id === current) return;
+    current = id;
+    links.forEach(function (a) {
+      if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+  }
+
+  /* The active section is the last heading whose top has passed the reading
+     line. Computed from scroll position rather than observed intersections:
+     an IntersectionObserver only reports the headings that cross the viewport,
+     so a jump straight to an anchor leaves its state stale. */
+  var LINE = 120;
+  function update() {
+    /* At the bottom of the page the final sections are shorter than the
+       viewport, so their headings never reach the reading line and the
+       highlight would stick several entries early. Once the page cannot
+       scroll further, the last section is by definition the one being read. */
+    var doc = document.documentElement;
+    if (window.innerHeight + window.scrollY >= doc.scrollHeight - 2) {
+      mark(headings[headings.length - 1].id);
+      return;
+    }
+    var active = headings[0];
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].getBoundingClientRect().top <= LINE) active = headings[i];
+    }
+    mark(active.id);
+  }
+
+  var queued = false;
+  function onScroll() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; update(); });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  /* A hash in the URL is applied by the browser around load and fires no scroll
+     event, so the first update() can run against the pre-jump position. Re-run
+     on load, and whenever the hash changes. */
+  window.addEventListener("load", update);
+  window.addEventListener("hashchange", onScroll);
+  update();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+<svg width="172" height="32" viewBox="0 0 172 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notavibe">
+  <title>notavibe</title>
+  <!--
+    The lockup for LIGHT surfaces. See logo-lockup.svg for dark ones.
+
+    "nota" takes the ink, "vibe" the muted step — the green NOT plus a dimmed
+    "vibe" is what makes it read as the statement rather than as decoration.
+
+    The inks are the site's own tokens (volt-white / volt-text-500) rather than a
+    separate ramp, so the lockup cannot drift from the chrome it sits next to.
+
+    Colours are baked rather than inherited on purpose: an SVG loaded through an
+    <img> tag is an isolated document and cannot see the host page's
+    currentColor, so an "adaptive" single file renders black on black wherever it
+    is used as an image — which is how a downloaded logo is normally used.
+
+    The wordmark is live Inter text, not outlined paths, so it falls back
+    wherever Inter is absent. That is the remaining known gap.
+  -->
+  <path d="M6 12.5 H 22 V 20" stroke="#00ca8e" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="32" y="22.5" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="19" font-weight="600" letter-spacing="-0.4">
+    <tspan fill="#0b0d10">nota</tspan><tspan fill="#5e646c">vibe</tspan>
+  </text>
+</svg>
