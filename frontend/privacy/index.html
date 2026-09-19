@@ -313,7 +313,7 @@ tbody td:first-child {
 
   <article>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: 8 September 2026</p>
+    <p class="updated">Last updated: 19 September 2026</p>
 
     <p class="intro">
       This policy explains what personal data notavibe handles when you visit
@@ -383,7 +383,42 @@ tbody td:first-child {
       site is read and whether it performs.
     </p>
 
-    <h3>2.4 Web fonts</h3>
+    <h3>2.4 Product analytics &mdash; only if you accept</h3>
+    <p>
+      We also use <strong>PostHog</strong> to understand how the site is actually used: which
+      pages lead to which, where people stop reading, and whether someone who arrives from a
+      link comes back later. Unlike the measurement in 2.3, this one can involve storing
+      something on your device, so <strong>we ask first</strong>. Nothing is stored and nothing
+      is sent until you have chosen.
+    </p>
+    <p>
+      <strong>If you accept</strong>, we set one first-party cookie on
+      <code>notavibe.dev</code> holding a random identifier. It lets us recognise the same
+      browser across visits, so we can tell a returning reader from a new one. It is scoped to
+      this site only &mdash; it is not sent to any other notavibe subdomain, it is not readable
+      by any other website, and it carries nothing about who you are.
+    </p>
+    <p>
+      <strong>If you decline</strong>, we store nothing on your device at all. We still count
+      the visit, but through a privacy-preserving hash calculated on PostHog's servers from a
+      random value that changes every day and is deleted once that day's measurements are
+      processed. The practical effect is that a declining visitor cannot be recognised from one
+      day to the next, and cannot be linked across devices &mdash; which is the point.
+    </p>
+    <p>
+      Either way, the site behaves identically, nothing is shared with any advertising network
+      or data broker, we do not record your screen or your keystrokes, and the measurements are
+      visible only to us. You can change your choice at any time &mdash; see section 4.
+    </p>
+    <p class="basis">
+      <b>Lawful basis:</b> consent (Article 6(1)(a)) for the cookie and the measurement that
+      follows from it. You may withdraw it at any moment, and withdrawing is exactly as easy as
+      giving it. Where you decline, the storage-free counting described above rests on
+      legitimate interests (Article 6(1)(f)) &mdash; knowing how many people read the site
+      &mdash; and involves no access to, or storage on, your device.
+    </p>
+
+    <h3>2.5 Web fonts</h3>
     <p>
       The typefaces on these pages are served by <strong>Google Fonts</strong> rather than by us,
       which means your browser requests those font files from Google directly and Google receives
@@ -411,14 +446,31 @@ tbody td:first-child {
 
     <h2 id="cookies"><span class="num">4.</span>Cookies and local storage</h2>
     <p>
-      <strong>We set no cookies of our own</strong> — none for advertising and none for
-      cross-site tracking. Our analytics is cookieless and stores nothing on your device, which
-      is why there is no cookie banner on this site: there is nothing to consent to.
+      <strong>We set one cookie of our own, and only if you accept it</strong> — the product
+      analytics cookie described in section 2.4. It holds a random identifier, it is scoped to
+      <code>notavibe.dev</code> alone, and it exists for one purpose: telling a returning
+      reader from a new one. <strong>We set none for advertising and none for cross-site
+      tracking</strong>, and we never will on this site.
+    </p>
+    <p>
+      That cookie is why this site now carries a consent banner. It appears before anything is
+      stored, it offers Decline as plainly as Accept, and until you answer, nothing is written
+      to your device and nothing is measured. Declining is a complete answer: the site works
+      the same and we lose the ability to recognise you, which is what you asked for.
+    </p>
+    <p>
+      <strong>Changing your mind.</strong> Withdrawing consent is as easy as giving it and takes
+      effect immediately. Use the <strong>Cookie choices</strong> link in the footer of any
+      page, or open
+      <a href="https://notavibe.dev/#consent">notavibe.dev/#consent</a> directly, and the banner
+      returns with the choice reset. Clearing your browser's cookies for this site has the same
+      effect.
     </p>
     <p>
       If you use the light/dark theme switch, your choice is saved in your own browser's local
       storage under the key <code>nv-theme</code>. That is not a cookie, it is never transmitted
-      to us, and clearing your browser storage removes it.
+      to us, it is unrelated to the consent choice above, and clearing your browser storage
+      removes it.
     </p>
     <p>
       Our content delivery network may set a strictly necessary cookie of its own for bot
@@ -440,6 +492,10 @@ tbody td:first-child {
           <tr>
             <td>Cloudflare</td>
             <td>DNS, content delivery, security, and the cookieless website analytics described in section 2.3. This site is served through Cloudflare's edge network, which transiently processes connection data — including your IP address — to deliver and protect it.</td>
+          </tr>
+          <tr>
+            <td>PostHog</td>
+            <td>The product analytics described in section 2.4 — how pages are used and whether readers return. Processes data in the United States. Only receives anything once you have accepted; if you decline, it counts the visit without storing anything on your device.</td>
           </tr>
           <tr>
             <td>GitHub</td>
@@ -481,8 +537,16 @@ tbody td:first-child {
             <td>Retained by our content delivery network under its own retention schedule. We keep no separate copy and build no history of your visits.</td>
           </tr>
           <tr>
-            <td>Analytics</td>
+            <td>Website analytics (Cloudflare)</td>
             <td>Retained by Cloudflare under its own retention schedule, as aggregate counts rather than records about individuals. We keep no separate copy.</td>
+          </tr>
+          <tr>
+            <td>Product analytics (PostHog)</td>
+            <td>Retained by PostHog under its own retention schedule. If you declined, the daily value used to count you is deleted by PostHog once that day's measurements are processed, so nothing persists that could re-identify you afterwards. We keep no separate copy.</td>
+          </tr>
+          <tr>
+            <td>Analytics cookie</td>
+            <td>Stays in your browser until it expires or you clear it — or until you withdraw consent using the Cookie choices link, which removes it immediately.</td>
           </tr>
           <tr>
             <td>Theme preference</td>

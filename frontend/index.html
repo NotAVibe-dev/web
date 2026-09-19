@@ -294,6 +294,14 @@ a:hover { color: var(--volt-emerald); }
 .footer p {
   margin: 0; font-size: 13px; color: var(--volt-text-600);
 }
+.footer-legal {
+  margin-top: 10px !important;
+  display: flex; justify-content: center; align-items: center; gap: 10px;
+}
+.footer-legal a {
+  color: var(--volt-text-500); text-decoration: underline; text-underline-offset: 2px;
+}
+.footer-legal a:hover { color: var(--volt-emerald); }
 
 /* ── Theme toggle ────────────────────────────────────────────────────────── */
 .theme-toggle {
@@ -583,6 +591,15 @@ a:hover { color: var(--volt-emerald); }
 <footer class="footer">
   <div class="container">
     <p>&copy; 2026 notavibe. Ranked on maintenance, not popularity.</p>
+    <!-- Withdrawal has to be as easy as granting (GDPR Art. 7(3)), so the way
+         back to the choice is permanent furniture, not a one-time banner.
+         scripts/consent.js defines window.nvConsent; the href is the no-JS
+         fallback and the route /privacy/ section 4 points at. -->
+    <p class="footer-legal">
+      <a href="/privacy/">Privacy</a>
+      <span aria-hidden="true">&middot;</span>
+      <a href="#consent" onclick="if(window.nvConsent){event.preventDefault();window.nvConsent.open();}">Cookie choices</a>
+    </p>
   </div>
 </footer>
 
@@ -728,5 +745,11 @@ a:hover { color: var(--volt-emerald); }
   });
 })();
 </script>
+
+<!-- Consent banner + PostHog. Deferred and last: it writes nothing and captures
+     nothing until the visitor has chosen, so it never races the page. See the
+     header of scripts/consent.js for the three consent states and why a
+     decline still counts the visit. -->
+<script src="scripts/consent.js" defer></script>
 </body>
 </html>
