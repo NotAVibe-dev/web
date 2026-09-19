@@ -101,6 +101,32 @@
     cookieless_mode: "on_reject",
     // Host-scope the cookie so it never reaches app./admin. (SPEC §10.4).
     cross_subdomain_cookie: false,
+    // SCREEN RECORDING IS LOCKED OFF HERE, ON PURPOSE — and this line, not the
+    // PostHog project setting, is what holds it.
+    //
+    // A new PostHog project arrives with session replay ON. It was on when this
+    // one was created (2026-09-19) and was turned off by hand. That switch lives
+    // in a web UI, so anyone with project access can flip it back in a moment —
+    // and the site would begin recording visitors' screens, scrolling and typing
+    // while /privacy/ §2.4 still tells them "we do not record your screen or
+    // your keystrokes". A published promise should not be one checkbox from
+    // false. The browser now refuses regardless of what the server says.
+    //
+    // Replay is expected to be switched on deliberately later. Turning it on is
+    // NOT this line alone:
+    //   1. /privacy/ §2.4 has to stop saying we don't record — and the policy
+    //      promises changes land BEFORE new processing, not after;
+    //   2. infra's gdpr-baseline.md subprocessor row says replay is off, and
+    //      that register is Gamal's sign-off;
+    //   3. consent already given does not stretch to cover it. Someone who
+    //      accepted agreed to what the policy said that day; screen recording
+    //      was not in it. Expect to reset the decision and ask again.
+    //   4. it must be ACCEPT-ONLY. Recording the screen of a visitor who just
+    //      clicked Decline is indefensible.
+    // Which is the point of putting the lock in code: the change has to come
+    // through here, where all four are written down, instead of through a
+    // checkbox where none of them are.
+    disable_session_recording: true,
     loaded: function (ph) {
       // `loaded` is the only safe place to read consent state — before array.js
       // arrives every method on the stub is a queue push returning undefined.
