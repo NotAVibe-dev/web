@@ -229,7 +229,16 @@
   /* Re-opening the choice. Withdrawal has to be as easy as granting, so the
    * footer control and /privacy/'s section 4 both land here — from any page,
    * via the /#consent hash. `clear_opt_in_out_capturing` returns the visitor
-   * to `pending`, which is the honest starting state for a fresh decision. */
+   * to `pending`, which is the honest starting state for a fresh decision.
+   *
+   * DO NOT put a "Cookie choices" link on prototype.html. That page is
+   * HASH-ROUTED: its parseHash() reads the first path segment as a route name,
+   * so `#consent` resolves to a screen that does not exist, and its
+   * `hashchange` listener would navigate the app there. Nothing sets that hash
+   * on the prototype today — this file only ever READS location.hash, and the
+   * privacy policy links to the homepage — so there is no live bug. Adding a
+   * control that writes it would create one. Send prototype visitors to
+   * https://notavibe.dev/#consent instead, where no router competes. */
   window.nvConsent = {
     open: function () {
       try { posthog.clear_opt_in_out_capturing(); } catch (e) {}
