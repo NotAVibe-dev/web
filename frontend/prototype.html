@@ -887,5 +887,12 @@ class Component extends DCLogic {
 
      Loads nothing on localhost; see the guard at the top of the file. -->
 <script src="scripts/consent.js" defer></script>
+
+<!-- Which screens reviewers actually open. Must load AFTER consent.js, which
+     owns the PostHog bootstrap — both are deferred, and deferred scripts run in
+     document order, so that is guaranteed. Captures nothing until the banner is
+     answered, and never reads the gate password. See the file header for why
+     hashchange is the right hook for this page's router. -->
+<script src="scripts/prototype-events.js" defer></script>
 </body>
 </html>
