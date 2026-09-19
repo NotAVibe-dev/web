@@ -1,5 +1,11 @@
 /* consent.js — the notavibe.dev consent banner + PostHog bootstrap.
  *
+ * LOADED BY index.html AND prototype.html. One script, one host, one cookie:
+ * a decision made on the front page already applies to the preview, so nobody
+ * is asked twice, and the front page's footer control withdraws it for both.
+ * /privacy/ deliberately does NOT load this — it stays script-free, as its own
+ * header comment requires, and links to the /#consent route instead.
+ *
  * WHY THIS EXISTS. Until now the site set no cookies of its own, which is why
  * the privacy policy could say "there is nothing to consent to" and carry no
  * banner. PostHog changes that: on accept it writes a first-party cookie, so
@@ -43,6 +49,19 @@
   var TOKEN = "phc_wSL6aYnvDfmCwiNn93TB4tg7Ta8xCQRU6C4PjhWbLrV2";
   var API_HOST = "https://us.i.posthog.com";
 
+  /* LOCAL DEVELOPMENT IS NOT TRAFFIC. Without this, every `npx serve frontend`
+   * session lands in the same project as real visitors and quietly inflates
+   * it — and a banner nobody asked for interrupts every dev reload. Same host
+   * test the prototype's access gate uses, for the same reason. Bail before
+   * the loader runs, so no script is fetched and `window.posthog` never
+   * exists locally. */
+  var host = location.hostname;
+  if (!host || host === "localhost" || host === "127.0.0.1" || host === "::1"
+      || host === "[::1]" || /\.localhost$/.test(host)) {
+    window.nvConsent = { open: function () {} };
+    return;
+  }
+
   /* ── PostHog loader (official snippet, unmodified) ───────────────────── */
   !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="vu fu pu gu bu init Hu zu qu ju Gu Xl Bu Qu Du eh ih nh sh rh oh capture getExtension Uu cu hh calculateEventProperties uh register register_once register_for_session unregister unregister_for_session gh Nu dh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync mh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset yh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty fh Xu createPersonProfile setInternalOrTestUser ph wu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ju debug Yl Os getPageViewId captureTraceFeedback captureTraceMetric Ru".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 
@@ -70,26 +89,38 @@
     if (document.getElementById("nv-consent-css")) return;
     var css = document.createElement("style");
     css.id = "nv-consent-css";
+    // Every token carries a hex fallback. On prototype.html the design-system
+    // stylesheets are hoisted from <helmet> by the runtime and may not have
+    // resolved when this paints — the access gate hardcodes fallbacks for the
+    // same reason. Fallbacks are the LIGHT values, matching that page's
+    // default; under dark the tokens resolve long before anyone reads this.
+    //
+    // z-index sits BELOW the prototype's access gate (2147483000) on purpose.
+    // A locked visitor is shown the password card, not a consent question, and
+    // PostHog stays in `pending` behind it — nothing stored, nothing captured.
+    // The banner is simply there once they unlock.
     css.textContent = [
       "#nv-consent{position:fixed;left:0;right:0;bottom:0;z-index:9000;",
-      "background:var(--volt-panel);border-top:1px solid var(--volt-border);",
-      "padding:20px 24px;box-shadow:0 -8px 32px rgba(0,0,0,.18)}",
+      "background:var(--volt-panel,#eceef1);",
+      "border-top:1px solid var(--volt-border,rgba(11,13,16,.12));",
+      "padding:20px 24px;box-shadow:0 -8px 32px rgba(0,0,0,.18);",
+      "font-family:var(--font-sans,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif)}",
       "#nv-consent .nv-c-inner{max-width:1120px;margin:0 auto;display:flex;",
       "flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}",
       "#nv-consent p{margin:0;max-width:64ch;font-size:14px;line-height:1.65;",
-      "color:var(--volt-text-500)}",
-      "#nv-consent strong{color:var(--volt-text-100);font-weight:600}",
-      "#nv-consent a{color:var(--volt-emerald-deep);text-decoration:underline;",
+      "color:var(--volt-text-500,#5e646c)}",
+      "#nv-consent strong{color:var(--volt-text-100,#141719);font-weight:600}",
+      "#nv-consent a{color:var(--volt-emerald-deep,#047857);text-decoration:underline;",
       "text-underline-offset:2px}",
-      "#nv-consent a:hover{color:var(--volt-emerald)}",
+      "#nv-consent a:hover{color:var(--volt-emerald,#00ca8e)}",
       "#nv-consent .nv-c-actions{display:flex;gap:12px;flex-shrink:0}",
       "#nv-consent button{font:inherit;font-size:14px;font-weight:600;",
       "padding:10px 20px;border-radius:8px;cursor:pointer;min-height:40px;",
-      "border:1px solid var(--volt-border-hover);background:transparent;",
-      "color:var(--volt-text-100)}",
-      "#nv-consent button:hover{border-color:var(--volt-emerald);",
-      "color:var(--volt-emerald)}",
-      "#nv-consent button:focus-visible{outline:2px solid var(--volt-emerald);",
+      "border:1px solid var(--volt-border-hover,rgba(11,13,16,.22));background:transparent;",
+      "color:var(--volt-text-100,#141719)}",
+      "#nv-consent button:hover{border-color:var(--volt-emerald,#00ca8e);",
+      "color:var(--volt-emerald,#00ca8e)}",
+      "#nv-consent button:focus-visible{outline:2px solid var(--volt-emerald,#00ca8e);",
       "outline-offset:2px}",
       "@media(max-width:640px){#nv-consent .nv-c-actions{width:100%}",
       "#nv-consent button{flex:1}}",

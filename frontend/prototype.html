@@ -873,5 +873,19 @@ class Component extends DCLogic {
   }
 }
 </script>
+
+<!-- ── Consent banner + PostHog ────────────────────────────────────────────────
+     Same script, same host, same cookie as the front page — so a decision made
+     on notavibe.dev already applies here and does not get asked twice, and the
+     footer control on the front page withdraws it for both.
+
+     Deliberately layered UNDER the access gate (z-index 2147483000 vs 9000): a
+     locked visitor gets the password card, not a consent question, and PostHog
+     sits in `pending` behind it — nothing stored, nothing captured — until they
+     are through. Appended to <body> rather than into the app root, so the
+     runtime's dc.replaceWith swap leaves it standing.
+
+     Loads nothing on localhost; see the guard at the top of the file. -->
+<script src="scripts/consent.js" defer></script>
 </body>
 </html>
