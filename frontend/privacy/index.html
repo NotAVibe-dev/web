@@ -399,11 +399,11 @@ tbody td:first-child {
       by any other website, and it carries nothing about who you are.
     </p>
     <p>
-      <strong>If you decline</strong>, we store nothing on your device at all. We still count
-      the visit, but through a privacy-preserving hash calculated on PostHog's servers from a
-      random value that changes every day and is deleted once that day's measurements are
-      processed. The practical effect is that a declining visitor cannot be recognised from one
-      day to the next, and cannot be linked across devices &mdash; which is the point.
+      <strong>If you decline</strong>, nothing is stored on your device at all &mdash; no
+      cookie, no local storage. We still count the visit, but PostHog does that on its own
+      servers using a privacy-preserving identifier it derives and rotates, rather than anything
+      kept on your machine. You are given no persistent identity to carry between visits or
+      between devices, and we hold nothing that links the visit back to you.
     </p>
     <p>
       Either way, the site behaves identically, nothing is shared with any advertising network
@@ -550,7 +550,7 @@ tbody td:first-child {
           </tr>
           <tr>
             <td>Product analytics (PostHog)</td>
-            <td>Retained by PostHog under its own retention schedule. If you declined, the daily value used to count you is deleted by PostHog once that day's measurements are processed, so nothing persists that could re-identify you afterwards. We keep no separate copy.</td>
+            <td>Retained by PostHog under its own retention schedule. If you declined, nothing was stored on your device, and the identifier used to count you exists only on PostHog's servers under that same schedule. We keep no separate copy.</td>
           </tr>
           <tr>
             <td>Analytics cookie</td>
