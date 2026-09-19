@@ -46,8 +46,21 @@
 (function () {
   "use strict";
 
-  var TOKEN = "phc_wSL6aYnvDfmCwiNn93TB4tg7Ta8xCQRU6C4PjhWbLrV2";
-  var API_HOST = "https://us.i.posthog.com";
+  /* EU REGION. Data is stored in PostHog Cloud EU (AWS eu-central-1,
+   * Frankfurt), matching the EEA-residency choice already made for Resend's
+   * eu-west-1 in infra's gdpr-baseline.md. The loader derives its asset host
+   * from this one (eu.i.posthog.com → eu-assets.i.posthog.com), so this is the
+   * only URL to change.
+   *
+   * A PostHog project is REGION-BOUND: this token belongs to the EU project and
+   * only works against the EU host. They are a matched pair — swapping one
+   * without the other sends every event into a void that returns 200. The
+   * previous US project (phc_wSL6…) is dead; do not resurrect it here.
+   *
+   * The token is a PROJECT token: write-only, designed to ship in client code,
+   * and public in this repo by intent. It is not a secret. */
+  var TOKEN = "__EU_PROJECT_TOKEN__";
+  var API_HOST = "https://eu.i.posthog.com";
 
   /* LOCAL DEVELOPMENT IS NOT TRAFFIC. Without this, every `npx serve frontend`
    * session lands in the same project as real visitors and quietly inflates
@@ -59,6 +72,20 @@
   if (!host || host === "localhost" || host === "127.0.0.1" || host === "::1"
       || host === "[::1]" || /\.localhost$/.test(host)) {
     window.nvConsent = { open: function () {} };
+    return;
+  }
+
+  /* FAIL SAFE, NOT FAIL SILENT. Until the EU project's token is pasted above,
+   * do nothing at all: no loader, no cookie, no banner. The failure mode that
+   * matters is the other one — shipping a placeholder against a live host
+   * captures nothing while every surface claims measurement is running, and
+   * the privacy policy describes a cookie that was never set. Better the site
+   * is visibly un-instrumented than invisibly lying. */
+  if (TOKEN.indexOf("__") === 0) {
+    window.nvConsent = { open: function () {} };
+    if (window.console && console.warn) {
+      console.warn("[notavibe] consent.js: no PostHog token configured — analytics disabled.");
+    }
     return;
   }
 
