@@ -741,6 +741,18 @@ class Component extends DCLogic {
       scan: { matched, unmatched, total: names.length, source },
       route: { name: "stack.results" }
     });
+    /* Broadcast the scan's SHAPE for analytics, the same way app.js broadcasts
+       nv-theme-change: a CustomEvent on document, so a listener can hear it
+       without reaching into React state. Counts only — never the manifest text
+       and never the matched slugs, which together would describe someone's
+       real dependency tree. The route change to stack.results is already
+       visible as a screen view; what this adds is how much was scanned and how
+       much of it the catalog actually knew. */
+    try {
+      document.dispatchEvent(new CustomEvent("nv-stack-scan", {
+        detail: { source, total: names.length, matched: matched.length, unmatched }
+      }));
+    } catch (e) { /* older browser, or CustomEvent unavailable — scan still works */ }
     window.scrollTo(0, 0);
   }
 
