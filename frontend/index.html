@@ -751,5 +751,12 @@ a:hover { color: var(--volt-emerald); }
      header of scripts/consent.js for the three consent states and why a
      decline still counts the visit. -->
 <script src="scripts/consent.js" defer></script>
+
+<!-- What visitors do on this page. Must load AFTER consent.js, which owns the
+     PostHog bootstrap — both are deferred, and deferred scripts run in document
+     order, so this is guaranteed. It captures nothing on its own: every event
+     goes through posthog.capture(), which stays silent until the banner has
+     been answered. No email, no typed text, no identifiers — see the file. -->
+<script src="scripts/events.js" defer></script>
 </body>
 </html>
