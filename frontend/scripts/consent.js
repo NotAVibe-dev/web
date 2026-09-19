@@ -52,14 +52,15 @@
    * from this one (eu.i.posthog.com → eu-assets.i.posthog.com), so this is the
    * only URL to change.
    *
-   * A PostHog project is REGION-BOUND: this token belongs to the EU project and
-   * only works against the EU host. They are a matched pair — swapping one
-   * without the other sends every event into a void that returns 200. The
-   * previous US project (phc_wSL6…) is dead; do not resurrect it here.
+   * A PostHog project is REGION-BOUND: this token belongs to EU project 278842
+   * (organisation Notavibe, created 2026-09-19) and only works against the EU
+   * host. They are a matched pair — swapping one without the other sends every
+   * event into a void that returns 200. The previous US project (phc_wSL6…) is
+   * dead; do not resurrect it here.
    *
    * The token is a PROJECT token: write-only, designed to ship in client code,
    * and public in this repo by intent. It is not a secret. */
-  var TOKEN = "__EU_PROJECT_TOKEN__";
+  var TOKEN = "phc_qfaTBFDxbpETb6rhgx5nxJ5GyhHyj96kZJNFNAYp3myy";
   var API_HOST = "https://eu.i.posthog.com";
 
   /* LOCAL DEVELOPMENT IS NOT TRAFFIC. Without this, every `npx serve frontend`
