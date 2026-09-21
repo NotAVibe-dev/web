@@ -207,6 +207,12 @@ a:not(.btn):hover { color: var(--volt-emerald); }
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
 }
+/* Fixed column counts, as classes rather than inline style attributes. Inline
+   styles outrank every rule in this sheet, including the mobile one below, so
+   as attributes these two counts held at 2 and 3 columns on a phone and pushed
+   the page wider than the screen. */
+.card-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 .card {
   background: var(--volt-canvas);
   border: 1px solid var(--volt-border);
@@ -360,7 +366,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
   .section { padding: 56px 0; }
   .hero-content { padding: 100px 20px 48px; }
   .signup-form { flex-direction: column; }
-  .card-grid { grid-template-columns: 1fr; }
+  .card-grid, .card-grid.cols-2, .card-grid.cols-3 { grid-template-columns: 1fr; }
   .install-tabs { flex-wrap: wrap; justify-content: center; }
 }
 </style>
@@ -424,7 +430,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
       <p>Every project shows five maintenance signals derived from public data &mdash; each with its source, fetch date, and a clear rating. No hidden formula.</p>
     </div>
 
-    <div class="card-grid" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="card-grid cols-2">
       <div class="card">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
@@ -555,7 +561,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
       <h2>Built for the questions your tooling doesn't answer</h2>
     </div>
 
-    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr)">
+    <div class="card-grid cols-3">
       <div class="card">
         <h3>Transparent ratings, not opaque scores</h3>
         <p>Each signal shows its source, fetch date, and a clear rating like "steady" or "days." You see exactly what we see &mdash; no hidden formula.</p>
