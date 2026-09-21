@@ -121,7 +121,13 @@ code {
 /* ── Page frame ──────────────────────────────────────────────────────────── */
 .wrap {
   max-width: 1120px; margin: 0 auto; padding: 56px 32px 96px;
-  display: grid; grid-template-columns: 1fr; gap: 48px;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px;
+  /* minmax(0, 1fr), not a bare 1fr. A grid track's implicit floor is `auto`, so
+     the column would refuse to shrink below the min-content width of whatever
+     it holds -- the widest <pre> of SVG path data, or the widest table. That
+     propagates out through <article> and scrolls the whole page sideways on a
+     phone. Pinning the floor to 0 lets those boxes scroll inside their own
+     overflow-x: auto instead. The >=1024px rule below already does this. */
 }
 @media (min-width: 1024px) {
   .wrap { grid-template-columns: minmax(0, 1fr) 232px; gap: 64px; align-items: start; }
