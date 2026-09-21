@@ -80,7 +80,12 @@ body {
   line-height: 1.5;
 }
 a { color: var(--volt-emerald-deep); text-decoration: none; }
-a:hover { color: var(--volt-emerald); }
+/* Excluding .btn is load-bearing, not tidiness. A bare `a:hover` is (0,1,1) and
+   beats `.btn-primary` at (0,1,0), so it repainted the primary CTA's label
+   --volt-emerald — the same value as that button's own background — and the text
+   vanished on hover in both themes. Buttons carry their own colour; link styling
+   must not reach into them. */
+a:not(.btn):hover { color: var(--volt-emerald); }
 
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 .container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
