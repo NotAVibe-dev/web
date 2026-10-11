@@ -107,6 +107,65 @@
   window.addEventListener("hashchange", reportScreen);
   setTimeout(reportScreen, 0);
 
+  /* ── Search ───────────────────────────────────────────────────────────
+   * Searching does not necessarily change the route, so screen tracking misses
+   * it entirely — that is why this event exists rather than being folded into
+   * prototype_screen_viewed.
+   *
+   * NvQuery is the shared store the hero field and the header field both write
+   * to, so one subscription covers every search box on the page. It notifies on
+   * every set(), i.e. per KEYSTROKE, so this debounces: "hono" typed as four
+   * characters is one search, not four. 800ms is long enough to sit past normal
+   * typing and short enough that a pause mid-thought still reads as a search.
+   *
+   * THE QUERY TEXT IS NOT CAPTURED — only how long it was. That is a real loss:
+   * "what do people search for" is most of why you would track search at all.
+   * It is deliberate. /privacy/ §2.4 describes this analytics as understanding
+   * "which pages lead to which, where people stop reading, and whether someone
+   * who arrives from a link comes back later". Recording what a visitor typed
+   * is not in that description, so capturing terms would make a published
+   * policy incomplete. Add the term here only together with a line in §2.4
+   * saying so — the policy first, then the code, which is the order §9 of that
+   * document promises. */
+  var searchTimer = null;
+  if (window.NvQuery && typeof window.NvQuery.subscribe === "function") {
+    window.NvQuery.subscribe(function (q) {
+      var text = typeof q === "string" ? q.trim() : "";
+      /* Bail BEFORE touching the timer. Clearing the box is not a search — but
+       * it must not cancel the one already pending either. Ordering these the
+       * other way round meant typing "hono" and then clearing it within the
+       * debounce window recorded nothing at all, and anything that resets the
+       * shared store (a route change, a remount) silently swallowed the search
+       * that preceded it. Caught by the debounce test, not by reading. */
+      if (!text) return;
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        track("search_performed", { length: text.length });
+      }, 800);
+    });
+  }
+
+  /* ── Stack scan ───────────────────────────────────────────────────────
+   * The core of the product demo: paste a manifest, find out what you depend
+   * on. Arriving at the results screen is already a screen view, so what this
+   * adds is the SHAPE of the scan — how many dependencies went in, and how many
+   * the catalog recognised. A demo where `matched` is usually near zero is a
+   * demo that lands badly, and no navigation event would ever tell you that.
+   *
+   * Counts only. The manifest text and the matched project slugs are both
+   * withheld at the source (see runScan in prototype.html) — together they
+   * would describe someone's real dependency tree, which is not ours to
+   * collect for analytics. */
+  document.addEventListener("nv-stack-scan", function (e) {
+    var d = (e && e.detail) || {};
+    track("stack_scan_run", {
+      source: d.source || "",
+      total: d.total || 0,
+      matched: d.matched || 0,
+      unmatched: d.unmatched || 0,
+    });
+  });
+
   /* ── Theme ────────────────────────────────────────────────────────────
    * app.js broadcasts `nv-theme-change` so every mounted control can stay in
    * sync — the desktop icon button and the burger segment can both be live at
