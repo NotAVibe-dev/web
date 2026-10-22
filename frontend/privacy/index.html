@@ -458,17 +458,26 @@ tbody td:first-child {
     <h3>2.6 MCP server usage</h3>
     <p>
       notavibe also runs an MCP server at <code>notavibe.dev/mcp</code>, which AI coding
-      assistants can call. When it handles a call, our server sends <strong>PostHog</strong> a
-      count of that call: which tool was used, how long it took, the type of any error, how many
-      results came back, the coarse shape of the request (for example whether a query was given,
-      a length bucket, and the mode), and the name and version of the app making the call, such
-      as &ldquo;Claude Desktop 1.2&rdquo;.
+      assistants can call. When an app connects, and each time it calls one of our tools, our
+      server sends <strong>PostHog</strong> a count of it: which tool was used, how long it took,
+      the type of any error, how many results came back, and the coarse shape of the request
+      &mdash; for example whether a query was given, a length bucket, how many words it had,
+      which filters were used, and the mode. A filter value is included only when it is one of
+      our own fixed options; a tool name we do not recognise is recorded as unknown, never as
+      given.
+    </p>
+    <p>
+      We also note which app made the call, as one name from a fixed list (such as
+      &ldquo;claude&rdquo; or &ldquo;cursor&rdquo;) or &ldquo;other&rdquo;, together with its
+      version number, such as &ldquo;1.2&rdquo;, and the MCP protocol version it asked for.
+      Anything that is not a plain version number is dropped.
     </p>
     <p>
       It does <strong>not</strong> send your IP address, which is discarded before anything
-      leaves our server. It does not send the text of any query, the names of the projects you
-      ask about, or any identifier that persists from one call to the next, and it sets no
-      cookie. The counts tell us how the server is used, not who used it.
+      leaves our server. It does not send the text of any query or anything else typed into a
+      request, the names of the projects you ask about, or any identifier that persists from one
+      call to the next, and it sets no cookie. The counts tell us how the server is used, not
+      who used it.
     </p>
     <p class="basis">
       <b>No consent prompt:</b> this happens on our server, nothing is stored on your device,
