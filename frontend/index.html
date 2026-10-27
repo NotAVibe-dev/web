@@ -419,7 +419,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     </div>
 
     <p class="fade-up fade-up-5" style="font-size:14px; color:var(--volt-text-400); margin:0; font-weight:500">
-      8,400+ npm packages &middot; Free, no auth &middot; Works with Claude, Cursor &amp; VS Code
+      <span id="project-count">1,000+</span> JS/TS projects &middot; Free, no auth &middot; Works with Claude, Cursor &amp; VS Code
     </p>
 
     <div class="pill fade-up fade-up-5" style="margin-top:4px">
@@ -827,6 +827,19 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     else window.addEventListener("resize", resize);
     if (!reduce) { host.addEventListener("pointermove", onMove); host.addEventListener("pointerleave", onLeave); }
   })();
+
+  /* ── Live project count ────────────────────────────────────────────── */
+  /* The HTML holds a static floor; replace it with the catalog's live count,
+   * floored to the nearest 100. Any failure leaves the static text. */
+  var countEl = document.getElementById("project-count");
+  if (countEl && window.fetch) {
+    fetch("/stats.json").then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (d) {
+      var n = d && typeof d.projects === "number" ? Math.floor(d.projects / 100) * 100 : 0;
+      if (n > 0) countEl.textContent = n.toLocaleString("en-US") + "+";
+    }).catch(function () {});
+  }
 
   /* ── Smooth scroll for anchor links ────────────────────────────────── */
   document.querySelectorAll('a[href^="#"]').forEach(function (a) {
