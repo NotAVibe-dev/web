@@ -8,23 +8,23 @@
 
 ## Site
 
-- [Home](https://notavibe.dev/): what notavibe measures, the five signals, and how to install the MCP server
+- [Home](https://notavibe.dev/): what notavibe measures, the five signals, and how to connect the MCP server
 - [Privacy policy](https://notavibe.dev/privacy/): what personal data the site handles, why, who processes it, and GDPR rights
 
 ## Sections on the home page
 
 - [Five signals, fully sourced, no black box](https://notavibe.dev/#how-it-works): the five maintenance signals and why each is reported as a band with its source and fetch date rather than a score
-- [Install the MCP server](https://notavibe.dev/#install): install with `npx @notavibe/mcp`; works with Claude, Cursor, Windsurf, VS Code and any MCP-compatible client
+- [Connect the MCP server](https://notavibe.dev/#install): a hosted remote MCP server at `https://notavibe.dev/mcp` (streamable HTTP, no API key); set up by URL, with a Claude Code command, or with a JSON config
 - [Built for the questions your tooling doesn't answer](https://notavibe.dev/#why): what notavibe is for, and what it deliberately is not
 
 ## Reference
 
-- [npm package](https://www.npmjs.com/package/@notavibe/mcp): `@notavibe/mcp` on npm
-- MCP tools: `check_dependencies`, `search_projects`, `get_project`, `compare_projects`
+- MCP server: `https://notavibe.dev/mcp` (HTTP). Claude Code: `claude mcp add --transport http notavibe https://notavibe.dev/mcp`
+- MCP tools (all read-only): `search_projects`, `get_project`, `compare_projects`, `get_lists`
 
 ## Notes for agents
 
 - notavibe reports maintenance signals, not security vulnerabilities. It is not a CVE scanner.
 - Every signal is a named band carrying its own source and fetch date. There is no single composite score, and inventing one misrepresents the product.
 - "Insufficient data" is a valid answer and is reported as such rather than guessed.
-- Scope at launch is npm only.
+- The catalog currently covers one ecosystem: JavaScript and TypeScript.

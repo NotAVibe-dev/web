@@ -368,6 +368,8 @@ a:not(.btn):hover { color: var(--volt-emerald); }
   .signup-form { flex-direction: column; }
   .card-grid, .card-grid.cols-2, .card-grid.cols-3 { grid-template-columns: 1fr; }
   .install-tabs { flex-wrap: wrap; justify-content: center; }
+  /* Wrap long commands on phones instead of scrolling the box; copy still uses COPY_TEXT. */
+  .install-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 }
 </style>
 </head>
@@ -481,7 +483,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     <!-- Tabs -->
     <div role="tablist" class="install-tabs" id="install-tabs" style="align-self: flex-start">
       <button role="tab" class="install-tab" aria-selected="true" data-tab="quick">Quick start</button>
-      <button role="tab" class="install-tab" aria-selected="false" data-tab="npm">npm</button>
+      <button role="tab" class="install-tab" aria-selected="false" data-tab="claude-code">Claude Code</button>
       <button role="tab" class="install-tab" aria-selected="false" data-tab="manual">Manual</button>
     </div>
 
@@ -489,31 +491,27 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     <div class="install-panel" data-panel="quick">
       <div class="install-block">
         <div class="install-header">
-          <span class="label">One command &mdash; works with Claude Desktop, Cursor &amp; more</span>
+          <span class="label">Server URL &mdash; paste into your client's Add MCP server / Connectors setting</span>
           <button class="copy-btn" data-copy="quick">Copy</button>
         </div>
-        <div class="install-body" id="code-quick"><span class="cmd">npx</span> <span class="comment">@notavibe/mcp</span></div>
+        <div class="install-body" id="code-quick"><span class="comment">https://notavibe.dev/mcp</span></div>
       </div>
       <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:var(--volt-text-500)">
-        This downloads and runs the notavibe MCP server. Your AI assistant will automatically detect it. No configuration file needed &mdash; just run and go.
+        notavibe is a hosted MCP server, so there is nothing to install and no API key. Add the URL to your client as a remote (HTTP) server.
       </p>
     </div>
 
-    <!-- Tab: npm -->
-    <div class="install-panel" data-panel="npm" style="display:none">
+    <!-- Tab: Claude Code -->
+    <div class="install-panel" data-panel="claude-code" style="display:none">
       <div class="install-block">
         <div class="install-header">
-          <span class="label">Install globally via npm</span>
-          <button class="copy-btn" data-copy="npm">Copy</button>
+          <span class="label">Run in your terminal</span>
+          <button class="copy-btn" data-copy="claude-code">Copy</button>
         </div>
-        <div class="install-body" id="code-npm"><span class="comment"># Install globally</span>
-<span class="cmd">npm</span> install -g @notavibe/mcp
-
-<span class="comment"># Run the server</span>
-<span class="cmd">notavibe-mcp</span></div>
+        <div class="install-body" id="code-claude-code"><span class="cmd">claude</span> mcp add --transport http notavibe <span class="comment">https://notavibe.dev/mcp</span></div>
       </div>
       <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:var(--volt-text-500)">
-        Installing globally makes the <code style="color:var(--volt-emerald); font-family:var(--font-mono)">notavibe-mcp</code> command available system-wide. Point your MCP client's config at it and you're set.
+        Adds notavibe to the current project. Add <code style="color:var(--volt-emerald); font-family:var(--font-mono); white-space:nowrap">--scope user</code> to make it available in every project.
       </p>
     </div>
 
@@ -521,31 +519,23 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     <div class="install-panel" data-panel="manual" style="display:none">
       <div class="install-block">
         <div class="install-header">
-          <span class="label">Add to your MCP client config (e.g. claude_desktop_config.json)</span>
+          <span class="label">Add to your MCP client config</span>
           <button class="copy-btn" data-copy="manual">Copy</button>
         </div>
         <div class="install-body" id="code-manual">{
   "mcpServers": {
     "notavibe": {
-      "command": "<span class="cmd">npx</span>",
-      "args": ["<span class="comment">@notavibe/mcp</span>"]
+      "type": "http",
+      "url": "<span class="comment">https://notavibe.dev/mcp</span>"
     }
   }
 }</div>
       </div>
       <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:var(--volt-text-500)">
-        Drop this into your client's MCP configuration file. For Claude Desktop, that's <code style="color:var(--volt-emerald); font-family:var(--font-mono)">~/Library/Application Support/Claude/claude_desktop_config.json</code> on Mac or <code style="color:var(--volt-emerald); font-family:var(--font-mono)">%APPDATA%\Claude\claude_desktop_config.json</code> on Windows.
+        Drop this into your client's MCP configuration file. Key names vary by client, so check its MCP docs. A client that only runs local servers can use <code style="color:var(--volt-emerald); font-family:var(--font-mono)">npx -y mcp-remote https://notavibe.dev/mcp</code> as the command.
       </p>
     </div>
     <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
-      <a href="#" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-        View on GitHub
-      </a>
-      <a href="https://www.npmjs.com/package/@notavibe/mcp" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H5.334v-4H3.999v4H1.335V8.667h5.331v5.331zm4 0v1.336H8.001V8.667h5.334v5.331h-2.669zm12.001 0h-1.33v-4h-1.336v4h-1.335v-4h-1.33v4h-2.671V8.667h8.002v5.331zM10.665 10H12v2.667h-1.335V10z"/></svg>
-        npm package
-      </a>
       <span style="font-size:13px; color:var(--volt-text-600)">Free &middot; no API key &middot; rate-limited by IP</span>
     </div>
   </div>
@@ -657,9 +647,9 @@ a:not(.btn):hover { color: var(--volt-emerald); }
 
   /* ── Copy buttons ──────────────────────────────────────────────────── */
   var COPY_TEXT = {
-    quick: "npx @notavibe/mcp",
-    npm: "npm install -g @notavibe/mcp",
-    manual: '{\n  "mcpServers": {\n    "notavibe": {\n      "command": "npx",\n      "args": ["@notavibe/mcp"]\n    }\n  }\n}'
+    quick: "https://notavibe.dev/mcp",
+    "claude-code": "claude mcp add --transport http notavibe https://notavibe.dev/mcp",
+    manual: '{\n  "mcpServers": {\n    "notavibe": {\n      "type": "http",\n      "url": "https://notavibe.dev/mcp"\n    }\n  }\n}'
   };
 
   document.querySelectorAll(".copy-btn").forEach(function (btn) {
