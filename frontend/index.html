@@ -275,7 +275,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
 
 /* ── Signup form ─────────────────────────────────────────────────────────── */
 .signup-form {
-  display: flex; gap: 8px; max-width: 480px; width: 100%;
+  display: flex; flex-wrap: wrap; gap: 8px; max-width: 480px; width: 100%;
 }
 .signup-input {
   flex: 1; padding: 14px 20px;
@@ -295,6 +295,14 @@ a:not(.btn):hover { color: var(--volt-emerald); }
   margin-top: 4px; opacity: 0; transition: opacity 200ms ease;
 }
 .signup-msg.show { opacity: 1; }
+.signup-msg.error { color: var(--volt-text-200); }
+.signup-consent { margin: 0; font-size: 13px; color: var(--volt-text-600); }
+.signup-consent a { color: inherit; text-decoration: underline; }
+/* Honeypot: off-screen rather than display:none, so simple bots still fill it in. */
+.signup-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+/* Turnstile renders here, below the input row; empty unless Cloudflare needs an interaction. */
+.signup-turnstile { flex-basis: 100%; display: flex; justify-content: center; }
+.signup-turnstile:empty { display: none; }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer {
@@ -581,10 +589,15 @@ a:not(.btn):hover { color: var(--volt-emerald); }
       Dependency discovery, team dashboards, and CI integration are next. Drop your email &mdash; we'll let you know when it ships.
     </p>
     <form class="signup-form" id="signup-form" autocomplete="off">
-      <input class="signup-input" type="email" name="email" placeholder="you@company.com" aria-label="Email address" required>
+      <input class="signup-input ph-no-capture" type="email" name="email" placeholder="you@company.com" aria-label="Email address" autocomplete="email" required>
       <button type="submit" class="btn btn-primary" style="flex-shrink:0">Notify me</button>
+      <div class="signup-hp" aria-hidden="true">
+        <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <div class="signup-turnstile" id="signup-turnstile"></div>
     </form>
-    <p class="signup-msg" id="signup-msg">You're on the list. We'll be in touch.</p>
+    <p class="signup-consent">We'll email you once when notavibe launches, then delete your address. <a href="/privacy/#what-we-collect">Privacy</a></p>
+    <p class="signup-msg" id="signup-msg" role="status" aria-live="polite"></p>
   </div>
 </section>
 
@@ -664,16 +677,94 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     });
   });
 
-  /* ── Email signup (client-side placeholder) ────────────────────────── */
+  /* ── Email signup ──────────────────────────────────────────────────── */
+  /* POSTs to the waitlist Worker (same origin). Turnstile loads on first
+     focus of the email field, not on page load, so visitors who never touch
+     the form never contact challenges.cloudflare.com. */
   var form = document.getElementById("signup-form");
   var msg = document.getElementById("signup-msg");
+  var emailInput = form.querySelector('input[name="email"]');
+  var submitBtn = form.querySelector('button[type="submit"]');
+  var TURNSTILE_SITEKEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+    ? "1x00000000000000000000AA"   /* Cloudflare's always-pass test key */
+    : "0x4AAAAAAFoJbaSjBdGR4rZL";
+  var turnstileState = "idle";     /* idle | loading | ready | failed */
+  var widgetId = null;
+  var msgTimer = null;
+
+  function showMsg(text, isError) {
+    clearTimeout(msgTimer);
+    msg.textContent = text;
+    msg.classList.toggle("error", !!isError);
+    msg.classList.add("show");
+    if (!isError) msgTimer = setTimeout(function () { msg.classList.remove("show"); }, 4000);
+  }
+
+  window.nvTurnstileReady = function () {
+    turnstileState = "ready";
+    widgetId = window.turnstile.render("#signup-turnstile", {
+      sitekey: TURNSTILE_SITEKEY,
+      appearance: "interaction-only",
+      theme: document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"
+    });
+  };
+
+  function loadTurnstile() {
+    if (turnstileState !== "idle") return;
+    turnstileState = "loading";
+    var script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=nvTurnstileReady";
+    script.async = true;
+    script.onerror = function () { turnstileState = "failed"; };
+    document.head.appendChild(script);
+  }
+
+  emailInput.addEventListener("focus", loadTurnstile);
+
+  function resetTurnstile() {
+    if (widgetId !== null && window.turnstile) window.turnstile.reset(widgetId);
+  }
+
+  var ERRORS = {
+    400: "That email address doesn't look right.",
+    403: "We couldn't confirm you're not a bot. Please try again.",
+    429: "Too many attempts. Please wait a minute and try again."
+  };
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    /* TODO: wire to a real endpoint (e.g. Formspree, Buttondown, or your own API) */
-    msg.classList.add("show");
-    form.querySelector("input").value = "";
-    setTimeout(function () { msg.classList.remove("show"); }, 4000);
+    loadTurnstile();
+    var token = widgetId !== null && window.turnstile ? window.turnstile.getResponse(widgetId) : "";
+    if (!token) {
+      showMsg(turnstileState === "failed"
+        ? "The bot check couldn't load. Please reload the page and try again."
+        : "Still checking you're not a bot. Try again in a moment.", true);
+      return;
+    }
+    submitBtn.disabled = true;
+    fetch("/waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: emailInput.value,
+        token: token,
+        website: form.querySelector('input[name="website"]').value
+      })
+    }).then(function (res) {
+      if (res.status === 200) {
+        showMsg("You're on the list. We'll be in touch.", false);
+        emailInput.value = "";
+        form.dispatchEvent(new CustomEvent("nv:waitlist-joined"));
+      } else {
+        showMsg(ERRORS[res.status] || "Something went wrong on our side. Please try again later.", true);
+      }
+    }, function () {
+      showMsg("Something went wrong on our side. Please try again later.", true);
+    }).then(function () {
+      /* A Turnstile token is single-use, so get a fresh one either way. */
+      resetTurnstile();
+      submitBtn.disabled = false;
+    });
   });
 
   /* ── Mouse-reactive dot field (same as the main site hero) ─────────── */

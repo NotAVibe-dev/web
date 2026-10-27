@@ -109,11 +109,12 @@
   });
 
   /* ── 5. The other conversion ──────────────────────────────────────────
-   * Fires on submit, carrying NOTHING. Not the address, not its domain, not
-   * its length. See the header: that email was given for the waitlist, and
-   * analytics is a different purpose. The count is the insight; the identity
-   * is not ours to take. */
-  on(document.getElementById("signup-form"), "submit", function () {
+   * Fires only once the waitlist Worker has answered 200 (index.html
+   * dispatches `nv:waitlist-joined` then), carrying NOTHING. Not the address,
+   * not its domain, not its length. See the header: that email was given for
+   * the waitlist, and analytics is a different purpose. The count is the
+   * insight; the identity is not ours to take. */
+  on(document.getElementById("signup-form"), "nv:waitlist-joined", function () {
     track("waitlist_submitted");
   });
 
