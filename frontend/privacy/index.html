@@ -337,7 +337,7 @@ tbody td:first-child {
 
   <article>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: 22 October 2026</p>
+    <p class="updated">Last updated: 27 October 2026</p>
 
     <p class="intro">
       This policy explains what personal data notavibe handles when you visit
@@ -372,9 +372,16 @@ tbody td:first-child {
     <h3>2.1 Waitlist sign-ups</h3>
     <p>
       If you give us your email address to be told when notavibe launches, we store that address
-      and nothing else alongside it. We use it for that one announcement. We do not use it for
-      unrelated marketing, we do not pass it to anyone else, and you can withdraw your consent
-      and be removed at any time, permanently.
+      and nothing else alongside it. It is stored with <strong>Resend</strong>, the provider that
+      sends our email, which keeps it in the United States under the European Commission's
+      Standard Contractual Clauses (see section 6). We use it for that one announcement. We do
+      not use it for unrelated marketing, we do not pass it to anyone else, and you can withdraw
+      your consent and be removed at any time, permanently.
+    </p>
+    <p>
+      To keep automated sign-ups out, the form uses <strong>Cloudflare Turnstile</strong>, which
+      checks that a person rather than a bot is submitting it. It loads only once you click into
+      the email field, and it is not used to identify you or to follow you elsewhere.
     </p>
     <p class="basis"><b>Lawful basis:</b> consent (Article 6(1)(a)).</p>
 
@@ -545,11 +552,15 @@ tbody td:first-child {
         <tbody>
           <tr>
             <td>Cloudflare</td>
-            <td>DNS, content delivery, security, and the cookieless website analytics described in section 2.3. This site is served through Cloudflare's edge network, which transiently processes connection data — including your IP address — to deliver and protect it.</td>
+            <td>DNS, content delivery, security, and the cookieless website analytics described in section 2.3. This site is served through Cloudflare's edge network, which transiently processes connection data — including your IP address — to deliver and protect it. Cloudflare Turnstile also checks the waitlist form for bots, as described in section 2.1.</td>
           </tr>
           <tr>
             <td>PostHog</td>
             <td>Two things. First, the product analytics described in section 2.4 — how pages are used and whether readers return. That only receives anything once you have accepted; if you decline, it counts the visit without storing anything on your device. Second, the usage counts from our MCP server described in section 2.6, which carry no persistent identifier and no IP address, and so are not tied to your choice on this site. <strong>Your data is stored in the European Union</strong> (Frankfurt, Germany); PostHog is a US company, so its own staff may access it in support of the service, which is covered by our agreement with them and the safeguards in section 6.</td>
+          </tr>
+          <tr>
+            <td>Resend</td>
+            <td>Sends our email, and stores the waitlist addresses described in section 2.1. <strong>Your data is stored in the United States</strong>, under the Standard Contractual Clauses described in section 6.</td>
           </tr>
           <tr>
             <td>GitHub</td>
@@ -576,11 +587,13 @@ tbody td:first-child {
     </p>
     <p>
       Where we had the choice, we took the European one. The analytics in section 2.4 is stored
-      in the EU rather than the United States, and the provider that sends our email stores its
-      data in Ireland, both for this reason. Neither provider is a European company, so their
-      own staff may still reach the data in support of the service &mdash; that access runs
-      under the same safeguards named above. We would rather tell you that than claim a clean
-      European boundary that does not exist.
+      in the EU rather than the United States for this reason. PostHog is not a European
+      company, so its own staff may still reach the data in support of the service &mdash; that
+      access runs under the same safeguards named above. The provider that sends our email,
+      Resend, stores all of its data, including waitlist addresses, in the United States; only
+      the sending of the email itself happens from Ireland. That transfer is covered by the
+      Standard Contractual Clauses. We would rather tell you that than claim a clean European
+      boundary that does not exist.
     </p>
 
     <h2 id="retention"><span class="num">7.</span>How long we keep it</h2>
@@ -592,7 +605,7 @@ tbody td:first-child {
         <tbody>
           <tr>
             <td>Waitlist email</td>
-            <td>Until notavibe launches and we have told you, or until you opt out — whichever comes first. Then deleted.</td>
+            <td>Until notavibe launches and we have told you, until you opt out, or 18 months after you signed up — whichever comes first. Then deleted.</td>
           </tr>
           <tr>
             <td>Request logs</td>
