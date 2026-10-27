@@ -373,15 +373,17 @@ tbody td:first-child {
     <p>
       If you give us your email address to be told when notavibe launches, we store that address
       and nothing else alongside it. It is stored with <strong>Resend</strong>, the provider that
-      sends our email, which keeps it in the United States under the European Commission's
-      Standard Contractual Clauses (see section 6). We use it for that one announcement. We do
+      sends our email, which keeps it in the United States. That transfer is covered by the
+      EU&ndash;US Data Privacy Framework, with Standard Contractual Clauses as well (see
+      section 6). We use it for that one announcement. We do
       not use it for unrelated marketing, we do not pass it to anyone else, and you can withdraw
       your consent and be removed at any time, permanently.
     </p>
     <p>
       To keep automated sign-ups out, the form uses <strong>Cloudflare Turnstile</strong>, which
       checks that a person rather than a bot is submitting it. It loads only once you click into
-      the email field, and it is not used to identify you or to follow you elsewhere.
+      the email field, and it is not used to identify you or to follow you elsewhere. It saves
+      one item in your browser when it runs; see section 4.
     </p>
     <p class="basis"><b>Lawful basis:</b> consent (Article 6(1)(a)).</p>
 
@@ -534,6 +536,12 @@ tbody td:first-child {
       removes it.
     </p>
     <p>
+      When you click into the waitlist email field, Cloudflare Turnstile (section 2.1) saves one
+      item, <code>cf.turnstile.u</code>, in your browser, in Cloudflare's own storage area, not
+      ours, to help tell people from bots. It is needed for the form to work, so we don't ask
+      for consent for it; nothing is stored if you never use the form.
+    </p>
+    <p>
       Our content delivery network may set a strictly necessary cookie of its own for bot
       detection and security. We do not control its contents and we do not read it.
     </p>
@@ -560,7 +568,7 @@ tbody td:first-child {
           </tr>
           <tr>
             <td>Resend</td>
-            <td>Sends our email, and stores the waitlist addresses described in section 2.1. <strong>Your data is stored in the United States</strong>, under the Standard Contractual Clauses described in section 6.</td>
+            <td>Sends our email, and stores the waitlist addresses described in section 2.1. <strong>Your data is stored in the United States</strong>; the transfer is covered by the EU&ndash;US Data Privacy Framework, with Standard Contractual Clauses as well, as described in section 6.</td>
           </tr>
           <tr>
             <td>GitHub</td>
@@ -591,8 +599,9 @@ tbody td:first-child {
       company, so its own staff may still reach the data in support of the service &mdash; that
       access runs under the same safeguards named above. The provider that sends our email,
       Resend, stores all of its data, including waitlist addresses, in the United States; only
-      the sending of the email itself happens from Ireland. That transfer is covered by the
-      Standard Contractual Clauses. We would rather tell you that than claim a clean European
+      the sending of the email itself happens from Ireland. Resend is certified under the
+      EU&ndash;US Data Privacy Framework, including its UK Extension, and that transfer is
+      covered by it, with Standard Contractual Clauses as well. We would rather tell you that than claim a clean European
       boundary that does not exist.
     </p>
 
