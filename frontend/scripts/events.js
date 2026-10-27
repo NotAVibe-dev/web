@@ -28,9 +28,19 @@
  *
  * NAMED EVENTS ALONGSIDE AUTOCAPTURE. PostHog's autocapture already records raw
  * clicks, so nothing here is strictly required. It exists because
- * `install_command_copied {method: "npm"}` is a question you can answer in one
- * glance, and "clicks on button.copy-btn[data-copy=npm]" is one you have to
- * reconstruct every time you ask.
+ * `install_command_copied {method: "cli"}` is a question you can answer in one
+ * glance, and "clicks on button.copy-btn[data-copy=claude-code]" is one you
+ * have to reconstruct every time you ask.
+ *
+ * INSTALL PROPERTIES. `install_tab_selected` and `install_command_copied` both
+ * carry the same two properties, read from data-method / data-client on the
+ * tab or copy button in index.html:
+ *   method  "url"  (Quick start: paste the server URL into a client)
+ *           "cli"  (Claude Code: `claude mcp add` command)
+ *           "json" (Manual: mcpServers JSON config)
+ *   client  "claude-code" when the step is specific to one client, else "any"
+ * Before 2026-10-27 `method` held the tab key ("quick", "claude-code",
+ * "manual") and there was no `client`; filters on the old values need both.
  */
 (function () {
   "use strict";
@@ -52,7 +62,7 @@
   }
 
   /* ── 1. Hero intent ───────────────────────────────────────────────────
-   * Which promise sends people down the page — "Install in 30 seconds" or
+   * Which promise sends people down the page — "Connect in 30 seconds" or
    * "See the signals". The split tells you whether the pitch or the proof is
    * doing the work. */
   document.querySelectorAll(".hero-cta-row .btn").forEach(function (a) {
@@ -89,22 +99,30 @@
   }
 
   /* ── 3. Which install method they want ────────────────────────────────
-   * Three tabs, and you are guessing which one matters until this exists.
-   * If everyone switches to Manual, the quick-start command is not landing. */
+   * Three tabs (url = Quick start, cli = Claude Code, json = Manual), and you
+   * are guessing which one matters until this exists. If everyone switches to
+   * json, the quick-start URL is not landing. */
   document.querySelectorAll(".install-tab").forEach(function (tab) {
     on(tab, "click", function () {
-      track("install_tab_selected", { method: tab.getAttribute("data-tab") });
+      track("install_tab_selected", {
+        method: tab.getAttribute("data-method"),
+        client: tab.getAttribute("data-client"),
+      });
     });
   });
 
   /* ── 4. THE CONVERSION ────────────────────────────────────────────────
-   * Copying the install command is the closest this page gets to intent to
-   * use the product — someone is about to paste it into a terminal. If you
-   * watch one number on this page, watch this one, and watch it against
-   * `section_viewed {section: "install"}` to see how many who saw it acted. */
+   * Copying the server URL, command or config is the closest this page gets to
+   * intent to use the product — someone is about to paste it into their MCP
+   * client or terminal. If you watch one number on this page, watch this one,
+   * and watch it against `section_viewed {section: "install"}` to see how many
+   * who saw it acted. */
   document.querySelectorAll(".copy-btn").forEach(function (btn) {
     on(btn, "click", function () {
-      track("install_command_copied", { method: btn.getAttribute("data-copy") });
+      track("install_command_copied", {
+        method: btn.getAttribute("data-method"),
+        client: btn.getAttribute("data-client"),
+      });
     });
   });
 

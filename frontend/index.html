@@ -490,9 +490,9 @@ a:not(.btn):hover { color: var(--volt-emerald); }
 
     <!-- Tabs -->
     <div role="tablist" class="install-tabs" id="install-tabs" style="align-self: flex-start">
-      <button role="tab" class="install-tab" aria-selected="true" data-tab="quick">Quick start</button>
-      <button role="tab" class="install-tab" aria-selected="false" data-tab="claude-code">Claude Code</button>
-      <button role="tab" class="install-tab" aria-selected="false" data-tab="manual">Manual</button>
+      <button role="tab" class="install-tab" aria-selected="true" data-tab="quick" data-method="url" data-client="any">Quick start</button>
+      <button role="tab" class="install-tab" aria-selected="false" data-tab="claude-code" data-method="cli" data-client="claude-code">Claude Code</button>
+      <button role="tab" class="install-tab" aria-selected="false" data-tab="manual" data-method="json" data-client="any">Manual</button>
     </div>
 
     <!-- Tab: Quick start -->
@@ -500,7 +500,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
       <div class="install-block">
         <div class="install-header">
           <span class="label">Server URL &mdash; paste into your client's Add MCP server / Connectors setting</span>
-          <button class="copy-btn" data-copy="quick">Copy</button>
+          <button class="copy-btn" data-copy="quick" data-method="url" data-client="any">Copy</button>
         </div>
         <div class="install-body" id="code-quick"><span class="comment">https://notavibe.dev/mcp</span></div>
       </div>
@@ -514,7 +514,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
       <div class="install-block">
         <div class="install-header">
           <span class="label">Run in your terminal</span>
-          <button class="copy-btn" data-copy="claude-code">Copy</button>
+          <button class="copy-btn" data-copy="claude-code" data-method="cli" data-client="claude-code">Copy</button>
         </div>
         <div class="install-body" id="code-claude-code"><span class="cmd">claude</span> mcp add --transport http notavibe <span class="comment">https://notavibe.dev/mcp</span></div>
       </div>
@@ -528,7 +528,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
       <div class="install-block">
         <div class="install-header">
           <span class="label">Add to your MCP client config</span>
-          <button class="copy-btn" data-copy="manual">Copy</button>
+          <button class="copy-btn" data-copy="manual" data-method="json" data-client="any">Copy</button>
         </div>
         <div class="install-body" id="code-manual">{
   "mcpServers": {
