@@ -337,7 +337,7 @@ tbody td:first-child {
 
   <article>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: 27 October 2026</p>
+    <p class="updated">Last updated: 28 October 2026</p>
 
     <p class="intro">
       This policy explains what personal data notavibe handles when you visit
@@ -467,19 +467,26 @@ tbody td:first-child {
     <h3>2.6 MCP server usage</h3>
     <p>
       notavibe also runs an MCP server at <code>notavibe.dev/mcp</code>, which AI coding
-      assistants can call. When an app connects, and each time it calls one of our tools, our
-      server sends <strong>PostHog</strong> a count of it: which tool was used, how long it took,
-      the type of any error, how many results came back, and the coarse shape of the request
-      &mdash; for example whether a query was given, a length bucket, how many words it had,
-      which filters were used, and the mode. A filter value is included only when it is one of
-      our own fixed options; a tool name we do not recognise is recorded as unknown, never as
-      given.
+      assistants can call. When an app connects, when it asks which tools we offer, and each
+      time it calls one of our tools, our server sends <strong>PostHog</strong> a count of it.
+      For a tool call that is which tool was used, that tool's fixed description and category,
+      how long it took, the outcome (such as &ldquo;not found&rdquo;, or the type of any
+      error), how many results came back, and the coarse shape of the request &mdash; for
+      example whether a query was given, a length bucket, how many words it had, which filters
+      were used, and the mode. A filter value is included only when it is one of our own fixed
+      options; a tool name we do not recognise is recorded as unknown, never as given. When an
+      app asks which tools we offer, we record the list of our tool names we sent back.
     </p>
     <p>
       We also note which app made the call, as one name from a fixed list (such as
       &ldquo;claude&rdquo; or &ldquo;cursor&rdquo;) or &ldquo;other&rdquo;, together with its
       version number, such as &ldquo;1.2&rdquo;, and the MCP protocol version it asked for.
-      Anything that is not a plain version number is dropped.
+      Anything that is not a plain version number is dropped. For the AI apps and MCP tools on
+      that list only, we also send the label the app attaches to every request (its user agent,
+      such as &ldquo;claude-code/2.1.0&rdquo;, which can also name the operating system it
+      runs on) and, if the app sends one, its <code>X-Anthropic-Client</code> header. Each is
+      sent only when it is short plain text of that kind; anything else is dropped. Calls from
+      our own tests and checks are marked as ours so we can leave them out of the counts.
     </p>
     <p>
       It does <strong>not</strong> send your IP address, which is discarded before anything
