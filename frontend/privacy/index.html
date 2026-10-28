@@ -498,17 +498,30 @@ tbody td:first-child {
       it to nothing else we hold. It is kept in PostHog with the counts.
     </p>
     <p>
+      One tool, <code>get_more_tools</code>, is there for an assistant to tell us about
+      something it needed and could not find. When an assistant calls it, the description it
+      writes is sent to PostHog as written, after PostHog's software removes email addresses,
+      phone numbers, card numbers, IP addresses and keys from it, and cut to 2&nbsp;KB. This is
+      the only text from a request that we send. The assistant writes it, not you, but it may
+      draw on your conversation, so it could mention a project, a file or something else about
+      your work. The tool's own description tells the assistant that what it writes is stored
+      by an analytics service.
+    </p>
+    <p>
       It does <strong>not</strong> send your IP address, which is discarded before anything
-      leaves our server. It does not send the text of any query or anything else typed into a
-      request, or the names of the projects you ask about, and it sets no cookie. The counts
-      tell us how the server is used, not who used it.
+      leaves our server. Apart from that one description, it does not send the text of any query
+      or anything else typed into a request, or the names of the projects you ask about, and it
+      sets no cookie. The counts tell us how the server is used, not who used it.
     </p>
     <p class="basis">
       <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) &mdash; knowing how the MCP
-      server is used, so we can improve it. The session code shows which calls belong together,
-      but we have no way to tell whose calls they are, so we cannot pick out yours to show you or
-      delete (Article 11). There is no consent prompt: your app holds the session code only
-      for the length of that one connection, and we set no cookie.
+      server is used and what it is missing, so we can improve it. Most of what we record is
+      counts. The session code shows which calls belong together, but we have no way to tell
+      whose calls they are, so we cannot pick out your counts to show you or delete (Article
+      11). A description sent through <code>get_more_tools</code> is different: it could mention
+      something about you, so if you think one does, email us and we will find it and delete
+      it. There is no consent prompt: your app holds the session code only for the length of
+      that one connection, and we set no cookie.
     </p>
 
     <h2 id="what-we-do-not"><span class="num">3.</span>What we do not collect</h2>
@@ -582,7 +595,7 @@ tbody td:first-child {
           </tr>
           <tr>
             <td>PostHog</td>
-            <td>Two things. First, the product analytics described in section 2.4 — how pages are used and whether readers return. That only receives anything once you have accepted; if you decline, it counts the visit without storing anything on your device. Second, the usage counts from our MCP server described in section 2.6, which carry no IP address and no identifier beyond the random session code described there, and so are not tied to your choice on this site. <strong>Your data is stored in the European Union</strong> (Frankfurt, Germany); PostHog is a US company, so its own staff may access it in support of the service, which is covered by our agreement with them and the safeguards in section 6.</td>
+            <td>Two things. First, the product analytics described in section 2.4 — how pages are used and whether readers return. That only receives anything once you have accepted; if you decline, it counts the visit without storing anything on your device. Second, the usage counts from our MCP server described in section 2.6, and the descriptions assistants send through its <code>get_more_tools</code> tool. These carry no IP address and no identifier beyond the random session code described there, and so are not tied to your choice on this site. <strong>Your data is stored in the European Union</strong> (Frankfurt, Germany); PostHog is a US company, so its own staff may access it in support of the service, which is covered by our agreement with them and the safeguards in section 6.</td>
           </tr>
           <tr>
             <td>Resend</td>
@@ -647,7 +660,7 @@ tbody td:first-child {
             <td>Retained by PostHog under its own retention schedule. If you declined, nothing was stored on your device, and the identifier used to count you exists only on PostHog's servers under that same schedule. We keep no separate copy.</td>
           </tr>
           <tr>
-            <td>MCP server usage counts (PostHog)</td>
+            <td>MCP server usage counts and <code>get_more_tools</code> descriptions (PostHog)</td>
             <td>Retained by PostHog under its own retention schedule. We keep no separate copy.</td>
           </tr>
           <tr>
