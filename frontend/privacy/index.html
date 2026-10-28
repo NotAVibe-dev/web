@@ -481,11 +481,12 @@ tbody td:first-child {
       We also note which app made the call, as one name from a fixed list (such as
       &ldquo;claude&rdquo; or &ldquo;cursor&rdquo;) or &ldquo;other&rdquo;, together with its
       version number, such as &ldquo;1.2&rdquo;, and the MCP protocol version it asked for.
-      Anything that is not a plain version number is dropped. For the AI apps and MCP tools on
-      that list only, we also send the label the app attaches to every request (its user agent,
-      such as &ldquo;claude-code/2.1.0&rdquo;, which can also name the operating system it
-      runs on) and, if the app sends one, its <code>X-Anthropic-Client</code> header. Each is
-      sent only when it is short plain text of that kind; anything else is dropped. Calls from
+      Anything that is not a plain version number is dropped. For a fixed list of AI apps and
+      MCP tools only, we also send the app's own product name and version from the label it
+      attaches to every request (its user agent), such as &ldquo;claude-code/2.1.0&rdquo;;
+      everything else in that label is dropped. Alongside it, we send the app's
+      <code>X-Anthropic-Client</code> header if it is a short lowercase name such as
+      &ldquo;claude-code&rdquo;, and drop it otherwise. Calls from
       our own tests and checks are marked as ours so we can leave them out of the counts.
     </p>
     <p>
