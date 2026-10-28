@@ -490,15 +490,25 @@ tbody td:first-child {
       our own tests and checks are marked as ours so we can leave them out of the counts.
     </p>
     <p>
+      To see which calls belong together, we use one random code. When an app connects, our
+      server gives it a <strong>session code</strong>, made up at random, and the app sends it
+      back with each call for as long as that one connection lasts. We issue it only so we can
+      group that connection's calls in our counts; our server works the same without it. It
+      says nothing about who you are or which device you use, it is not a cookie, and we link
+      it to nothing else we hold. It is kept in PostHog with the counts.
+    </p>
+    <p>
       It does <strong>not</strong> send your IP address, which is discarded before anything
       leaves our server. It does not send the text of any query or anything else typed into a
-      request, the names of the projects you ask about, or any identifier that persists from one
-      call to the next, and it sets no cookie. The counts tell us how the server is used, not
-      who used it.
+      request, or the names of the projects you ask about, and it sets no cookie. The counts
+      tell us how the server is used, not who used it.
     </p>
     <p class="basis">
-      <b>No consent prompt:</b> this happens on our server, nothing is stored on your device,
-      and the counts are not personal data, so there is nothing to consent to.
+      <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) &mdash; knowing how the MCP
+      server is used, so we can improve it. The session code shows which calls belong together,
+      but we have no way to tell whose calls they are, so we cannot pick out yours to show you or
+      delete (Article 11). There is no consent prompt: your app holds the session code only
+      for the length of that one connection, and we set no cookie.
     </p>
 
     <h2 id="what-we-do-not"><span class="num">3.</span>What we do not collect</h2>
@@ -572,7 +582,7 @@ tbody td:first-child {
           </tr>
           <tr>
             <td>PostHog</td>
-            <td>Two things. First, the product analytics described in section 2.4 — how pages are used and whether readers return. That only receives anything once you have accepted; if you decline, it counts the visit without storing anything on your device. Second, the usage counts from our MCP server described in section 2.6, which carry no persistent identifier and no IP address, and so are not tied to your choice on this site. <strong>Your data is stored in the European Union</strong> (Frankfurt, Germany); PostHog is a US company, so its own staff may access it in support of the service, which is covered by our agreement with them and the safeguards in section 6.</td>
+            <td>Two things. First, the product analytics described in section 2.4 — how pages are used and whether readers return. That only receives anything once you have accepted; if you decline, it counts the visit without storing anything on your device. Second, the usage counts from our MCP server described in section 2.6, which carry no IP address and no identifier beyond the random session code described there, and so are not tied to your choice on this site. <strong>Your data is stored in the European Union</strong> (Frankfurt, Germany); PostHog is a US company, so its own staff may access it in support of the service, which is covered by our agreement with them and the safeguards in section 6.</td>
           </tr>
           <tr>
             <td>Resend</td>
