@@ -2,33 +2,33 @@
  *
  * index.html ships "JS/TS projects · …" with an empty #project-count span, so
  * the page never claims a number it has not been given. On load this asks
- * /stats.json (same origin) for `projects` and prepends "~N ".
+ * /stats.json (same origin) for `projects` and prepends "N+ ".
  *
- * N is rounded UP: under 100 to the next 10, 100–999 to the next 100, 1,000
- * and over to the next 1,000; an exact multiple stays as it is. Because N can
- * be larger than the real count, it is shown as "~N", never "N+".
+ * N is rounded DOWN, so the page never shows more than the real count (no
+ * invented facts): under 1,000 to the 10 below, 1,000 and over to the 100
+ * below. Under 10 would read "0+", so it shows no number instead.
  *
- * 0, a missing or non-numeric value, a non-2xx response, a network error or
- * bad JSON all leave the line without a number. Nothing is logged.
+ * That, 0, a missing or non-numeric value, a non-2xx response, a network
+ * error or bad JSON all leave the line without a number. Nothing is logged.
  *
- * roundUpCount/countLabel are exported for tests/project-count.test.js.
+ * roundDownCount/countLabel are exported for tests/project-count.test.js.
  */
 (function () {
   "use strict";
 
-  function roundUpCount(p) {
+  function roundDownCount(p) {
     if (typeof p !== "number" || !isFinite(p) || p <= 0) return 0;
-    var step = p < 100 ? 10 : p < 1000 ? 100 : 1000;
-    return Math.ceil(p / step) * step;
+    var step = p < 1000 ? 10 : 100;
+    return Math.floor(p / step) * step;
   }
 
   function countLabel(p) {
-    var n = roundUpCount(p);
-    return n > 0 ? "~" + n.toLocaleString("en-US") + " " : "";
+    var n = roundDownCount(p);
+    return n > 0 ? n.toLocaleString("en-US") + "+ " : "";
   }
 
   if (typeof module === "object" && module.exports) {
-    module.exports = { roundUpCount: roundUpCount, countLabel: countLabel };
+    module.exports = { roundDownCount: roundDownCount, countLabel: countLabel };
     return;
   }
 
