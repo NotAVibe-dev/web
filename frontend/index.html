@@ -828,22 +828,6 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     if (!reduce) { host.addEventListener("pointermove", onMove); host.addEventListener("pointerleave", onLeave); }
   })();
 
-  /* ── Live project count ────────────────────────────────────────────── */
-  /* The HTML claims no number; prepend the catalog's live count, floored to
-   * the nearest 100 from 1,000 up and to the nearest 10 below. Any failure
-   * leaves the line without a count. */
-  var countEl = document.getElementById("project-count");
-  if (countEl && window.fetch) {
-    fetch("/stats.json").then(function (r) {
-      return r.ok ? r.json() : null;
-    }).then(function (d) {
-      var p = d && typeof d.projects === "number" ? d.projects : 0;
-      var step = p >= 1000 ? 100 : 10;
-      var n = Math.floor(p / step) * step;
-      if (n > 0) countEl.textContent = n.toLocaleString("en-US") + "+ ";
-    }).catch(function () {});
-  }
-
   /* ── Smooth scroll for anchor links ────────────────────────────────── */
   document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     a.addEventListener("click", function (e) {
@@ -866,5 +850,8 @@ a:not(.btn):hover { color: var(--volt-emerald); }
      goes through posthog.capture(), which stays silent until the banner has
      been answered. No email, no typed text, no identifiers — see the file. -->
 <script src="scripts/events.js" defer></script>
+
+<!-- Live project count in the hero line (#project-count); see its header. -->
+<script src="scripts/project-count.js" defer></script>
 </body>
 </html>
