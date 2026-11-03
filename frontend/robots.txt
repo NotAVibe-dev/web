@@ -31,3 +31,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://notavibe.dev/sitemap.xml
+Sitemap: https://notavibe.dev/sitemaps/projects.xml
