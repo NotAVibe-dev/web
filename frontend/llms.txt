@@ -1,8 +1,8 @@
 # notavibe
 
 > Ranks open-source npm projects on maintenance, not popularity. Five sourced
-> signals per project — release cadence, response time, contributor breadth,
-> security posture, and adoption — each shown as a named band with its data
+> signals per project — release cadence, contributor breadth, adoption,
+> maintainer responses, and security posture — each shown as a named band with its data
 > source and fetch date. No composite score. Exposed as an MCP server so coding
 > assistants can ground dependency recommendations in real data.
 
