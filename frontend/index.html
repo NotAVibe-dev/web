@@ -410,7 +410,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
 
     <h1 class="fade-up fade-up-2">Your dependencies look fine.<br><span class="accent">Are they?</span></h1>
     <p class="lead fade-up fade-up-3">
-      notavibe checks five maintenance signals &mdash; release cadence, response time, contributor breadth, security posture, and adoption &mdash; so your AI assistant recommends packages that are actually alive.
+      notavibe checks five maintenance signals &mdash; release cadence, contributor breadth, adoption, maintainer responses, and security posture &mdash; so your AI assistant recommends packages that are actually alive.
     </p>
 
     <div class="hero-cta-row fade-up fade-up-4">
@@ -437,24 +437,17 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     <div class="section-head">
       <p class="eyebrow">How it works</p>
       <h2>Five signals, fully sourced, no black box</h2>
-      <p>Every project shows five maintenance signals derived from public data &mdash; each with its source, fetch date, and a clear rating. No hidden formula.</p>
+      <p>Every project shows five maintenance signals derived from public data &mdash; each with its source, fetch date, and a clear rating. No hidden formula. When a source has nothing to measure, the signal says &ldquo;insufficient data&rdquo; instead of guessing.</p>
     </div>
 
-    <div class="card-grid cols-2">
+    <!-- Same order and band names as the app: app/internal/ingestion/band/band.go -->
+    <div class="card-grid cols-3">
       <div class="card">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
         </div>
         <h3>Maintenance activity</h3>
-        <p>Substantive releases and merged external PRs over the trailing 90 days. Active, steady, quiet, or dormant.</p>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z"/></svg>
-        </div>
-        <h3>Responsiveness</h3>
-        <p>Median time to first substantive maintainer response on issues and PRs. Days, weeks, or insufficient data.</p>
+        <p>Substantive updates &mdash; registry publishes and releases &mdash; over the trailing 90 days. Steady, intermittent, or quiet.</p>
       </div>
 
       <div class="card">
@@ -462,7 +455,23 @@ a:not(.btn):hover { color: var(--volt-emerald); }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
         </div>
         <h3>Contributor breadth</h3>
-        <p>How many distinct authors are merging code. Broad, narrowing, single-author, or insufficient data.</p>
+        <p>How many outside contributors had pull requests merged. Broad, several, single, or maintainer-only.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+        </div>
+        <h3>Adoption</h3>
+        <p>Dependent-project count from the registry &mdash; the hardest signal to fake. Under 10, 10&ndash;100, 100&ndash;1k, 1k&ndash;10k, or 10k+.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z"/></svg>
+        </div>
+        <h3>Responsiveness</h3>
+        <p>The share of new issues that get a reply from a maintainer, not a bot. Engaged, selective, or quiet.</p>
       </div>
 
       <div class="card">
@@ -470,7 +479,7 @@ a:not(.btn):hover { color: var(--volt-emerald); }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
         </div>
         <h3>Security posture</h3>
-        <p>OpenSSF Scorecard-style checks: security policy, CI in place, code review practice. Strong, partial, or none visible.</p>
+        <p>The OpenSSF Scorecard score, built from checks like a security policy, CI and code review. Strong, moderate, or low.</p>
       </div>
 
     </div>
@@ -562,11 +571,11 @@ a:not(.btn):hover { color: var(--volt-emerald); }
     <div class="card-grid cols-3">
       <div class="card">
         <h3>Transparent ratings, not opaque scores</h3>
-        <p>Each signal shows its source, fetch date, and a clear rating like "steady" or "days." You see exactly what we see &mdash; no hidden formula.</p>
+        <p>Each signal shows its source, fetch date, and a clear rating like "steady" or "engaged." You see exactly what we see &mdash; no hidden formula.</p>
       </div>
       <div class="card">
         <h3>Maintenance, not popularity</h3>
-        <p>Stars and downloads are farmable. Release cadence, response times, and dependent-project counts are not. We measure what matters.</p>
+        <p>Stars and downloads are farmable. Release cadence, maintainer responses, and dependent-project counts are not. We measure what matters.</p>
       </div>
       <div class="card">
         <h3>Agent-native from day one</h3>
