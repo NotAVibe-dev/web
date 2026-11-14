@@ -1,6 +1,6 @@
 /* project-count.js — the live catalog count in the hero line.
  *
- * index.html ships "JS/TS projects · …" with an empty #project-count span, so
+ * index.html ships "JS/TS and Python projects · …" with an empty #project-count span, so
  * the page never claims a number it has not been given. On load this asks
  * /stats.json (same origin) for `projects` and prepends "N+ ".
  *
