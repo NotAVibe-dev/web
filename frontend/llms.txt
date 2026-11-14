@@ -1,14 +1,16 @@
 # notavibe
 
-> Ranks open-source npm projects on maintenance, not popularity. Five sourced
-> signals per project — release cadence, contributor breadth, adoption,
-> maintainer responses, and security posture — each shown as a named band with its data
-> source and fetch date. No composite score. Exposed as an MCP server so coding
-> assistants can ground dependency recommendations in real data.
+> Ranks open-source JavaScript and TypeScript projects published to npm on
+> maintenance, not popularity. Five sourced signals per project — release
+> cadence, contributor breadth, adoption, maintainer responses, and security
+> posture — each shown as a named band with its data source and fetch date. No
+> composite score. Exposed as an MCP server so coding assistants can ground
+> dependency recommendations in real data.
 
 ## Site
 
 - [Home](https://notavibe.dev/): what notavibe measures, the five signals, and how to connect the MCP server
+- [Methodology](https://notavibe.dev/methodology): which packages are listed and how they are screened, what each signal measures, every band's cut-point, and how ranking works. This page is the source of truth for the rules summarised here
 - [Privacy policy](https://notavibe.dev/privacy/): what personal data the site handles, why, who processes it, and GDPR rights
 
 ## Sections on the home page
@@ -20,11 +22,21 @@
 ## Reference
 
 - MCP server: `https://notavibe.dev/mcp` (HTTP). Claude Code: `claude mcp add --transport http notavibe https://notavibe.dev/mcp`
-- MCP tools (all read-only): `search_projects`, `get_project`, `compare_projects`, `get_lists`
+- MCP tools (none of them changes the catalog):
+  - `search_projects`: search the catalog by words and exact filters
+  - `get_project`: one project's public profile, by repository or by npm package name
+  - `compare_projects`: two projects' public profiles side by side, with no winner named
+  - `get_lists`: the public curated lists, or the members of one list
+  - `get_methodology`: what each signal measures, with its bands and cut-points, from the same source as the methodology page
+  - `check_dependencies`: look up to 100 npm package names in one call and get one row per name
+  - `get_more_tools`: tell the maintainers about a capability the other tools are missing
 
 ## Notes for agents
 
 - notavibe reports maintenance signals, not security vulnerabilities. It is not a CVE scanner.
 - Every signal is a named band carrying its own source and fetch date. There is no single composite score, and inventing one misrepresents the product.
 - "Insufficient data" is a valid answer and is reported as such rather than guessed.
-- The catalog currently covers one ecosystem: JavaScript and TypeScript.
+- The catalog currently covers one ecosystem: JavaScript and TypeScript, from npm. Its coverage is partial: it does not yet hold every JavaScript or TypeScript project published to npm.
+- New packages come from the npm registry's change feed. A project without a package can be requested.
+- A package's data counts only when the package and its repository name each other: the repository's package.json names the package and the package names the repository as its source, or a verified signed publish attestation names the repository. A package's own claim is never enough on its own.
+- Every package is screened against OpenSSF Malicious Packages reports on OSV before it is listed, and checked again when a report changes. A package with a report on another of its releases waits for a staff review. This screen keeps known-malicious packages out; it is not a vulnerability scan.
