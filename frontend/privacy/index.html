@@ -544,6 +544,13 @@ tbody td:first-child {
       name, we check when the owning GitHub account was created; we compare that date and do
       not store it.
     </p>
+    <p>
+      <b>Pipeline statistics.</b> Every 15 minutes our ingestion worker sends PostHog a few counts
+      describing the catalog pipeline: how many packages are at each stage, how many projects are in
+      the catalog per ecosystem, and how far behind each package feed is. These events contain only
+      totals and our own labels; they never name a package, a project or a person, and they are not
+      tied to any visitor.
+    </p>
     <p class="basis">
       <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) &mdash; showing how actively
       public open-source projects are maintained, from data their maintainers have already
@@ -688,7 +695,7 @@ tbody td:first-child {
             <td>Retained by PostHog under its own retention schedule. If you declined, nothing was stored on your device, and the identifier used to count you exists only on PostHog's servers under that same schedule. We keep no separate copy.</td>
           </tr>
           <tr>
-            <td>MCP server usage counts and <code>get_more_tools</code> descriptions (PostHog)</td>
+            <td>MCP server usage counts, pipeline statistics and <code>get_more_tools</code> descriptions (PostHog)</td>
             <td>Retained by PostHog under its own retention schedule. We keep no separate copy.</td>
           </tr>
           <tr>
