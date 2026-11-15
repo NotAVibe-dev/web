@@ -337,7 +337,7 @@ tbody td:first-child {
 
   <article>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: 28 October 2026</p>
+    <p class="updated">Last updated: 15 November 2026</p>
 
     <p class="intro">
       This policy explains what personal data notavibe handles when you visit
@@ -524,6 +524,31 @@ tbody td:first-child {
       that one connection, and we set no cookie.
     </p>
 
+    <h3>2.7 Public open-source data in the catalog</h3>
+    <p>
+      The catalog is built from public data about open-source projects: their repositories on
+      GitHub, and the packages they publish to npm, PyPI, crates.io and the Go module proxy. We
+      read this from the registries' public feeds and data dumps, the GitHub API, and the other
+      public sources each project page names. We do not read the registries' records about
+      people, such as author, owner or publisher fields, email addresses or download history.
+    </p>
+    <p>
+      Some of this data can still identify a person. A repository address or a Go module path
+      usually contains the account name of whoever owns the repository, such as
+      <code>github.com/name/project</code>. For crates.io we also compare a crate's owners with
+      the repository's owner while we process each day's dump, and keep only the yes-or-no
+      answer, never the owner names. To protect against someone taking over an old account
+      name, we check when the owning GitHub account was created; we compare that date and do
+      not store it.
+    </p>
+    <p class="basis">
+      <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) &mdash; showing how actively
+      public open-source projects are maintained, from data their maintainers have already
+      published. If you would rather your project, or a package or repository naming your
+      account, were not in the catalog, email us and we will remove it and keep it out (you
+      can also use the can also use the opt-out link on any project page).ldquo;Request removalcan also use the opt-out link on any project page).rdquo; form at the bottom of any project page, with no account needed).
+    </p>
+
     <h2 id="what-we-do-not"><span class="num">3.</span>What we do not collect</h2>
     <p>
       We do not collect special-category data as defined in Article 9 of the GDPR — nothing
@@ -662,6 +687,10 @@ tbody td:first-child {
           <tr>
             <td>MCP server usage counts and <code>get_more_tools</code> descriptions (PostHog)</td>
             <td>Retained by PostHog under its own retention schedule. We keep no separate copy.</td>
+          </tr>
+          <tr>
+            <td>Catalog data about packages and repositories</td>
+            <td>Package records we are still checking, or that did not qualify, are deleted 13 months after we last saw them. Records behind a live project page are kept while the page exists. Records of packages held back for a malware report are kept while the report stands, then 13 months. Go module data is deleted 30 days after the module leaves the catalog. A crates.io package leaves within a day of leaving the daily dump. Our record of why each decision was made keeps repository names; if you ask us to remove yours, we take it out of that record too.</td>
           </tr>
           <tr>
             <td>Analytics cookie</td>
