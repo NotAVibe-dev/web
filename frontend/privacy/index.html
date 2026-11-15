@@ -530,7 +530,10 @@ tbody td:first-child {
       GitHub, and the packages they publish to npm, PyPI, crates.io and the Go module proxy. We
       read this from the registries' public feeds and data dumps, the GitHub API, and the other
       public sources each project page names. We do not read the registries' records about
-      people, such as author, owner or publisher fields, email addresses or download history.
+      people, such as author, owner or publisher fields, email addresses or download history,
+      except that for crates.io we read owner account names to make the comparison below, and do
+      not keep them. From GitHub we also read who authored recent pull requests and issue
+      comments, to count maintainer responses; we keep only the counts.
     </p>
     <p>
       Some of this data can still identify a person. A repository address or a Go module path
@@ -545,8 +548,8 @@ tbody td:first-child {
       <b>Lawful basis:</b> legitimate interests (Article 6(1)(f)) &mdash; showing how actively
       public open-source projects are maintained, from data their maintainers have already
       published. If you would rather your project, or a package or repository naming your
-      account, were not in the catalog, email us and we will remove it and keep it out (you
-      can also use the can also use the opt-out link on any project page).ldquo;Request removalcan also use the opt-out link on any project page).rdquo; form at the bottom of any project page, with no account needed).
+      account, were not in the catalog, email us and we will remove it and keep it out (or use the
+      &ldquo;Request removal&rdquo; form at the bottom of any project page, with no account needed).
     </p>
 
     <h2 id="what-we-do-not"><span class="num">3.</span>What we do not collect</h2>
@@ -690,7 +693,7 @@ tbody td:first-child {
           </tr>
           <tr>
             <td>Catalog data about packages and repositories</td>
-            <td>Package records we are still checking, or that did not qualify, are deleted 13 months after we last saw them. Records behind a live project page are kept while the page exists. Records of packages held back for a malware report are kept while the report stands, then 13 months. Go module data is deleted 30 days after the module leaves the catalog. A crates.io package leaves within a day of leaving the daily dump. Our record of why each decision was made keeps repository names; if you ask us to remove yours, we take it out of that record too.</td>
+            <td>Package records we are still checking, or that did not qualify, are deleted 13 months after we last saw them or last changed their status. Records behind a live project page are kept while the page exists. Packages held back for a malware report or a conflicting-provenance check are kept while that applies, then 13 months. Go module data is deleted 30 days after the module leaves the catalog and no project page lists it. Our crates.io data about a package is deleted at the next daily dump after it leaves the dump. Records of packages we could not read are deleted 13 months after the last failed read. Our record of why each decision was made keeps package and module names (a Go module path includes an account name) with no time limit; if you ask, we remove yours from it. If you ask us to remove something, we keep a record of that request so it stays out.</td>
           </tr>
           <tr>
             <td>Analytics cookie</td>
