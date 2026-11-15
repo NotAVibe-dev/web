@@ -1,7 +1,7 @@
 # notavibe
 
-> Ranks open-source JavaScript, TypeScript, Python and Rust projects published to
-> npm, PyPI and crates.io on maintenance, not popularity. Five sourced signals per project — release
+> Ranks open-source JavaScript, TypeScript, Python, Rust and Go projects published
+> to npm, PyPI, crates.io and the Go module proxy on maintenance, not popularity. Five sourced signals per project — release
 > cadence, contributor breadth, adoption, maintainer responses, and security
 > posture — each shown as a named band with its data source and fetch date. No
 > composite score. Exposed as an MCP server so coding assistants can ground
@@ -24,11 +24,11 @@
 - MCP server: `https://notavibe.dev/mcp` (HTTP). Claude Code: `claude mcp add --transport http notavibe https://notavibe.dev/mcp`
 - MCP tools (none of them changes the catalog):
   - `search_projects`: search the catalog by words and exact filters
-  - `get_project`: one project's public profile, by repository or by npm, PyPI or crates.io package name
+  - `get_project`: one project's public profile, by repository or by npm, PyPI or crates.io package name, or Go module path
   - `compare_projects`: two projects' public profiles side by side, with no winner named
   - `get_lists`: the public curated lists, or the members of one list
   - `get_methodology`: what each signal measures, with its bands and cut-points, from the same source as the methodology page
-  - `check_dependencies`: look up to 100 npm, PyPI or crates.io package names in one call and get one row per name
+  - `check_dependencies`: look up to 100 npm, PyPI or crates.io package names or Go module paths in one call and get one row per name
   - `get_more_tools`: tell the maintainers about a capability the other tools are missing
 
 ## Notes for agents
@@ -36,10 +36,10 @@
 - notavibe reports maintenance signals, not security vulnerabilities. It is not a CVE scanner.
 - Every signal is a named band carrying its own source and fetch date. There is no single composite score, and inventing one misrepresents the product.
 - "Insufficient data" is a valid answer and is reported as such rather than guessed.
-- The catalog currently covers three ecosystems: JavaScript and TypeScript, from npm; Python, from PyPI; and Rust, from crates.io. Its coverage of each is partial: it does not yet hold every JavaScript or TypeScript project published to npm, every Python project published to PyPI, or every Rust project published to crates.io.
+- The catalog currently covers four ecosystems: JavaScript and TypeScript, from npm; Python, from PyPI; Rust, from crates.io; and Go, from the Go module proxy (proxy.golang.org). Its coverage of each is partial: it does not yet hold every JavaScript or TypeScript project published to npm, every Python project published to PyPI, every Rust project published to crates.io, or every Go project published to the Go module proxy.
 - New packages come from the npm and PyPI registries' feeds, crates.io's daily database dump, and the Go module index (index.golang.org). A project without a package can be requested.
 - A package's data counts only when the package and its repository name each other: the repository's package.json names the npm package, its root pyproject.toml names the PyPI package, or its root Cargo.toml (or that of a workspace member the root lists) names the crate, and the package names the repository as its source, or a verified signed publish attestation names the repository. A package's own claim is never enough on its own.
 - A Rust project's maintenance rhythm and last release come from its bound crate's stable releases on crates.io (as of the daily dump) when one of the crate's crates.io owners is the repository's owner or a workspace member names the crate; otherwise from GitHub. A crate counts only once its first stable version that names the repository is at least 90 days old. No dependents count is read for crates, so a Rust project's dependents show insufficient data, not zero.
 - A Go module counts only when the module and the repository name each other: the module path is github.com/ followed by the repository's owner and name (with a /v2 or later suffix where the module has one), and the repository's root go.mod, and the go.mod proxy.golang.org serves for the newest stable version, declare exactly that path. Its first stable version must be at least 90 days old, the repository and its GitHub owner account must predate it, and it needs a stable version in the last 365 days, so a finished Go library that has not released in a year is not bound. A bound module's page says it is published to the Go module proxy, and its module path is searchable by exact name.
-- Go is not yet an admitted ecosystem: a project whose ecosystem is Go is not in search or the ranked catalog, and a Go module's version dates do not yet count toward maintenance rhythm or last release.
+- A Go project's maintenance rhythm and last release come from its bound module's stable version tags in the repository (annotated tags by tag date, lightweight tags by commit date), ahead of its GitHub releases; when the tags can't answer, GitHub releases do, never a zero from the tags. A Go module path is compared exactly, letter case included. No dependents count is read for Go modules, so a Go project's dependents show insufficient data, not zero.
 - Every package is screened against OpenSSF Malicious Packages reports on OSV before it is listed, and checked again when a report changes. A package with a report on another of its releases waits for a staff review. This screen keeps known-malicious packages out; it is not a vulnerability scan.
